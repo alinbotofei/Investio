@@ -26,3 +26,10 @@ logs/
 # Misc
 .cache/
 coverage/
+
+# Development files
+test-proxy.js
+proxy.log
+
+# Excluded projects
+next-app/
