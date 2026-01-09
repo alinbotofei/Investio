@@ -4,6 +4,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Next.js
+.next/
+out/
+
 # Build output
 build/
 dist/
@@ -11,6 +15,7 @@ dist/
 # Env files
 .env
 .env.*
+!.env.example
 
 # IDEs
 .vscode/

@@ -1,27 +1,28 @@
 # Investio
 
-A modern financial investment dashboard built with React, Vite, and Tailwind CSS.
-
-## Features
-
-- Real-time market overview
-- AI-powered chat assistant
-- Portfolio tracking
-- Responsive design for mobile and desktop
+AI-powered investment assistant built with Next.js and OpenAI.
 
 ## Tech Stack
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS
-- **Build Tool**: Vite
-- **API**: OpenAI GPT-5-nano
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **AI**: OpenAI GPT-5-nano
 - **Deployment**: Vercel
+
+## Features
+
+- 💬 AI chat assistant for market insights
+- 📊 Portfolio dashboard overview
+- 📱 Responsive design
+- 🚀 Server-side rendering with Next.js
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 20.2+
+- OpenAI API key
 
 ### Installation
 
@@ -31,61 +32,39 @@ npm install
 
 ### Development
 
-Run the development server:
-
 ```bash
 npm run dev
 ```
 
-The app will open at [http://localhost:3000](http://localhost:3000)
-
-### Build
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-Preview the production build:
-
-```bash
-npm run preview
-```
-
-## Deployment
-
-This project is configured for deployment on Vercel.
+Visit [http://localhost:3000](http://localhost:3000)
 
 ### Environment Variables
 
-Set the following environment variable in your Vercel project:
+Create a `.env` file:
 
-- `OPENAI_API_KEY`: Your OpenAI API key
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Import your repository in Vercel
-3. Add the environment variable
-4. Deploy
+```env
+OPENAI_API_KEY=your_openai_api_key
+```
 
 ## Project Structure
 
 ```
-frontend/
-├── src/
-│   ├── components/     # Atomic design components
-│   │   ├── atoms/      # Basic UI elements
-│   │   ├── molecules/  # Component combinations
-│   │   ├── organisms/  # Complex components
-│   │   └── templates/  # Page layouts
-│   ├── pages/          # Page components
-│   ├── styles/         # Global styles
-│   └── main.tsx        # App entry point
-├── dist/               # Build output
-└── index.html          # HTML template
+app/
+├── components/
+│   ├── ui/          # Reusable components
+│   └── layout/      # Layout components
+├── lib/             # Constants & types
+├── api/chat/        # OpenAI API route
+├── page.tsx         # Dashboard
+└── chat/page.tsx    # Chat interface
 ```
+
+## Deployment
+
+1. Push to GitHub
+2. Import to Vercel
+3. Add `OPENAI_API_KEY` environment variable
+4. Deploy
 
 ## License
 
