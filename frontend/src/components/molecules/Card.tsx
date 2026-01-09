@@ -1,5 +1,4 @@
 import Text from '../atoms/Text'
-import React from 'react'
 
 export default function Card({
   title,

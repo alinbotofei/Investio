@@ -10,6 +10,11 @@ export default function ChatPage() {
   const landingTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const chatTextareaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const SUGGESTION_BTN_BASE = 'flex items-center justify-center gap-3 px-5 py-3 rounded-lg transition-transform duration-200 hover:scale-105 focus:outline-none'
+  const SUGGESTION_BTN_SECONDARY = `${SUGGESTION_BTN_BASE} bg-slate-800 text-slate-100 border border-slate-700 focus:ring-2 focus:ring-slate-600`
+  const SUGGESTION_BTN_PRIMARY = `${SUGGESTION_BTN_BASE} bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow focus:ring-2 focus:ring-cyan-400`
+
+
   useEffect(() => {
     const el = messagesRef.current
     if (el) {
@@ -128,7 +133,7 @@ export default function ChatPage() {
 
               <div className="mt-5 md:mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                 <button
-                  className="flex items-center justify-center gap-3 px-5 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg shadow transition-transform duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  className={SUGGESTION_BTN_PRIMARY}
                   onClick={() => { setValue('What are the top technology stocks to watch?'); }}
                 >
                   <Icon name="trending_up" className="text-[18px]" />
@@ -136,7 +141,7 @@ export default function ChatPage() {
                 </button>
 
                 <button
-                  className="flex items-center justify-center gap-3 px-5 py-3 bg-slate-800 text-slate-100 rounded-lg border border-slate-700 transition duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-600"
+                  className={SUGGESTION_BTN_SECONDARY}
                   onClick={() => { setValue('Summarize the latest Bitcoin market drivers.'); }}
                 >
                   <Icon name="currency_bitcoin" className="text-[18px]" />
@@ -144,7 +149,7 @@ export default function ChatPage() {
                 </button>
 
                 <button
-                  className="flex items-center justify-center gap-3 px-5 py-3 bg-slate-800 text-slate-100 rounded-lg border border-slate-700 transition duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-600"
+                  className={SUGGESTION_BTN_SECONDARY}
                   onClick={() => { setValue('How should I allocate a $10,000 portfolio for moderate risk?'); }}
                 >
                   <Icon name="pie_chart" className="text-[18px]" />
@@ -152,7 +157,7 @@ export default function ChatPage() {
                 </button>
 
                 <button
-                  className="flex items-center justify-center gap-3 px-5 py-3 bg-slate-800 text-slate-100 rounded-lg border border-slate-700 transition duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-600"
+                  className={SUGGESTION_BTN_SECONDARY}
                   onClick={() => { setValue('Compare AAPL and MSFT performance over the last year.'); }}
                 >
                   <Icon name="compare_arrows" className="text-[18px]" />
@@ -160,7 +165,7 @@ export default function ChatPage() {
                 </button>
 
                 <button
-                  className="flex items-center justify-center gap-3 px-5 py-3 bg-slate-800 text-slate-100 rounded-lg border border-slate-700 transition duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-600"
+                  className={SUGGESTION_BTN_SECONDARY}
                   onClick={() => { setValue('Generate a watchlist for fintech stocks with strong earnings momentum.'); }}
                 >
                   <Icon name="list" className="text-[18px]" />
@@ -168,7 +173,7 @@ export default function ChatPage() {
                 </button>
 
                 <button
-                  className="flex items-center justify-center gap-3 px-5 py-3 bg-slate-800 text-slate-100 rounded-lg border border-slate-700 transition duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-600"
+                  className={SUGGESTION_BTN_SECONDARY}
                   onClick={() => { setValue('Explain how recent CPI data could affect equity markets.'); }}
                 >
                   <Icon name="insights" className="text-[18px]" />
