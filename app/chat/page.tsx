@@ -38,7 +38,7 @@ export default function ChatPage() {
       setPlaceholderIndex((prev) => (prev + 1) % placeholderWords.length)
     }, 2500)
     return () => clearInterval(interval)
-  }, [])
+  }, [placeholderWords.length])
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -102,7 +102,7 @@ export default function ChatPage() {
           <div className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 md:py-0">
             <div className="max-w-3xl w-full text-center">
               <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">Your AI Investment Partner</h1>
-              <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-6 md:mb-8">Let's chat about your investments, explore market insights, and build your financial future together.</p>
+              <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-6 md:mb-8">Let&apos;s chat about your investments, explore market insights, and build your financial future together.</p>
 
               <div className="mt-6 md:mt-10 flex items-center justify-center">
                 <div className="relative w-full md:mx-auto md:max-w-3xl">

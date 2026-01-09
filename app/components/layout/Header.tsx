@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import Icon from '../ui/Icon'
 import { useState } from 'react'
 
@@ -73,14 +74,14 @@ export default function Header() {
             </div>
             {/* Navigation content */}
             <nav className="p-6 space-y-2">
-              <a href="/" className="flex items-center gap-3 px-4 py-3 text-white bg-white/10 rounded-lg transition">
+              <Link href="/" className="flex items-center gap-3 px-4 py-3 text-white bg-white/10 rounded-lg transition">
                 <Icon name="dashboard" />
                 <span className="font-semibold">Dashboard</span>
-              </a>
-              <a href="/chat" className="flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition">
+              </Link>
+              <Link href="/chat" className="flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition">
                 <Icon name="chat" />
                 <span className="font-medium">Chat</span>
-              </a>
+              </Link>
             </nav>
           </aside>
         </div>
