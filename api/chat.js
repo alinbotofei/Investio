@@ -64,9 +64,9 @@ export default async function handler(req, res) {
 
     if (!assistant) {
       if (String(message).length > 4000) {
-        assistant = 'Mesajul tău este prea lung pentru a primi un răspuns complet. Te rugăm să îl scurtezi sau să îl împarți în mai multe părți.'
+        assistant = 'Your message is too long to generate a complete response. Please shorten it or use multiple messages.'
       } else {
-        assistant = 'Nu am putut genera un răspuns complet. Încearcă să reformulezi întrebarea sau să folosești un mesaj mai scurt.'
+        assistant = 'Unable to generate a complete response. Try rephrasing your question or using a shorter message.'
       }
     }
 

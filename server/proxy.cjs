@@ -21,7 +21,6 @@ app.post('/api/chat', async (req, res) => {
     if (typeof model !== 'string' || !model.startsWith('gpt-5')) {
       return res.status(400).json({ error: 'Only gpt-5-nano is supported by this proxy. Set PROXY_MODEL=gpt-5-nano.' })
     }
-    // Încearcă automat cu max_output_tokens mari, pentru răspunsuri normale
     const tryTokens = [1024, 2048, 4096, 8192, 16384]
     let assistant = ''
     let lastDebug = ''
@@ -44,7 +43,6 @@ app.post('/api/chat', async (req, res) => {
       console.log('OpenAI raw response:', raw)
       let data = {}
       try { data = raw ? JSON.parse(raw) : {} } catch (e) { data = {} }
-      // Extrage orice text util
       if (Array.isArray(data?.output)) {
         for (const item of data.output) {
           if (Array.isArray(item.content)) {
@@ -64,7 +62,7 @@ app.post('/api/chat', async (req, res) => {
       }
       assistant = assistant || data?.output_text || ''
       if (assistant) break
-      // Salvează motivul pentru debugging
+
       const debug = []
       if (data.status) debug.push('status: ' + data.status)
       if (data.incomplete_details?.reason) debug.push('reason: ' + data.incomplete_details.reason)
@@ -72,12 +70,11 @@ app.post('/api/chat', async (req, res) => {
       lastDebug = debug.length ? debug.join(' | ') : ''
     }
     if (!assistant) {
-      // Dacă mesajul e foarte lung, anunță politicos
       if (String(message).length > 4000) {
-        assistant = 'Mesajul tău este prea lung pentru a primi un răspuns complet. Te rugăm să îl scurtezi sau să îl împarți în mai multe părți.'
+        assistant = 'Your message is too long to generate a complete response. Please shorten it or split it into multiple parts.'
       } else {
-        assistant = 'Nu am putut genera un răspuns complet. Încearcă să reformulezi întrebarea sau să folosești un mesaj mai scurt.'
-        if (lastDebug) assistant += `\n[Detalii tehnice: ${lastDebug}]`
+        assistant = 'Unable to generate a complete response. Try rephrasing your question or using a shorter message.'
+        if (lastDebug) assistant += `\n[Technical details: ${lastDebug}]`
       }
     }
     return res.json({ text: assistant })
