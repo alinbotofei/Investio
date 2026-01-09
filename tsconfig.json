@@ -33,13 +33,9 @@
     ]
   },
   "include": [
-    "frontend/src",
+    "next-env.d.ts",
+    "app/**/*",
     ".next/types/**/*.ts"
-  ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
   ],
   "exclude": [
     "node_modules"
