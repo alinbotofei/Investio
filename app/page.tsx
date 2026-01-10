@@ -2,6 +2,7 @@ import DashboardLayout from './components/layout/DashboardLayout'
 import Card from './components/ui/Card'
 import Text from './components/ui/Text'
 import Icon from './components/ui/Icon'
+import Link from 'next/link'
 
 export default function HomePage() {
   const portfolioValue = 125430.50
@@ -10,11 +11,20 @@ export default function HomePage() {
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 md:p-8">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
-            Dashboard
-          </h1>
-          <p className="text-sm sm:text-base text-slate-300">Welcome back to your investment overview</p>
+        <div className="mb-6 md:mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
+              Dashboard
+            </h1>
+            <p className="text-sm sm:text-base text-slate-300">Welcome back to your investment overview</p>
+          </div>
+          <Link 
+            href="/dashboard"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+          >
+            <Icon name="show_chart" />
+            <span className="hidden sm:inline">Live Dashboard</span>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 mb-6 md:mb-8">
