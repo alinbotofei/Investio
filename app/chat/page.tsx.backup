@@ -2,8 +2,6 @@
 
 import { useEffect, useRef, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Icon from '../components/ui/Icon'
 import { Message } from '../lib/types'
@@ -37,13 +35,10 @@ function ChatContent() {
     const el = messagesRef.current
     if (el) {
       requestAnimationFrame(() => {
-        el.scrollTo({
-          top: el.scrollHeight,
-          behavior: 'smooth'
-        })
+        el.scrollTop = el.scrollHeight
       })
     }
-  }, [messages])
+  }, [messages, loading])
 
   useEffect(() => {
     const ta = landingTextareaRef.current || chatTextareaRef.current
@@ -77,65 +72,39 @@ function ChatContent() {
     setValue('')
     setLoading(true)
 
-    const assistantId = String(Date.now() + 1)
-    setMessages((m) => [...m, { id: assistantId, role: 'assistant', text: '', time: Date.now() }])
-
     try {
-      const response = await fetch('/api/chat', {
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend })
+        body: JSON.stringify({ message: userMsg.text })
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
+      const textBody = await res.text()
+      let bodyJson: any = null
+      try { 
+        bodyJson = textBody ? JSON.parse(textBody) : null 
+      } catch (_e) { 
+        bodyJson = null 
       }
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (!reader) {
-        throw new Error('No response stream')
+      if (!res.ok) {
+        const openaiErr = bodyJson?.error ?? bodyJson ?? textBody
+        const errMsg = `API error: ${res.status} ${res.statusText} - ${typeof openaiErr === 'string' ? openaiErr : JSON.stringify(openaiErr)}`
+        console.error('Chat request failed', { status: res.status, body: bodyJson ?? textBody })
+        setMessages((m) => [...m, { id: String(Date.now() + 2), role: 'assistant', text: errMsg }])
+        return
       }
 
-      let accumulatedText = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n').filter(line => line.trim() !== '')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6)
-            try {
-              const json = JSON.parse(data)
-              if (json.content) {
-                accumulatedText += json.content
-                setMessages((m) => m.map((msg) =>
-                  msg.id === assistantId ? { ...msg, text: accumulatedText } : msg
-                ))
-              }
-              if (json.error) {
-                throw new Error(json.error)
-              }
-            } catch (e) {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
+      const data = bodyJson ?? { text: textBody }
+      const assistant: Message = { id: String(Date.now() + 1), role: 'assistant', text: data.text ?? 'No response' }
+      setMessages((m) => [...m, assistant])
 
       setTimeout(() => {
         setMessages((current) => current.map((x) => (x.id === id ? { ...x, fresh: false } : x)))
       }, 300)
-    } catch (error: any) {
-      console.error('Chat error:', error)
-      setMessages((m) => m.map((msg) =>
-        msg.id === assistantId ? { ...msg, text: `Error: ${error.message}` } : msg
-      ))
+    } catch (e: any) {
+      console.error('Network error', e)
+      setMessages((m) => [...m, { id: String(Date.now() + 3), role: 'assistant', text: `Network error: ${String(e.message ?? e)}` }])
     } finally {
       setLoading(false)
     }
@@ -236,77 +205,25 @@ function ChatContent() {
           <div className="flex-1 flex flex-col h-full">
             <div ref={messagesRef} className="flex-1 overflow-auto px-6 py-8 space-y-6 scroll-smooth">
               {messages.map((m, i) => (
-                <div key={m.id ?? i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-3`}> 
+                <div key={m.id ?? i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-2`}> 
                   {m.role === 'user' && (
                     <>
-                      <div className="rounded-2xl px-5 py-4 max-w-[70%] bg-gradient-to-br from-blue-600/90 to-cyan-500/90 text-white text-base leading-relaxed shadow-lg animate-fade-in border border-blue-400/30 break-words backdrop-blur-sm">
-                        {m.text}
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shadow-lg flex-shrink-0">U</div>
+                      <div className="rounded-2xl px-4 py-3.5 max-w-[75vw] bg-slate-900/90 text-white font-medium font-['Plus Jakarta Sans','Inter','system-ui','sans-serif'] text-[0.95rem] leading-relaxed shadow animate-fade-in whitespace-pre-wrap border border-blue-700/30 break-words" style={{width:'fit-content'}}>{m.text}</div>
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0">U</div>
                     </>
                   )}
                   {m.role !== 'user' && (
                     <>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      <div className="rounded-2xl px-5 py-4 max-w-[70%] bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-slate-100 shadow-xl animate-fade-in break-words border border-slate-700/50 backdrop-blur-sm">
-                        {m.text ? (
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-3 mt-4 text-white" {...props} />,
-                              h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-3 text-white" {...props} />,
-                              h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2 mt-2 text-slate-200" {...props} />,
-                              p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-slate-100" {...props} />,
-                              ul: ({node, ...props}) => <ul className="list-disc list-outside mb-3 space-y-2 ml-6 marker:text-slate-400" {...props} />,
-                              ol: ({node, ...props}) => <ol className="list-decimal list-outside mb-3 space-y-2 ml-6 marker:text-slate-400" {...props} />,
-                              li: ({node, ...props}) => <li className="leading-relaxed text-slate-100" {...props} />,
-                              strong: ({node, ...props}) => <strong className="font-bold text-white" {...props} />,
-                              em: ({node, ...props}) => <em className="italic text-slate-200" {...props} />,
-                              code: ({node, className, children, ...props}) => {
-                                const isInline = !className
-                                return isInline ? (
-                                  <code className="bg-slate-950/70 px-2 py-1 rounded text-cyan-400 text-sm font-mono border border-slate-700/50" {...props}>{children}</code>
-                                ) : (
-                                  <code className="block bg-slate-950/90 p-4 rounded-lg text-slate-300 text-sm font-mono my-3 overflow-x-auto border border-slate-700 shadow-inner" {...props}>{children}</code>
-                                )
-                              },
-                              pre: ({node, ...props}) => <pre className="my-3" {...props} />,
-                              table: ({node, ...props}) => (
-                                <div className="overflow-x-auto my-4">
-                                  <table className="w-full border-collapse rounded-lg overflow-hidden" {...props} />
-                                </div>
-                              ),
-                              thead: ({node, ...props}) => <thead className="bg-slate-700/50" {...props} />,
-                              th: ({node, ...props}) => <th className="border border-slate-600 px-4 py-2 text-left font-semibold text-slate-200" {...props} />,
-                              td: ({node, ...props}) => <td className="border border-slate-700/50 px-4 py-2 text-slate-100" {...props} />,
-                              blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-slate-500 pl-4 italic my-3 text-slate-300 bg-slate-900/50 py-2 rounded-r" {...props} />,
-                              a: ({node, ...props}) => <a className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 hover:decoration-cyan-300/50 transition-colors" {...props} />,
-                            }}
-                          >
-                            {m.text}
-                          </ReactMarkdown>
-                        ) : (
-                          <div className="typing-dots">
-                            <span></span><span></span><span></span>
-                          </div>
-                        )}
-                      </div>
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-base shadow-md flex-shrink-0">🤖</div>
+                      <div className="rounded-2xl px-4 py-3.5 max-w-[75vw] bg-gradient-to-br from-blue-400/80 to-cyan-400/80 text-white font-medium font-['Plus Jakarta Sans','Inter','system-ui','sans-serif'] text-[0.95rem] leading-relaxed shadow animate-fade-in whitespace-pre-wrap break-words text-left" style={{minWidth:'60px'}}>{m.text}</div>
                     </>
                   )}
                 </div>
               ))}
-              {loading && messages[messages.length - 1]?.role !== 'assistant' && (
-                <div className="flex items-start justify-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <div className="rounded-2xl px-5 py-4 bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-white shadow-xl animate-fade-in border border-slate-700/50">
+              {loading && (
+                <div className="flex items-start justify-start gap-2">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-base shadow-md flex-shrink-0">🤖</div>
+                  <div className="rounded-2xl px-4 py-3.5 bg-gradient-to-br from-blue-400/80 to-cyan-400/80 text-white font-medium font-['Plus Jakarta Sans','Inter','system-ui','sans-serif'] text-[0.95rem] leading-relaxed shadow animate-fade-in" style={{width:'fit-content'}}>
                     <div className="typing-dots">
                       <span></span><span></span><span></span>
                     </div>
