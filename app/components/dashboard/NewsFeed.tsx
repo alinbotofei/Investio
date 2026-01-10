@@ -20,27 +20,17 @@ function NewsCard({ article }: NewsCardProps) {
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+      className="block p-3 border border-slate-700/50 rounded-lg hover:bg-slate-700/30 transition-colors"
     >
-      <div className="flex gap-3">
-        {article.image && (
-          <img
-            src={article.image}
-            alt={article.headline}
-            className="w-20 h-20 object-cover rounded flex-shrink-0"
-          />
-        )}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-sm line-clamp-2 mb-1">
-            {article.headline}
-          </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">
-            {article.summary}
-          </p>
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span className="font-medium">{article.source}</span>
-            <span>{formattedDate}</span>
-          </div>
+      <div className="flex-1">
+        <h3 className="font-semibold text-sm text-white line-clamp-2 mb-1">
+          {article.headline}
+        </h3>
+        <p className="text-xs text-slate-400 line-clamp-2 mb-2">
+          {article.summary}
+        </p>
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span>{formattedDate}</span>
         </div>
       </div>
     </a>
@@ -116,10 +106,10 @@ export default function NewsFeed({ symbol, category = 'general' }: NewsFeedProps
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold">
+        <h2 className="text-lg font-bold text-white">
           {symbol ? `${symbol} News` : 'Market News'}
         </h2>
-        <span className="text-xs text-gray-500">Live updates</span>
+        <span className="text-xs text-slate-400">Live updates</span>
       </div>
       <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
         {news.map(article => (

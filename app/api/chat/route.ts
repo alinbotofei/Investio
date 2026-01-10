@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const API_CONFIG = {
   OPENAI_MODEL: 'gpt-5-nano',
-  MAX_OUTPUT_TOKENS: [1024, 2048, 4096, 8192, 16384],
+  MAX_OUTPUT_TOKENS: [4096, 8192, 16384, 32768],
   MAX_MESSAGE_LENGTH: 4000,
 } as const
 
@@ -21,6 +21,16 @@ export async function POST(request: NextRequest) {
 
     const model = process.env.PROXY_MODEL || API_CONFIG.OPENAI_MODEL
     let assistant = ''
+    
+    const stockMatch = message.match(/\[Stock: ([A-Z]+)\]/);
+    const stockSymbol = stockMatch ? stockMatch[1] : null;
+    const userMessage = stockSymbol ? message.replace(/\[Stock: [A-Z]+\]\s*/, '') : message;
+    
+    const systemContext = stockSymbol 
+      ? `You are a financial investment assistant. The user is asking about ${stockSymbol} stock. Provide insights specific to this company.`
+      : 'You are a financial investment assistant.';
+    
+    const fullMessage = `${systemContext}\n\nUser: ${userMessage}`;
 
     for (const maxOutput of API_CONFIG.MAX_OUTPUT_TOKENS) {
       const response = await fetch('https://api.openai.com/v1/responses', {
@@ -31,7 +41,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           model,
-          input: message,
+          input: fullMessage,
           max_output_tokens: maxOutput
         })
       })

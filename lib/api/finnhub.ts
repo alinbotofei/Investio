@@ -3,7 +3,7 @@
  * Free tier includes: Quote, Company News, Market News, Stock Symbols
  */
 
-const FINNHUB_API_KEY = process.env.NEXT_PUBLIC_FINNHUB_API_KEY || '';
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || '';
 const BASE_URL = 'https://finnhub.io/api/v1';
 
 export interface StockQuote {

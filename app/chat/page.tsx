@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import Icon from '../components/ui/Icon'
 import { Message } from '../lib/types'
 import { SUGGESTION_BTN_PRIMARY, SUGGESTION_BTN_SECONDARY } from '../lib/constants'
 
 export default function ChatPage() {
+  const searchParams = useSearchParams()
+  const contextFromUrl = searchParams.get('context')
   const [value, setValue] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
@@ -14,8 +17,19 @@ export default function ChatPage() {
   const messagesRef = useRef<HTMLDivElement | null>(null)
   const landingTextareaRef = useRef<HTMLTextAreaElement | null>(null)
   const chatTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const hasSubmittedRef = useRef(false)
 
   const placeholderWords = ['your portfolio', 'market trends', 'investment strategies', 'crypto opportunities', 'stock analysis', 'financial goals']
+
+  useEffect(() => {
+    if (contextFromUrl && !hasSubmittedRef.current) {
+      hasSubmittedRef.current = true
+      setValue(contextFromUrl)
+      setTimeout(() => {
+        handleSend(contextFromUrl)
+      }, 100)
+    }
+  }, [contextFromUrl]);
 
   useEffect(() => {
     const el = messagesRef.current
@@ -48,11 +62,12 @@ export default function ChatPage() {
     }
   }, [messages.length])
 
-  async function send() {
-    if (!value.trim()) return
+  async function handleSend(messageText?: string) {
+    const textToSend = messageText || value.trim()
+    if (!textToSend) return
     
     const id = String(Date.now())
-    const userMsg: Message = { id, role: 'user', text: value.trim(), time: Date.now(), fresh: true }
+    const userMsg: Message = { id, role: 'user', text: textToSend, time: Date.now(), fresh: true }
     setMessages((m) => [...m, userMsg])
     setValue('')
     setLoading(true)
@@ -114,7 +129,7 @@ export default function ChatPage() {
                       placeholder=" "
                       className="w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white placeholder:text-white/60 p-5 md:p-8 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-base md:text-lg shadow-xl backdrop-blur-sm transition-all hover:bg-slate-800/70 min-h-[180px] md:min-h-[240px] max-h-[400px] md:max-h-[520px] input-focus input-hoverable"
                       rows={5}
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                     />
                     {!value && (
                       <div className="absolute left-5 md:left-8 top-5 md:top-8 pointer-events-none text-white/60 text-base md:text-lg">
@@ -134,7 +149,7 @@ export default function ChatPage() {
                   </div>
 
                   <button
-                    onClick={send}
+                    onClick={() => handleSend()}
                     disabled={loading}
                     aria-label="Send message"
                     className="absolute right-3 bottom-3 md:right-4 md:bottom-4 w-11 h-11 md:w-12 md:h-12 flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-60"
@@ -226,11 +241,11 @@ export default function ChatPage() {
                   placeholder="Ask another question..."
                   className="flex-1 bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white p-4 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition hover:bg-slate-800/70 min-h-[88px] max-h-[300px] text-base shadow-inner input-focus input-hoverable"
                   rows={1}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
                 />
 
                 <button
-                  onClick={send}
+                  onClick={() => handleSend()}
                   disabled={loading}
                   aria-label="Send message"
                   className="w-10 h-10 flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-md hover:scale-105 transition-transform disabled:opacity-60 self-end mb-4"
