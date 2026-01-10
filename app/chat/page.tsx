@@ -37,10 +37,13 @@ function ChatContent() {
     const el = messagesRef.current
     if (el) {
       requestAnimationFrame(() => {
-        el.scrollTop = el.scrollHeight
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: 'smooth'
+        })
       })
     }
-  }, [messages, loading])
+  }, [messages])
 
   useEffect(() => {
     const ta = landingTextareaRef.current || chatTextareaRef.current
@@ -244,27 +247,31 @@ function ChatContent() {
                   )}
                   {m.role !== 'user' && (
                     <>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">✨</div>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
                       <div className="rounded-2xl px-5 py-4 max-w-[70%] bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-slate-100 shadow-xl animate-fade-in break-words border border-slate-700/50 backdrop-blur-sm">
                         {m.text ? (
                           <ReactMarkdown 
                             remarkPlugins={[remarkGfm]}
                             components={{
-                              h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-3 mt-4 text-cyan-300" {...props} />,
-                              h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-3 text-cyan-300" {...props} />,
-                              h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2 mt-2 text-cyan-400" {...props} />,
+                              h1: ({node, ...props}) => <h1 className="text-2xl font-bold mb-3 mt-4 text-white" {...props} />,
+                              h2: ({node, ...props}) => <h2 className="text-xl font-bold mb-3 mt-3 text-white" {...props} />,
+                              h3: ({node, ...props}) => <h3 className="text-lg font-semibold mb-2 mt-2 text-slate-200" {...props} />,
                               p: ({node, ...props}) => <p className="mb-3 leading-relaxed text-slate-100" {...props} />,
-                              ul: ({node, ...props}) => <ul className="list-disc list-outside mb-3 space-y-2 ml-6 marker:text-cyan-400" {...props} />,
-                              ol: ({node, ...props}) => <ol className="list-decimal list-outside mb-3 space-y-2 ml-6 marker:text-cyan-400" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc list-outside mb-3 space-y-2 ml-6 marker:text-slate-400" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal list-outside mb-3 space-y-2 ml-6 marker:text-slate-400" {...props} />,
                               li: ({node, ...props}) => <li className="leading-relaxed text-slate-100" {...props} />,
-                              strong: ({node, ...props}) => <strong className="font-bold text-cyan-300" {...props} />,
+                              strong: ({node, ...props}) => <strong className="font-bold text-white" {...props} />,
                               em: ({node, ...props}) => <em className="italic text-slate-200" {...props} />,
                               code: ({node, className, children, ...props}) => {
                                 const isInline = !className
                                 return isInline ? (
-                                  <code className="bg-slate-950/70 px-2 py-1 rounded text-cyan-300 text-sm font-mono border border-slate-700/50" {...props}>{children}</code>
+                                  <code className="bg-slate-950/70 px-2 py-1 rounded text-cyan-400 text-sm font-mono border border-slate-700/50" {...props}>{children}</code>
                                 ) : (
-                                  <code className="block bg-slate-950/90 p-4 rounded-lg text-cyan-300 text-sm font-mono my-3 overflow-x-auto border border-slate-700 shadow-inner" {...props}>{children}</code>
+                                  <code className="block bg-slate-950/90 p-4 rounded-lg text-slate-300 text-sm font-mono my-3 overflow-x-auto border border-slate-700 shadow-inner" {...props}>{children}</code>
                                 )
                               },
                               pre: ({node, ...props}) => <pre className="my-3" {...props} />,
@@ -274,9 +281,9 @@ function ChatContent() {
                                 </div>
                               ),
                               thead: ({node, ...props}) => <thead className="bg-slate-700/50" {...props} />,
-                              th: ({node, ...props}) => <th className="border border-slate-600 px-4 py-2 text-left font-semibold text-cyan-300" {...props} />,
+                              th: ({node, ...props}) => <th className="border border-slate-600 px-4 py-2 text-left font-semibold text-slate-200" {...props} />,
                               td: ({node, ...props}) => <td className="border border-slate-700/50 px-4 py-2 text-slate-100" {...props} />,
-                              blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-cyan-500 pl-4 italic my-3 text-slate-300 bg-slate-900/50 py-2 rounded-r" {...props} />,
+                              blockquote: ({node, ...props}) => <blockquote className="border-l-4 border-slate-500 pl-4 italic my-3 text-slate-300 bg-slate-900/50 py-2 rounded-r" {...props} />,
                               a: ({node, ...props}) => <a className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 hover:decoration-cyan-300/50 transition-colors" {...props} />,
                             }}
                           >
@@ -294,7 +301,11 @@ function ChatContent() {
               ))}
               {loading && messages[messages.length - 1]?.role !== 'assistant' && (
                 <div className="flex items-start justify-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">✨</div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
                   <div className="rounded-2xl px-5 py-4 bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-white shadow-xl animate-fade-in border border-slate-700/50">
                     <div className="typing-dots">
                       <span></span><span></span><span></span>
