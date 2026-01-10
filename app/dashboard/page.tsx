@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import StockCard from '@/app/components/dashboard/StockCard';
 import NewsFeed from '@/app/components/dashboard/NewsFeed';
@@ -21,7 +21,7 @@ interface StockMetrics {
   eps: string;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tickerFromUrl = searchParams.get('ticker');
@@ -226,5 +226,24 @@ export default function DashboardPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="w-8 h-8">
+            <svg className="animate-spin text-cyan-500" width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="rgba(34,211,238,0.2)" strokeWidth="4"></circle>
+              <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" strokeWidth="4" strokeLinecap="round"></path>
+            </svg>
+          </div>
+        </div>
+      </DashboardLayout>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
