@@ -212,19 +212,18 @@ function ChatContent() {
                       }}
                     />
                     {!value && (
-                      <div className="absolute left-5 md:left-8 top-5 md:top-8 pointer-events-none text-white/60 text-base md:text-lg">
+                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-5 md:right-8 pointer-events-none text-white/60 text-base md:text-lg text-left">
                         <span>Ask anything about </span>
                         <span
                           key={placeholderIndex}
-                          className="inline-block"
+                          className="inline"
                           style={{
                             animation:
                               "fadeScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
                           }}
                         >
-                          {CHAT_PLACEHOLDERS[placeholderIndex]}
+                          {CHAT_PLACEHOLDERS[placeholderIndex]}...
                         </span>
-                        <span>...</span>
                       </div>
                     )}
                   </div>
