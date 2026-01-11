@@ -1,23 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { finnhubClient } from '@/lib/api/finnhub';
+import { NextRequest, NextResponse } from "next/server";
+import { finnhubClient } from "@/lib/api/finnhub";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const symbol = searchParams.get('symbol');
+    const symbol = searchParams.get("symbol");
 
     if (!symbol) {
       return NextResponse.json(
-        { error: 'Symbol parameter is required' },
+        { error: "Symbol parameter is required" },
         { status: 400 }
       );
     }
 
     const [quote, profile] = await Promise.all([
       finnhubClient.getQuote(symbol),
-      finnhubClient.getCompanyProfile(symbol).catch(() => null)
+      finnhubClient.getCompanyProfile(symbol).catch(() => null),
     ]);
 
     return NextResponse.json({
@@ -32,12 +32,12 @@ export async function GET(request: NextRequest) {
       previousClose: quote.pc,
       marketCap: profile?.marketCapitalization || undefined,
       logo: profile?.logo || undefined,
-      timestamp: quote.t
+      timestamp: quote.t,
     });
   } catch (error) {
-    console.error('Error fetching stock quote:', error);
+    console.error("Error fetching stock quote:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch stock quote' },
+      { error: "Failed to fetch stock quote" },
       { status: 500 }
     );
   }

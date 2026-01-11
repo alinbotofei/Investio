@@ -1,19 +1,22 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { NewsItem } from '@/lib/types/stocks';
+import { useEffect, useState } from "react";
+import { NewsItem } from "@/lib/types/stocks";
 
 interface NewsCardProps {
   article: NewsItem;
 }
 
 function NewsCard({ article }: NewsCardProps) {
-  const formattedDate = new Date(article.datetime * 1000).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const formattedDate = new Date(article.datetime * 1000).toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
 
   return (
     <a
@@ -42,7 +45,10 @@ interface NewsFeedProps {
   category?: string;
 }
 
-export default function NewsFeed({ symbol, category = 'general' }: NewsFeedProps) {
+export default function NewsFeed({
+  symbol,
+  category = "general",
+}: NewsFeedProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,16 +60,16 @@ export default function NewsFeed({ symbol, category = 'general' }: NewsFeedProps
         setError(null);
 
         const params = new URLSearchParams();
-        if (symbol) params.append('symbol', symbol);
-        if (category) params.append('category', category);
+        if (symbol) params.append("symbol", symbol);
+        if (category) params.append("category", category);
 
         const response = await fetch(`/api/stocks/news?${params}`);
-        if (!response.ok) throw new Error('Failed to fetch news');
+        if (!response.ok) throw new Error("Failed to fetch news");
 
         const data = await response.json();
         setNews(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load news');
+        setError(err instanceof Error ? err.message : "Failed to load news");
       } finally {
         setLoading(false);
       }
@@ -78,7 +84,7 @@ export default function NewsFeed({ symbol, category = 'general' }: NewsFeedProps
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3, 4].map(i => (
+        {[1, 2, 3, 4].map((i) => (
           <div key={i} className="animate-pulse">
             <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
           </div>
@@ -107,12 +113,12 @@ export default function NewsFeed({ symbol, category = 'general' }: NewsFeedProps
     <div className="space-y-3">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-white">
-          {symbol ? `${symbol} News` : 'Market News'}
+          {symbol ? `${symbol} News` : "Market News"}
         </h2>
         <span className="text-xs text-slate-400">Live updates</span>
       </div>
       <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-        {news.map(article => (
+        {news.map((article) => (
           <NewsCard key={article.id} article={article} />
         ))}
       </div>

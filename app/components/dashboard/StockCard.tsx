@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Stock } from '@/lib/types/stocks';
+import { useEffect, useState } from "react";
+import { Stock } from "@/lib/types/stocks";
 
 interface StockCardProps {
   symbol: string;
@@ -9,7 +9,11 @@ interface StockCardProps {
   isActive?: boolean;
 }
 
-export default function StockCard({ symbol, onClick, isActive }: StockCardProps) {
+export default function StockCard({
+  symbol,
+  onClick,
+  isActive,
+}: StockCardProps) {
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -17,11 +21,11 @@ export default function StockCard({ symbol, onClick, isActive }: StockCardProps)
     async function fetchQuote() {
       try {
         const response = await fetch(`/api/stocks/quote?symbol=${symbol}`);
-        if (!response.ok) throw new Error('Failed to fetch quote');
+        if (!response.ok) throw new Error("Failed to fetch quote");
         const data = await response.json();
         setStock(data);
       } catch (err) {
-        console.error('Error fetching quote:', err);
+        console.error("Error fetching quote:", err);
       } finally {
         setLoading(false);
       }
@@ -58,8 +62,8 @@ export default function StockCard({ symbol, onClick, isActive }: StockCardProps)
       onClick={onClick}
       className={`w-full p-4 border rounded-lg text-left transition-all hover:shadow-md ${
         isActive
-          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+          : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
       }`}
     >
       <div className="flex items-start justify-between mb-2">
@@ -79,17 +83,16 @@ export default function StockCard({ symbol, onClick, isActive }: StockCardProps)
       </div>
 
       <div className="mb-2">
-        <div className="text-2xl font-bold">
-          ${stock.price.toFixed(2)}
-        </div>
+        <div className="text-2xl font-bold">${stock.price.toFixed(2)}</div>
       </div>
 
       <div className="flex items-center gap-2 text-sm">
-        <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
-          {isPositive ? '▲' : '▼'} ${Math.abs(stock.change).toFixed(2)}
+        <span className={isPositive ? "text-green-600" : "text-red-600"}>
+          {isPositive ? "▲" : "▼"} ${Math.abs(stock.change).toFixed(2)}
         </span>
-        <span className={isPositive ? 'text-green-600' : 'text-red-600'}>
-          ({isPositive ? '+' : ''}{stock.changePercent.toFixed(2)}%)
+        <span className={isPositive ? "text-green-600" : "text-red-600"}>
+          ({isPositive ? "+" : ""}
+          {stock.changePercent.toFixed(2)}%)
         </span>
       </div>
 

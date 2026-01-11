@@ -1,10 +1,7 @@
-/**
- * Finnhub API client for stock data, news, and market information
- * Free tier includes: Quote, Company News, Market News, Stock Symbols
- */
+// Finnhub API client for stock data, news, and market information
 
-const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || '';
-const BASE_URL = 'https://finnhub.io/api/v1';
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "";
+const BASE_URL = "https://finnhub.io/api/v1";
 
 export interface StockQuote {
   c: number; // Current price
@@ -46,9 +43,9 @@ export interface NewsArticle {
 
 export interface BasicFinancials {
   metric: {
-    '52WeekHigh': number;
-    '52WeekLow': number;
-    '52WeekPriceReturnDaily': number;
+    "52WeekHigh": number;
+    "52WeekLow": number;
+    "52WeekPriceReturnDaily": number;
     beta: number;
     marketCapitalization: number;
     peBasicExclExtraTTM: number;
@@ -64,16 +61,19 @@ class FinnhubAPI {
     this.apiKey = apiKey;
   }
 
-  private async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
+  private async fetch<T>(
+    endpoint: string,
+    params: Record<string, string> = {}
+  ): Promise<T> {
     const url = new URL(`${BASE_URL}${endpoint}`);
-    url.searchParams.append('token', this.apiKey);
-    
+    url.searchParams.append("token", this.apiKey);
+
     Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value);
     });
 
     const response = await fetch(url.toString(), {
-      next: { revalidate: 60 } // Cache for 1 minute
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) {
@@ -83,55 +83,39 @@ class FinnhubAPI {
     return response.json();
   }
 
-  /**
-   * Get real-time quote data for a stock
-   */
   async getQuote(symbol: string): Promise<StockQuote> {
-    return this.fetch<StockQuote>('/quote', { symbol: symbol.toUpperCase() });
+    return this.fetch<StockQuote>("/quote", { symbol: symbol.toUpperCase() });
   }
 
-  /**
-   * Get company profile information
-   */
   async getCompanyProfile(symbol: string): Promise<CompanyProfile> {
-    return this.fetch<CompanyProfile>('/stock/profile2', { symbol: symbol.toUpperCase() });
+    return this.fetch<CompanyProfile>("/stock/profile2", {
+      symbol: symbol.toUpperCase(),
+    });
   }
 
-  /**
-   * Get company news for a specific stock
-   * @param symbol Stock symbol
-   * @param from Start date (YYYY-MM-DD)
-   * @param to End date (YYYY-MM-DD)
-   */
-  async getCompanyNews(symbol: string, from: string, to: string): Promise<NewsArticle[]> {
-    return this.fetch<NewsArticle[]>('/company-news', {
+  async getCompanyNews(
+    symbol: string,
+    from: string,
+    to: string
+  ): Promise<NewsArticle[]> {
+    return this.fetch<NewsArticle[]>("/company-news", {
       symbol: symbol.toUpperCase(),
       from,
-      to
+      to,
     });
   }
 
-  /**
-   * Get general market news
-   * @param category News category: general, forex, crypto, merger
-   */
-  async getMarketNews(category: string = 'general'): Promise<NewsArticle[]> {
-    return this.fetch<NewsArticle[]>('/news', { category });
+  async getMarketNews(category: string = "general"): Promise<NewsArticle[]> {
+    return this.fetch<NewsArticle[]>("/news", { category });
   }
 
-  /**
-   * Get basic financials (free tier metrics)
-   */
   async getBasicFinancials(symbol: string): Promise<BasicFinancials> {
-    return this.fetch<BasicFinancials>('/stock/metric', {
+    return this.fetch<BasicFinancials>("/stock/metric", {
       symbol: symbol.toUpperCase(),
-      metric: 'all'
+      metric: "all",
     });
   }
 
-  /**
-   * Search for stocks by name or symbol
-   */
   async searchSymbol(query: string): Promise<{
     count: number;
     result: Array<{
@@ -141,22 +125,23 @@ class FinnhubAPI {
       type: string;
     }>;
   }> {
-    return this.fetch('/search', { q: query });
+    return this.fetch("/search", { q: query });
   }
 
-  /**
-   * Get recommendation trends (free tier)
-   */
-  async getRecommendationTrends(symbol: string): Promise<Array<{
-    buy: number;
-    hold: number;
-    period: string;
-    sell: number;
-    strongBuy: number;
-    strongSell: number;
-    symbol: string;
-  }>> {
-    return this.fetch('/stock/recommendation', { symbol: symbol.toUpperCase() });
+  async getRecommendationTrends(symbol: string): Promise<
+    Array<{
+      buy: number;
+      hold: number;
+      period: string;
+      sell: number;
+      strongBuy: number;
+      strongSell: number;
+      symbol: string;
+    }>
+  > {
+    return this.fetch("/stock/recommendation", {
+      symbol: symbol.toUpperCase(),
+    });
   }
 }
 

@@ -1,6 +1,4 @@
-/**
- * Type definitions for stock market data
- */
+// Type definitions for stock market data
 
 export interface Stock {
   symbol: string;
@@ -50,7 +48,7 @@ export interface SentimentData {
   strongBuy: number;
   strongSell: number;
   period: string;
-  signal: 'buy' | 'hold' | 'sell';
+  signal: "buy" | "hold" | "sell";
 }
 
 export interface ChartData {
