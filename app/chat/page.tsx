@@ -10,7 +10,14 @@ import { Message } from "../lib/types";
 import {
   SUGGESTION_BTN_PRIMARY,
   SUGGESTION_BTN_SECONDARY,
+  CHAT_PLACEHOLDERS,
+  CHAT_BUBBLE_USER,
+  CHAT_BUBBLE_ASSISTANT,
+  TEXTAREA_BASE,
+  SEND_BUTTON,
 } from "../lib/constants";
+import { smoothScrollToBottom } from "../lib/utils/scroll";
+import { markdownComponents } from "../lib/utils/markdown";
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -23,15 +30,7 @@ function ChatContent() {
   const landingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const chatTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const hasSubmittedRef = useRef(false);
-
-  const placeholderWords = [
-    "your portfolio",
-    "market trends",
-    "investment strategies",
-    "crypto opportunities",
-    "stock analysis",
-    "financial goals",
-  ];
+  const userScrolledRef = useRef(false);
 
   useEffect(() => {
     if (contextFromUrl && !hasSubmittedRef.current) {
@@ -44,14 +43,23 @@ function ChatContent() {
   }, [contextFromUrl]);
 
   useEffect(() => {
-    const el = messagesRef.current;
-    if (el) {
-      requestAnimationFrame(() => {
-        el.scrollTo({
-          top: el.scrollHeight,
-          behavior: "smooth",
-        });
-      });
+    const container = messagesRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight <
+        150;
+      userScrolledRef.current = !isNearBottom;
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!userScrolledRef.current) {
+      smoothScrollToBottom(messagesRef.current, true);
     }
   }, [messages]);
 
@@ -64,10 +72,10 @@ function ChatContent() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % placeholderWords.length);
+      setPlaceholderIndex((prev) => (prev + 1) % CHAT_PLACEHOLDERS.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, [placeholderWords.length]);
+  }, []);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -80,6 +88,8 @@ function ChatContent() {
   async function handleSend(messageText?: string) {
     const textToSend = messageText || value.trim();
     if (!textToSend) return;
+
+    userScrolledRef.current = false;
 
     const id = String(Date.now());
     const userMsg: Message = {
@@ -172,7 +182,7 @@ function ChatContent() {
 
   return (
     <DashboardLayout>
-      <div className="w-full h-full flex flex-col bg-transparent">
+      <div className="w-full h-full flex flex-col bg-transparent overflow-hidden">
         {messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 md:py-0">
             <div className="max-w-3xl w-full text-center">
@@ -212,7 +222,7 @@ function ChatContent() {
                               "fadeScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
                           }}
                         >
-                          {placeholderWords[placeholderIndex]}
+                          {CHAT_PLACEHOLDERS[placeholderIndex]}
                         </span>
                         <span>...</span>
                       </div>
@@ -343,9 +353,7 @@ function ChatContent() {
                 >
                   {m.role === "user" && (
                     <>
-                      <div className="rounded-2xl px-5 py-4 max-w-[70%] bg-gradient-to-br from-blue-600/90 to-cyan-500/90 text-white text-base leading-relaxed shadow-lg animate-fade-in border border-blue-400/30 break-words backdrop-blur-sm">
-                        {m.text}
-                      </div>
+                      <div className={CHAT_BUBBLE_USER}>{m.text}</div>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shadow-lg flex-shrink-0">
                         U
                       </div>
@@ -368,127 +376,11 @@ function ChatContent() {
                           />
                         </svg>
                       </div>
-                      <div className="rounded-2xl px-5 py-4 max-w-[70%] bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-slate-100 shadow-xl animate-fade-in break-words border border-slate-700/50 backdrop-blur-sm">
+                      <div className={CHAT_BUBBLE_ASSISTANT}>
                         {m.text ? (
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
-                            components={{
-                              h1: ({ node, ...props }) => (
-                                <h1
-                                  className="text-2xl font-bold mb-3 mt-4 text-white"
-                                  {...props}
-                                />
-                              ),
-                              h2: ({ node, ...props }) => (
-                                <h2
-                                  className="text-xl font-bold mb-3 mt-3 text-white"
-                                  {...props}
-                                />
-                              ),
-                              h3: ({ node, ...props }) => (
-                                <h3
-                                  className="text-lg font-semibold mb-2 mt-2 text-slate-200"
-                                  {...props}
-                                />
-                              ),
-                              p: ({ node, ...props }) => (
-                                <p
-                                  className="mb-3 leading-relaxed text-slate-100"
-                                  {...props}
-                                />
-                              ),
-                              ul: ({ node, ...props }) => (
-                                <ul
-                                  className="list-disc list-outside mb-3 space-y-2 ml-6 marker:text-slate-400"
-                                  {...props}
-                                />
-                              ),
-                              ol: ({ node, ...props }) => (
-                                <ol
-                                  className="list-decimal list-outside mb-3 space-y-2 ml-6 marker:text-slate-400"
-                                  {...props}
-                                />
-                              ),
-                              li: ({ node, ...props }) => (
-                                <li
-                                  className="leading-relaxed text-slate-100"
-                                  {...props}
-                                />
-                              ),
-                              strong: ({ node, ...props }) => (
-                                <strong
-                                  className="font-bold text-white"
-                                  {...props}
-                                />
-                              ),
-                              em: ({ node, ...props }) => (
-                                <em
-                                  className="italic text-slate-200"
-                                  {...props}
-                                />
-                              ),
-                              code: ({
-                                node,
-                                className,
-                                children,
-                                ...props
-                              }) => {
-                                const isInline = !className;
-                                return isInline ? (
-                                  <code
-                                    className="bg-slate-950/70 px-2 py-1 rounded text-cyan-400 text-sm font-mono border border-slate-700/50"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </code>
-                                ) : (
-                                  <code
-                                    className="block bg-slate-950/90 p-4 rounded-lg text-slate-300 text-sm font-mono my-3 overflow-x-auto border border-slate-700 shadow-inner"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </code>
-                                );
-                              },
-                              pre: ({ node, ...props }) => (
-                                <pre className="my-3" {...props} />
-                              ),
-                              table: ({ node, ...props }) => (
-                                <div className="overflow-x-auto my-4">
-                                  <table
-                                    className="w-full border-collapse rounded-lg overflow-hidden"
-                                    {...props}
-                                  />
-                                </div>
-                              ),
-                              thead: ({ node, ...props }) => (
-                                <thead className="bg-slate-700/50" {...props} />
-                              ),
-                              th: ({ node, ...props }) => (
-                                <th
-                                  className="border border-slate-600 px-4 py-2 text-left font-semibold text-slate-200"
-                                  {...props}
-                                />
-                              ),
-                              td: ({ node, ...props }) => (
-                                <td
-                                  className="border border-slate-700/50 px-4 py-2 text-slate-100"
-                                  {...props}
-                                />
-                              ),
-                              blockquote: ({ node, ...props }) => (
-                                <blockquote
-                                  className="border-l-4 border-slate-500 pl-4 italic my-3 text-slate-300 bg-slate-900/50 py-2 rounded-r"
-                                  {...props}
-                                />
-                              ),
-                              a: ({ node, ...props }) => (
-                                <a
-                                  className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 hover:decoration-cyan-300/50 transition-colors"
-                                  {...props}
-                                />
-                              ),
-                            }}
+                            components={markdownComponents}
                           >
                             {m.text}
                           </ReactMarkdown>
@@ -540,7 +432,7 @@ function ChatContent() {
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   placeholder="Ask another question..."
-                  className="flex-1 bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white p-4 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition hover:bg-slate-800/70 min-h-[88px] max-h-[300px] text-base shadow-inner input-focus input-hoverable"
+                  className={`${TEXTAREA_BASE} min-h-[88px] max-h-[300px] text-base`}
                   rows={1}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -554,7 +446,7 @@ function ChatContent() {
                   onClick={() => handleSend()}
                   disabled={loading}
                   aria-label="Send message"
-                  className="w-10 h-10 flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-md hover:scale-105 transition-transform disabled:opacity-60 self-end mb-4"
+                  className={`${SEND_BUTTON} w-10 h-10 self-end mb-4`}
                 >
                   {loading ? (
                     <div className="w-5 h-5">

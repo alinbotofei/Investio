@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Stock } from "@/lib/types/stocks";
+import { getStockGradient } from "@/app/lib/utils/stockLogos";
 
 interface StockCardProps {
   symbol: string;
@@ -16,6 +17,7 @@ export default function StockCard({
 }: StockCardProps) {
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     async function fetchQuote() {
@@ -56,37 +58,50 @@ export default function StockCard({
   }
 
   const isPositive = stock.change >= 0;
+  const gradient = getStockGradient(symbol);
 
   return (
     <button
       onClick={onClick}
-      className={`w-full p-4 border rounded-lg text-left transition-all hover:shadow-md ${
+      className={`w-full p-3 sm:p-4 border rounded-lg text-left transition-all hover:shadow-md ${
         isActive
           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
           : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
       }`}
     >
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <div className="font-bold text-lg">{stock.symbol}</div>
-          <div className="text-xs text-gray-500 truncate max-w-[120px]">
-            {stock.name}
+      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          {!logoError && stock.logo ? (
+            <img
+              src={stock.logo}
+              alt={stock.name}
+              onError={() => setLogoError(true)}
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg object-contain flex-shrink-0"
+            />
+          ) : (
+            <div
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg flex-shrink-0 shadow-sm"
+              style={{
+                background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})`,
+              }}
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-base sm:text-lg truncate">
+              {stock.symbol}
+            </div>
+            <div className="text-xs text-gray-500 truncate">{stock.name}</div>
           </div>
         </div>
-        {stock.logo && (
-          <img
-            src={stock.logo}
-            alt={stock.name}
-            className="w-10 h-10 rounded-full object-contain"
-          />
-        )}
       </div>
 
       <div className="mb-2">
-        <div className="text-2xl font-bold">${stock.price.toFixed(2)}</div>
+        <div className="text-xl sm:text-2xl font-bold">
+          ${stock.price.toFixed(2)}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm">
+      <div className="flex items-center gap-2 text-xs sm:text-sm">
         <span className={isPositive ? "text-green-600" : "text-red-600"}>
           {isPositive ? "▲" : "▼"} ${Math.abs(stock.change).toFixed(2)}
         </span>
@@ -96,7 +111,7 @@ export default function StockCard({
         </span>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-2 text-xs">
+      <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-2 text-xs">
         <div>
           <div className="text-gray-500">High</div>
           <div className="font-semibold">${stock.high.toFixed(2)}</div>
