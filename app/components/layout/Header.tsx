@@ -3,13 +3,27 @@
 import Link from "next/link";
 import Icon from "../ui/Icon";
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Header() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleChatClick = () => {
+    setSidebarOpen(false);
+    if (pathname === "/chat") {
+      router.push("/chat?reset=true");
+      setTimeout(() => window.location.reload(), 100);
+    } else {
+      router.push("/chat");
+    }
+  };
+
   return (
     <>
       <header
-        className="w-full shadow-sm relative z-10 bg-gradient-to-r from-cyan-500 to-blue-600"
+        className="w-full shadow-sm sticky top-0 z-20 bg-gradient-to-r from-cyan-500 to-blue-600"
         style={{
           boxShadow: "0 2px 16px 0 rgba(30,144,255,0.10)",
         }}
@@ -93,18 +107,27 @@ export default function Header() {
             <nav className="p-6 space-y-2">
               <Link
                 href="/"
-                className="flex items-center gap-3 px-4 py-3 text-white bg-white/10 rounded-lg transition"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 text-white rounded-lg transition ${
+                  pathname === "/" || pathname === "/dashboard"
+                    ? "bg-white/10"
+                    : "bg-white/5 hover:bg-white/10"
+                }`}
               >
                 <Icon name="dashboard" />
                 <span className="font-semibold">Dashboard</span>
               </Link>
-              <Link
-                href="/chat"
-                className="flex items-center gap-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/5 rounded-lg transition"
+              <button
+                onClick={handleChatClick}
+                className={`w-full flex items-center gap-3 px-4 py-3 text-white rounded-lg transition ${
+                  pathname === "/chat"
+                    ? "bg-white/10"
+                    : "bg-white/5 hover:bg-white/10"
+                }`}
               >
                 <Icon name="chat" />
-                <span className="font-medium">Chat</span>
-              </Link>
+                <span className="font-semibold">Chat</span>
+              </button>
             </nav>
           </aside>
         </div>
