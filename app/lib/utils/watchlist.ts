@@ -18,11 +18,11 @@ export const watchlistManager = {
     if (typeof window === "undefined") return false;
     try {
       const watchlist = watchlistManager.getWatchlist();
-      
+
       if (watchlist.some((w) => w.symbol === item.symbol)) {
         return false;
       }
-      
+
       if (watchlist.length >= MAX_WATCHLIST_ITEMS) {
         return false;
       }
@@ -88,6 +88,9 @@ export const assetHelpers = {
   },
 
   formatSymbol: (symbol: string): string => {
-    return symbol.replace("BINANCE:", "").replace("OANDA:", "").replace("_", "/");
+    return symbol
+      .replace("BINANCE:", "")
+      .replace("OANDA:", "")
+      .replace("_", "/");
   },
 };

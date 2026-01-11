@@ -4,8 +4,16 @@ const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 const BASE_URL = "https://finnhub.io/api/v1";
 
 const POPULAR_FOREX_PAIRS = [
-  "EUR/USD", "GBP/USD", "USD/JPY", "USD/CHF", "AUD/USD", 
-  "USD/CAD", "NZD/USD", "EUR/GBP", "EUR/JPY", "GBP/JPY"
+  "EUR/USD",
+  "GBP/USD",
+  "USD/JPY",
+  "USD/CHF",
+  "AUD/USD",
+  "USD/CAD",
+  "NZD/USD",
+  "EUR/GBP",
+  "EUR/JPY",
+  "GBP/JPY",
 ];
 
 export async function GET() {
@@ -27,7 +35,7 @@ export async function GET() {
     }
 
     const data = await response.json();
-    
+
     const filtered = data.filter((item: any) => {
       const pair = item.description.split("/").join("/");
       return POPULAR_FOREX_PAIRS.includes(pair);

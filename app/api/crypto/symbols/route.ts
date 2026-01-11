@@ -4,7 +4,16 @@ const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 const BASE_URL = "https://finnhub.io/api/v1";
 
 const POPULAR_CRYPTO_SYMBOLS = [
-  "BTC", "ETH", "BNB", "SOL", "ADA", "XRP", "DOGE", "DOT", "MATIC", "LTC"
+  "BTC",
+  "ETH",
+  "BNB",
+  "SOL",
+  "ADA",
+  "XRP",
+  "DOGE",
+  "DOT",
+  "MATIC",
+  "LTC",
 ];
 
 export async function GET() {
@@ -26,10 +35,12 @@ export async function GET() {
     }
 
     const data = await response.json();
-    
+
     const filtered = data.filter((item: any) => {
       const base = item.symbol.replace("BINANCE:", "").split("USDT")[0];
-      return POPULAR_CRYPTO_SYMBOLS.includes(base) && item.symbol.includes("USDT");
+      return (
+        POPULAR_CRYPTO_SYMBOLS.includes(base) && item.symbol.includes("USDT")
+      );
     });
 
     return NextResponse.json(filtered);
