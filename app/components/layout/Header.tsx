@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Icon from "../ui/Icon";
+import GlobalSearch from "../ui/GlobalSearch";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -101,6 +102,9 @@ export default function Header() {
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
                 </button>
+              </div>
+              <div className="mt-4">
+                <GlobalSearch />
               </div>
             </div>
 
