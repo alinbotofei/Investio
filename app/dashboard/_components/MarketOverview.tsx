@@ -28,23 +28,24 @@ export default function MarketOverview() {
   });
 
   useEffect(() => {
-    loadData();
+    const fetchData = async () => {
+      if (!data) {
+        setLoading(true);
+      }
+      const overview = await marketService.getMarketOverview();
+      if (overview) {
+        setData(overview);
+      }
+      setLoading(false);
+    };
+
+    fetchData();
     setWatchlist(watchlistManager.getWatchlist());
 
-    const interval = setInterval(loadData, 300000);
+    const interval = setInterval(fetchData, 300000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const loadData = async () => {
-    if (!data) {
-      setLoading(true);
-    }
-    const overview = await marketService.getMarketOverview();
-    if (overview) {
-      setData(overview);
-    }
-    setLoading(false);
-  };
 
   const handleAddToWatchlist = (symbol: string, category: AssetCategory) => {
     const existing = watchlist.find((w) => w.symbol === symbol);
