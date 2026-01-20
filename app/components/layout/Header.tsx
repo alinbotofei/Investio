@@ -29,7 +29,7 @@ export default function Header() {
           boxShadow: "0 2px 16px 0 rgba(30,144,255,0.10)",
         }}
       >
-        <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 md:px-6 md:py-4">
           <button
             className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 transition-all shadow-sm"
             aria-label="Open sidebar"
@@ -51,8 +51,9 @@ export default function Header() {
               <circle cx="12" cy="18" r="1.5" fill="white" />
               <circle cx="19" cy="18" r="1.5" fill="white" />
             </svg>
-          </button>{" "}
-          <div className="flex items-center gap-2.5 md:gap-3 md:ml-auto">
+          </button>
+
+          <div className="flex items-center gap-2.5 md:gap-3">
             <div className="w-8 h-8 md:w-9 md:h-9 rounded-md bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white shadow-lg">
               <Icon name="insights" />
             </div>
@@ -60,6 +61,11 @@ export default function Header() {
               Investio
             </div>
           </div>
+
+          <div className="hidden md:block flex-1 max-w-md mx-4">
+            <GlobalSearch />
+          </div>
+
           <div className="w-10 md:hidden"></div>
         </div>
       </header>

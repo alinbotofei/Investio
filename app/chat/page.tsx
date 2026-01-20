@@ -154,9 +154,7 @@ function ChatContent() {
               if (json.error) {
                 throw new Error(json.error);
               }
-            } catch (e) {
-              // Skip invalid JSON
-            }
+            } catch (e) {}
           }
         }
       }

@@ -43,11 +43,13 @@ function NewsCard({ article }: NewsCardProps) {
 interface NewsFeedProps {
   symbol?: string;
   category?: string;
+  limit?: number;
 }
 
 export default function NewsFeed({
   symbol,
   category = "general",
+  limit,
 }: NewsFeedProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,7 +120,7 @@ export default function NewsFeed({
         <span className="text-xs text-slate-400">Live updates</span>
       </div>
       <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-        {news.map((article) => (
+        {(limit ? news.slice(0, limit) : news).map((article) => (
           <NewsCard key={article.id} article={article} />
         ))}
       </div>

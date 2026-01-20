@@ -65,7 +65,7 @@ export const CHAT_BUBBLE_ASSISTANT =
   "rounded-2xl px-5 py-4 max-w-[75%] bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-slate-100 shadow-xl animate-fade-in break-words border border-slate-700/50 backdrop-blur-sm";
 
 export const TEXTAREA_BASE =
-  "w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white p-4 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition hover:bg-slate-800/70 shadow-inner input-focus input-hoverable";
+  "w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white px-4 py-3.5 sm:px-5 sm:py-4 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition hover:bg-slate-800/70 shadow-inner input-focus input-hoverable";
 
 export const SEND_BUTTON =
   "flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-md hover:scale-105 transition-transform disabled:opacity-60";

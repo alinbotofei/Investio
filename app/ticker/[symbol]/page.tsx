@@ -1,11 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/app/components/layout/DashboardLayout";
 import Icon from "@/app/components/ui/Icon";
+import {
+  SimpleChart,
+  NewsFeed,
+  RecommendationsWidget,
+  InsiderSentimentBadge,
+  ChatWidget,
+} from "@/app/components/dashboard";
 import { watchlistManager, assetHelpers } from "@/app/lib/utils/watchlist";
 import { AssetCategory } from "@/lib/types/assets";
+import { formatNumber, formatPrice } from "@/app/lib/utils/format";
+import { fetchTickerData } from "@/app/lib/utils/dataFetching";
+import { emitWatchlistUpdate } from "@/app/lib/utils/events";
 
 export default function TickerPage() {
   const params = useParams();
@@ -14,10 +24,16 @@ export default function TickerPage() {
 
   const [category, setCategory] = useState<AssetCategory>("stock");
   const [inWatchlist, setInWatchlist] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [insiderSentiment, setInsiderSentiment] = useState<any[]>([]);
+  const [watchlistFeedback, setWatchlistFeedback] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     if (symbol.includes("BINANCE:")) {
@@ -33,125 +49,196 @@ export default function TickerPage() {
     setInWatchlist(watchlistManager.isInWatchlist(symbol));
   }, [symbol]);
 
-  useEffect(() => {
+  const loadData = useCallback(async () => {
     if (!category) return;
 
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const quoteRes = await fetch(`/api/stocks/quote?symbol=${symbol}`);
-        const quoteData = await quoteRes.json();
-        setQuote(quoteData);
+    const isFirstLoad = !quote;
+    let showLoaderTimeout: NodeJS.Timeout | null = null;
 
-        if (category === "stock") {
-          const [recsRes, sentimentRes] = await Promise.all([
-            fetch(`/api/stocks/recommendations?symbol=${symbol}`),
-            fetch(`/api/stocks/insider-sentiment?symbol=${symbol}`),
-          ]);
+    if (isFirstLoad) {
+      setInitialLoading(true);
+    } else {
+      showLoaderTimeout = setTimeout(() => {
+        setRefreshing(true);
+      }, 800);
+    }
+    setError(null);
 
-          if (recsRes.ok) {
-            const recsData = await recsRes.json();
-            setRecommendations(recsData);
-          }
+    try {
+      const data = await fetchTickerData(symbol, category);
 
-          if (sentimentRes.ok) {
-            const sentimentData = await sentimentRes.json();
-            setInsiderSentiment(sentimentData.data || []);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading ticker data:", error);
-      } finally {
-        setLoading(false);
+      setQuote(data.quote);
+      setRecommendations(
+        Array.isArray(data.recommendations) ? data.recommendations : []
+      );
+      setInsiderSentiment(
+        Array.isArray(data.insiderSentiment) ? data.insiderSentiment : []
+      );
+      setMetrics(data.metrics);
+    } catch (err) {
+      console.error("Error loading ticker data:", err);
+      setError("Failed to load data. Please try again.");
+    } finally {
+      if (showLoaderTimeout) {
+        clearTimeout(showLoaderTimeout);
       }
-    };
+      setInitialLoading(false);
+      setRefreshing(false);
+    }
+  }, [symbol, category, quote]);
 
+  useEffect(() => {
     loadData();
-  }, [symbol, category]);
+  }, [loadData]);
+
+  useEffect(() => {
+    setInWatchlist(watchlistManager.isInWatchlist(symbol));
+  }, [symbol]);
 
   const toggleWatchlist = () => {
-    if (inWatchlist) {
+    const newInWatchlist = !inWatchlist;
+    setInWatchlist(newInWatchlist);
+
+    if (!newInWatchlist) {
       watchlistManager.removeFromWatchlist(symbol);
-      setInWatchlist(false);
+      setWatchlistFeedback(`Removed from watchlist`);
     } else {
       watchlistManager.addToWatchlist({
         symbol,
         name: quote?.name || symbol,
         category,
       });
-      setInWatchlist(true);
+      setWatchlistFeedback(`Added to watchlist`);
     }
+
+    emitWatchlistUpdate();
+    setTimeout(() => setWatchlistFeedback(null), 2000);
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
-          <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-slate-400 text-sm">Loading {symbol} data...</p>
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  const changeColor = quote?.change >= 0 ? "text-green-400" : "text-red-400";
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center max-w-md">
+            <Icon name="error_outline" className="text-red-400 text-5xl mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">
+              Error Loading Data
+            </h2>
+            <p className="text-slate-400 mb-6">{error}</p>
+            <button
+              onClick={loadData}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:scale-105 transition-all shadow-lg hover:shadow-cyan-500/20 font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
-      <div className="p-4 sm:p-6 md:p-8 overflow-y-auto">
+      {/* Refreshing Indicator */}
+      {refreshing && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-800/80 backdrop-blur-sm text-slate-300 px-3 py-1.5 rounded-full shadow-lg z-50 flex items-center gap-2 border border-slate-700/50">
+          <div className="w-2.5 h-2.5 border-2 border-cyan-500/60 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-medium">Updating</span>
+        </div>
+      )}
+
+      {/* Watchlist Feedback Toast */}
+      {watchlistFeedback && (
+        <div className="fixed top-24 right-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2">
+          <Icon name="check_circle" className="text-[20px]" />
+          <span className="font-medium">{watchlistFeedback}</span>
+        </div>
+      )}
+
+      <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
         <button
           onClick={() => router.back()}
-          className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition"
+          className="mb-4 sm:mb-6 flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-lg transition-all group"
         >
-          <Icon name="arrow_back" className="text-[20px]" />
-          <span className="text-sm">Back</span>
+          <Icon
+            name="arrow_back"
+            className="text-[18px] sm:text-[20px] group-hover:-translate-x-1 transition-transform"
+          />
+          <span className="text-xs sm:text-sm font-medium">
+            Back to Dashboard
+          </span>
         </button>
 
         <div
           className={`bg-gradient-to-br ${assetHelpers.getCategoryColor(
             category
-          )} rounded-2xl p-6 mb-6 shadow-2xl`}
+          )} rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 mb-4 sm:mb-6 shadow-2xl border border-white/10`}
         >
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+          <div className="flex items-start justify-between flex-wrap gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0">
                 <Icon
                   name={assetHelpers.getCategoryIcon(category)}
-                  className="text-white text-[32px]"
+                  className="text-white text-[24px] sm:text-[28px] md:text-[32px]"
                 />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-1">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-0.5 sm:mb-1 truncate">
                   {assetHelpers.formatSymbol(symbol)}
                 </h1>
-                <p className="text-white/80">{quote?.name || symbol}</p>
-                <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur rounded-full text-white text-xs font-medium mt-2">
+                <p className="text-white/80 text-xs sm:text-sm truncate">
+                  {quote?.name || symbol}
+                </p>
+                <span className="inline-block px-2 sm:px-3 py-0.5 sm:py-1 bg-white/20 backdrop-blur rounded-full text-white text-[10px] sm:text-xs font-medium mt-1 sm:mt-2">
                   {assetHelpers.getCategoryLabel(category)}
                 </span>
               </div>
             </div>
             <button
               onClick={toggleWatchlist}
-              className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition backdrop-blur"
+              className={`p-3 rounded-xl transition-all backdrop-blur group flex-shrink-0 border ${
+                inWatchlist
+                  ? "bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-400/30 hover:border-cyan-400/50"
+                  : "bg-white/10 hover:bg-white/20 border-white/10 hover:border-white/20"
+              }`}
+              title={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
             >
               <Icon
                 name={inWatchlist ? "bookmark" : "bookmark_border"}
-                className="text-white text-[24px]"
+                className={`text-[22px] sm:text-[26px] group-hover:scale-110 transition-transform ${
+                  inWatchlist ? "text-cyan-300" : "text-white"
+                }`}
               />
             </button>
           </div>
-        </div>
 
-        <div className="mb-6 bg-slate-800/90 border border-slate-700/50 rounded-xl p-6">
-          <div className="flex items-baseline gap-4 mb-4">
-            <div className="text-4xl font-bold text-white">
+          <div className="mt-4 sm:mt-6 flex items-baseline gap-3 sm:gap-4 flex-wrap">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
               ${quote?.price?.toFixed(2) || "N/A"}
             </div>
-            <div className={`flex items-center gap-2 ${changeColor}`}>
+            <div
+              className={`flex items-center gap-1.5 sm:gap-2 ${
+                quote?.change >= 0 ? "text-green-300" : "text-red-300"
+              }`}
+            >
               <Icon
                 name={quote?.change >= 0 ? "trending_up" : "trending_down"}
-                className="text-[20px]"
+                className="text-[16px] sm:text-[18px] md:text-[20px]"
               />
-              <span className="text-lg font-semibold">
+              <span className="text-base sm:text-lg font-semibold">
                 {quote?.change >= 0 ? "+" : ""}
                 {quote?.change?.toFixed(2)} ({quote?.changePercent?.toFixed(2)}
                 %)
@@ -160,131 +247,113 @@ export default function TickerPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 space-y-6">
-            <div className="bg-slate-800/90 border border-slate-700/50 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Price Chart</h3>
-              <div className="h-64 flex items-center justify-center text-slate-500">
-                Chart placeholder - TradingView or custom implementation
-              </div>
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr,400px] gap-4 sm:gap-6">
+          {/* Left Column - Chart + Widgets */}
+          <div className="space-y-4 sm:space-y-6 min-w-0">
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">
+                Price Chart
+              </h3>
+              <SimpleChart symbol={symbol} height={400} />
             </div>
 
-            {recommendations.length > 0 && (
-              <div className="bg-slate-800/90 border border-slate-700/50 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  Analyst Recommendations
-                </h3>
-                {recommendations.slice(0, 3).map((rec, idx) => {
-                  const total =
-                    rec.strongBuy +
-                    rec.buy +
-                    rec.hold +
-                    rec.sell +
-                    rec.strongSell;
-                  return (
-                    <div key={idx} className="mb-4">
-                      <div className="flex justify-between text-sm text-slate-400 mb-2">
-                        <span>{rec.period}</span>
-                        <span>{total} analysts</span>
-                      </div>
-                      <div className="flex h-3 rounded-full overflow-hidden">
-                        <div
-                          className="bg-green-600"
-                          style={{ width: `${(rec.strongBuy / total) * 100}%` }}
-                          title={`Strong Buy: ${rec.strongBuy}`}
-                        />
-                        <div
-                          className="bg-green-400"
-                          style={{ width: `${(rec.buy / total) * 100}%` }}
-                          title={`Buy: ${rec.buy}`}
-                        />
-                        <div
-                          className="bg-yellow-500"
-                          style={{ width: `${(rec.hold / total) * 100}%` }}
-                          title={`Hold: ${rec.hold}`}
-                        />
-                        <div
-                          className="bg-orange-400"
-                          style={{ width: `${(rec.sell / total) * 100}%` }}
-                          title={`Sell: ${rec.sell}`}
-                        />
-                        <div
-                          className="bg-red-600"
-                          style={{
-                            width: `${(rec.strongSell / total) * 100}%`,
-                          }}
-                          title={`Strong Sell: ${rec.strongSell}`}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            {category === "stock" && (
+              <>
+                <RecommendationsWidget
+                  data={recommendations}
+                  loading={initialLoading}
+                />
+                <InsiderSentimentBadge
+                  data={insiderSentiment}
+                  loading={initialLoading}
+                />
+              </>
             )}
+
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+              <ChatWidget
+                context={`Ticker: ${symbol}, Current Price: $${quote?.price?.toFixed(
+                  2
+                )}, Category: ${category}`}
+                placeholder={`Ask me anything about ${
+                  quote?.name || assetHelpers.formatSymbol(symbol)
+                }...`}
+                compact
+              />
+            </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-slate-800/90 border border-slate-700/50 rounded-xl p-6">
-              <h3 className="text-lg font-bold text-white mb-4">Key Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Open</span>
-                  <span className="text-white font-semibold">
-                    ${quote?.open?.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">High</span>
-                  <span className="text-white font-semibold">
-                    ${quote?.high?.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Low</span>
-                  <span className="text-white font-semibold">
-                    ${quote?.low?.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Prev. Close</span>
-                  <span className="text-white font-semibold">
-                    ${quote?.previousClose?.toFixed(2)}
-                  </span>
-                </div>
+          <div className="xl:sticky xl:top-6 space-y-4 sm:space-y-6 xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto">
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5">
+              <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <Icon
+                  name="analytics"
+                  className="text-cyan-400 text-[18px] sm:text-[20px]"
+                />
+                Key Metrics
+              </h3>
+              <div className="space-y-2.5 sm:space-y-3">
+                <MetricRow
+                  label="Open"
+                  value={`$${quote?.open?.toFixed(2) || "N/A"}`}
+                />
+                <MetricRow
+                  label="High"
+                  value={`$${quote?.high?.toFixed(2) || "N/A"}`}
+                />
+                <MetricRow
+                  label="Low"
+                  value={`$${quote?.low?.toFixed(2) || "N/A"}`}
+                />
+                <MetricRow
+                  label="Prev. Close"
+                  value={`$${quote?.previousClose?.toFixed(2) || "N/A"}`}
+                />
+                {category === "stock" && metrics && (
+                  <>
+                    <div className="border-t border-slate-700/50 my-3 pt-3" />
+                    <MetricRow
+                      label="Market Cap"
+                      value={formatNumber(metrics.marketCapitalization || 0)}
+                    />
+                    <MetricRow
+                      label="P/E Ratio"
+                      value={metrics.peBasicExclExtraTTM?.toFixed(2) || "N/A"}
+                    />
+                    <MetricRow
+                      label="Beta"
+                      value={metrics.beta?.toFixed(2) || "N/A"}
+                    />
+                    <MetricRow
+                      label="52W High"
+                      value={formatPrice(metrics["52WeekHigh"])}
+                    />
+                    <MetricRow
+                      label="52W Low"
+                      value={formatPrice(metrics["52WeekLow"])}
+                    />
+                  </>
+                )}
               </div>
             </div>
 
-            {insiderSentiment.length > 0 && (
-              <div className="bg-slate-800/90 border border-slate-700/50 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  Insider Sentiment
-                </h3>
-                <div className="space-y-2">
-                  {insiderSentiment.slice(0, 6).map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-slate-400 text-sm">
-                        {item.year}-{String(item.month).padStart(2, "0")}
-                      </span>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          item.mspr > 0
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                        }`}
-                      >
-                        {item.mspr > 0 ? "Bullish" : "Bearish"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5">
+              <NewsFeed symbol={symbol} limit={8} />
+            </div>
           </div>
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function MetricRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-center gap-2">
+      <span className="text-slate-400 text-xs sm:text-sm">{label}</span>
+      <span className="text-white font-semibold text-xs sm:text-sm truncate">
+        {value}
+      </span>
+    </div>
   );
 }

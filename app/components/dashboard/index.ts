@@ -1,1 +1,9 @@
-export { default } from "./NewsFeed";
+export { default as NewsFeed } from "./NewsFeed";
+export { default as SimpleChart } from "./SimpleChart";
+export { default as StockCard } from "./StockCard";
+export { default as AssetExplorer } from "./AssetExplorer";
+export { default as WatchlistManager } from "./WatchlistManager";
+export { default as AssetSelector } from "./AssetSelector";
+export { default as RecommendationsWidget } from "./RecommendationsWidget";
+export { default as InsiderSentimentBadge } from "./InsiderSentimentBadge";
+export { default as ChatWidget } from "./ChatWidget";

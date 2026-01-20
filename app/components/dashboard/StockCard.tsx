@@ -34,7 +34,6 @@ export default function StockCard({
     }
 
     fetchQuote();
-    // Refresh every minute
     const interval = setInterval(fetchQuote, 60 * 1000);
     return () => clearInterval(interval);
   }, [symbol]);

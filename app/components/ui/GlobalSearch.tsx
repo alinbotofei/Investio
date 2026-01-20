@@ -94,10 +94,6 @@ export default function GlobalSearch() {
   return (
     <div ref={searchRef} className="relative w-full">
       <div className="relative">
-        <Icon
-          name="search"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 text-[20px]"
-        />
         <input
           ref={inputRef}
           type="text"
@@ -105,67 +101,85 @@ export default function GlobalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query && setIsOpen(true)}
-          placeholder="Search stocks, crypto, forex..."
-          className="w-full bg-white/10 backdrop-blur-sm border border-white/30 text-white placeholder-white/50 pl-11 pr-10 py-2.5 rounded-xl focus:outline-none focus:bg-white/15 focus:border-white/40 transition-all shadow-lg"
+          placeholder="Search for stocks, crypto, or forex..."
+          className="w-full bg-slate-900/40 border border-slate-700/40 text-white placeholder-slate-200/50 px-4 py-2.5 rounded-xl focus:outline-none focus:bg-slate-900/60 focus:border-cyan-500/30 transition-all duration-200 hover:border-slate-600/50 text-sm"
         />
         {loading && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="w-4 h-4 border-2 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin" />
           </div>
+        )}
+        {query && !loading && (
+          <button
+            onClick={() => {
+              setQuery("");
+              setIsOpen(false);
+              inputRef.current?.focus();
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-slate-700/40 transition-colors group"
+            aria-label="Clear search"
+          >
+            <Icon
+              name="close"
+              className="text-slate-500 group-hover:text-slate-300 text-[16px] transition-colors"
+            />
+          </button>
         )}
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full mt-3 w-full bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl max-h-96 overflow-y-auto z-50">
-          {results.map((result, index) => (
-            <button
-              key={`${result.category}-${result.symbol}`}
-              onClick={() => handleSelect(result)}
-              className={`w-full px-4 py-3 flex items-center gap-3 transition-all text-left border-b border-slate-800/50 last:border-0 ${
-                index === selectedIndex
-                  ? "bg-slate-700/50"
-                  : "hover:bg-slate-800/30"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-lg bg-gradient-to-br ${assetHelpers.getCategoryColor(
-                  result.category
-                )} flex items-center justify-center flex-shrink-0 shadow-lg`}
+        <div className="absolute top-full mt-2 w-full bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl max-h-96 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="overflow-y-auto max-h-96">
+            {results.map((result, index) => (
+              <button
+                key={`${result.category}-${result.symbol}`}
+                onClick={() => handleSelect(result)}
+                className={`w-full px-4 py-3 flex items-center gap-3 transition-all text-left border-b border-slate-800/50 last:border-0 group ${
+                  index === selectedIndex
+                    ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border-l-2 border-l-cyan-400"
+                    : "hover:bg-slate-800/40"
+                }`}
               >
-                <Icon
-                  name={assetHelpers.getCategoryIcon(result.category)}
-                  className="text-white text-[18px]"
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-white truncate text-sm">
-                  {assetHelpers.formatSymbol(result.symbol)}
+                <div
+                  className={`w-10 h-10 rounded-lg bg-gradient-to-br ${assetHelpers.getCategoryColor(
+                    result.category
+                  )} flex items-center justify-center flex-shrink-0 shadow-lg group-hover:scale-110 transition-transform`}
+                >
+                  <Icon
+                    name={assetHelpers.getCategoryIcon(result.category)}
+                    className="text-white text-[18px]"
+                  />
                 </div>
-                <div className="text-xs text-slate-400 truncate">
-                  {result.name}
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-white truncate text-sm group-hover:text-cyan-300 transition-colors">
+                    {assetHelpers.formatSymbol(result.symbol)}
+                  </div>
+                  <div className="text-xs text-slate-400 truncate">
+                    {result.name}
+                  </div>
                 </div>
-              </div>
-              <span
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r ${assetHelpers.getCategoryColor(
-                  result.category
-                )} text-white flex-shrink-0 shadow-sm`}
-              >
-                {assetHelpers.getCategoryLabel(result.category)}
-              </span>
-            </button>
-          ))}
+                <span
+                  className={`px-2.5 py-1 rounded-md text-xs font-semibold bg-gradient-to-r ${assetHelpers.getCategoryColor(
+                    result.category
+                  )} text-white flex-shrink-0 shadow-sm`}
+                >
+                  {assetHelpers.getCategoryLabel(result.category)}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {isOpen && query && results.length === 0 && !loading && (
-        <div className="absolute top-full mt-3 w-full bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-6 z-50">
+        <div className="absolute top-full mt-2 w-full bg-slate-900/98 backdrop-blur-xl border border-slate-700/50 rounded-xl shadow-2xl p-8 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="text-center">
-            <Icon
-              name="search_off"
-              className="text-slate-600 text-[32px] mx-auto mb-2"
-            />
-            <p className="text-slate-400 text-sm">
-              No results found for "{query}"
+            <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-800/50 flex items-center justify-center">
+              <Icon name="search_off" className="text-slate-500 text-[32px]" />
+            </div>
+            <p className="text-slate-300 font-medium mb-1">No results found</p>
+            <p className="text-slate-500 text-sm">
+              Try searching for a different ticker or keyword
             </p>
           </div>
         </div>
