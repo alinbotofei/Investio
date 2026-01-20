@@ -20,12 +20,12 @@ import { emitWatchlistUpdate } from "@/app/lib/utils/events";
 export default function TickerPage() {
   const params = useParams();
   const router = useRouter();
-  const symbol = params.symbol as string;
+  const encodedSymbol = params.symbol as string;
+  const symbol = decodeURIComponent(encodedSymbol);
 
   const [category, setCategory] = useState<AssetCategory>("stock");
   const [inWatchlist, setInWatchlist] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<any>(null);
   const [metrics, setMetrics] = useState<any>(null);
@@ -36,9 +36,10 @@ export default function TickerPage() {
   );
 
   useEffect(() => {
-    if (symbol.includes("BINANCE:")) {
+    const upperSymbol = symbol.toUpperCase();
+    if (upperSymbol.includes("BINANCE:") || upperSymbol.includes("USDT")) {
       setCategory("crypto");
-    } else if (symbol.includes("OANDA:")) {
+    } else if (upperSymbol.includes("OANDA:") || upperSymbol.includes("/")) {
       setCategory("forex");
     } else {
       setCategory("stock");
@@ -50,17 +51,29 @@ export default function TickerPage() {
   }, [symbol]);
 
   const loadData = useCallback(async () => {
-    if (!category) return;
+    if (!category || !symbol) return;
+
+    const upperSymbol = symbol.toUpperCase();
+    const isValidCrypto =
+      category === "crypto" &&
+      (upperSymbol.includes("BINANCE:") || upperSymbol.includes("USDT"));
+    const isValidForex =
+      category === "forex" &&
+      (upperSymbol.includes("OANDA:") || upperSymbol.includes("/"));
+    const isValidStock =
+      category === "stock" &&
+      !upperSymbol.includes("BINANCE:") &&
+      !upperSymbol.includes("OANDA:");
+
+    if (!isValidCrypto && !isValidForex && !isValidStock) {
+      setError(`Invalid ${category} symbol format`);
+      setInitialLoading(false);
+      return;
+    }
 
     const isFirstLoad = !quote;
-    let showLoaderTimeout: NodeJS.Timeout | null = null;
-
     if (isFirstLoad) {
       setInitialLoading(true);
-    } else {
-      showLoaderTimeout = setTimeout(() => {
-        setRefreshing(true);
-      }, 800);
     }
     setError(null);
 
@@ -79,11 +92,7 @@ export default function TickerPage() {
       console.error("Error loading ticker data:", err);
       setError("Failed to load data. Please try again.");
     } finally {
-      if (showLoaderTimeout) {
-        clearTimeout(showLoaderTimeout);
-      }
       setInitialLoading(false);
-      setRefreshing(false);
     }
   }, [symbol, category, quote]);
 
@@ -152,14 +161,6 @@ export default function TickerPage() {
 
   return (
     <DashboardLayout>
-      {/* Refreshing Indicator */}
-      {refreshing && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-800/80 backdrop-blur-sm text-slate-300 px-3 py-1.5 rounded-full shadow-lg z-50 flex items-center gap-2 border border-slate-700/50">
-          <div className="w-2.5 h-2.5 border-2 border-cyan-500/60 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-medium">Updating</span>
-        </div>
-      )}
-
       {/* Watchlist Feedback Toast */}
       {watchlistFeedback && (
         <div className="fixed top-24 right-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2">
@@ -283,7 +284,7 @@ export default function TickerPage() {
             </div>
           </div>
 
-          <div className="xl:sticky xl:top-6 space-y-4 sm:space-y-6 xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto">
+          <div className="xl:sticky xl:top-6 space-y-4 sm:space-y-6">
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5">
               <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
                 <Icon

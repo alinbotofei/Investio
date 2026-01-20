@@ -69,7 +69,7 @@ export default function StockCard({
       }`}
     >
       <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 leading-tight">
           {!logoError && stock.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img

@@ -69,7 +69,6 @@ async function fetchCryptoQuote(symbol: string): Promise<QuoteSimple | null> {
     const coinId = CRYPTO_IDS[symbol];
     if (!coinId) return null;
 
-    // CoinGecko API - gratuit, fără API key necesar
     const url = `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&community_data=false&developer_data=false`;
     const res = await fetch(url, { next: { revalidate: 60 } });
 

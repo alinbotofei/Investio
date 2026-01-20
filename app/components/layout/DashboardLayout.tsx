@@ -17,7 +17,7 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 header hidden md:block sticky top-0 h-screen overflow-y-auto">
+      <aside className="w-16 md:hover:w-64 header hidden md:block sticky top-0 h-screen overflow-y-auto transition-all duration-300">
         <Sidebar items={sidebarItems} />
       </aside>
       <div className="flex-1 flex flex-col main-area">

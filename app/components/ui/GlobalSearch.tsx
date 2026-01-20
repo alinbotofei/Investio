@@ -85,7 +85,8 @@ export default function GlobalSearch() {
   };
 
   const handleSelect = (result: SearchResult) => {
-    router.push(`/ticker/${result.symbol}`);
+    const encodedSymbol = encodeURIComponent(result.symbol);
+    router.push(`/ticker/${encodedSymbol}`);
     setQuery("");
     setIsOpen(false);
     inputRef.current?.blur();

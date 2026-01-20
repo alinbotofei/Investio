@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import Icon from "@/app/components/ui/Icon";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
@@ -27,8 +27,6 @@ export default function TickerCard({
   onAddToWatchlist,
   inWatchlist,
 }: TickerCardProps) {
-  const router = useRouter();
-
   const getCategoryColor = (cat: AssetCategory) => {
     switch (cat) {
       case "stock":
@@ -51,22 +49,14 @@ export default function TickerCard({
     return getAssetLogoUrl(quote.symbol, category, quote.logo);
   };
 
-  const handleClick = () => {
-    router.push(`/ticker/${quote.symbol}`);
-  };
-
-  const handleMouseEnter = () => {
-    router.prefetch(`/ticker/${quote.symbol}`);
-  };
-
   const isPositive = quote.change >= 0;
   const logoInfo = getIcon();
 
   return (
-    <div
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 sm:p-4 hover:bg-slate-700/40 hover:border-slate-600/50 transition-all cursor-pointer group relative overflow-hidden"
+    <Link
+      href={`/ticker/${quote.symbol}`}
+      prefetch={true}
+      className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-2.5 sm:p-3 hover:bg-slate-700/40 hover:border-slate-600/50 transition-all cursor-pointer group relative overflow-hidden min-w-0 block"
     >
       <div
         className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(
@@ -74,37 +64,37 @@ export default function TickerCard({
         )} opacity-0 group-hover:opacity-5 transition-opacity`}
       />
 
-      <div className="relative">
-        <div className="flex items-start justify-between mb-2 sm:mb-3 gap-2">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+      <div className="relative min-w-0">
+        <div className="flex items-start justify-between gap-2 mb-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <div
-              className={`w-9 h-9 sm:w-11 sm:h-11 rounded-lg ${
+              className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex-shrink-0 ${
                 logoInfo.type === "url"
                   ? "bg-white/95"
                   : `bg-gradient-to-br ${getCategoryColor(category)}`
-              } flex items-center justify-center flex-shrink-0 shadow-md p-1.5`}
+              } flex items-center justify-center shadow-md p-1.5`}
             >
               {logoInfo.type === "url" ? (
                 <Image
                   src={logoInfo.value}
                   alt={quote.symbol}
-                  width={36}
-                  height={36}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-contain rounded"
                   unoptimized
                 />
               ) : (
                 <Icon
                   name={logoInfo.value}
-                  className="text-white text-[18px] sm:text-[20px]"
+                  className="text-white text-[16px] sm:text-[18px]"
                 />
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-white font-bold text-sm sm:text-base truncate">
+              <h3 className="text-white font-bold text-sm sm:text-base leading-tight break-words line-clamp-2">
                 {formatSymbol(quote.symbol)}
               </h3>
-              <span className="text-[10px] sm:text-xs text-slate-400 capitalize hidden sm:inline">
+              <span className="text-[10px] sm:text-xs text-slate-400 capitalize leading-tight block mt-0.5">
                 {category}
               </span>
             </div>
@@ -112,13 +102,15 @@ export default function TickerCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               onAddToWatchlist();
             }}
-            className="p-1 sm:p-1.5 hover:bg-slate-600/40 rounded-lg transition-colors flex-shrink-0"
+            className="p-1.5 hover:bg-slate-600/50 hover:scale-110 rounded-lg transition-all duration-200 flex-shrink-0"
+            title={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
           >
             <Icon
               name={inWatchlist ? "bookmark" : "bookmark_border"}
-              className={`text-[16px] sm:text-[18px] transition-colors ${
+              className={`text-[18px] sm:text-[19px] transition-colors ${
                 inWatchlist
                   ? "text-cyan-400"
                   : "text-slate-400 group-hover:text-slate-300"
@@ -128,25 +120,25 @@ export default function TickerCard({
         </div>
 
         <div className="mb-2">
-          <div className="text-xl sm:text-2xl font-bold text-white">
+          <div className="text-base sm:text-lg font-bold text-white leading-tight break-words">
             ${quote.price.toFixed(category === "forex" ? 4 : 2)}
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
           <div
-            className={`flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg flex-1 sm:flex-none ${
+            className={`flex items-center gap-1.5 px-2 py-1 rounded-lg flex-shrink-0 ${
               isPositive ? "bg-green-500/10" : "bg-red-500/10"
             }`}
           >
             <Icon
               name={isPositive ? "trending_up" : "trending_down"}
-              className={`text-[12px] sm:text-[14px] flex-shrink-0 ${
+              className={`text-[13px] flex-shrink-0 ${
                 isPositive ? "text-green-400" : "text-red-400"
               }`}
             />
             <span
-              className={`text-xs sm:text-sm font-semibold truncate ${
+              className={`text-xs sm:text-sm font-semibold whitespace-nowrap leading-tight ${
                 isPositive ? "text-green-400" : "text-red-400"
               }`}
             >
@@ -155,7 +147,7 @@ export default function TickerCard({
             </span>
           </div>
           <div
-            className={`text-xs sm:text-sm font-medium flex-shrink-0 ${
+            className={`text-xs sm:text-sm font-bold leading-tight whitespace-nowrap ${
               isPositive ? "text-green-400" : "text-red-400"
             }`}
           >
@@ -164,6 +156,6 @@ export default function TickerCard({
           </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

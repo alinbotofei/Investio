@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Icon from "../../components/ui/Icon";
 import TickerCard from "./TickerCard";
 import { watchlistManager } from "@/app/lib/utils/watchlist";
@@ -12,7 +12,7 @@ import {
 } from "@/lib/services/marketService";
 import type { AssetCategory } from "@/lib/types/assets";
 
-export default function MarketOverview() {
+function MarketOverview() {
   const [data, setData] = useState<MarketOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [watchlist, setWatchlist] = useState<any[]>([]);
@@ -95,38 +95,38 @@ export default function MarketOverview() {
     const topMovers = getTopMovers(allQuotes, 6);
 
     return (
-      <div className="bg-gradient-to-br from-orange-500/10 via-red-500/10 to-pink-500/10 border border-orange-500/20 rounded-2xl p-4 sm:p-6 mb-6">
+      <div className="bg-gradient-to-br from-orange-500/10 via-red-500/10 to-pink-500/10 border border-orange-500/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-5">
         <div
-          className="flex items-center justify-between mb-5 cursor-pointer"
+          className="flex items-center justify-between mb-3 sm:mb-4 cursor-pointer"
           onClick={() => toggleSection("topMovers")}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center shadow-md">
               <Icon
                 name="local_fire_department"
-                className="text-white text-[22px] sm:text-[26px]"
+                className="text-white text-[20px] sm:text-[22px]"
               />
             </div>
             <div>
-              <h3 className="text-lg sm:text-xl font-bold text-white">
+              <h3 className="text-base sm:text-lg font-bold text-white">
                 Top Movers
               </h3>
-              <p className="text-xs sm:text-sm text-slate-300">
+              <p className="text-[11px] sm:text-xs text-slate-300">
                 Biggest changes across all markets
               </p>
             </div>
           </div>
-          <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+          <button className="p-1.5 sm:p-2 hover:bg-white/5 rounded-lg transition-colors">
             <Icon
               name={expandedSections.topMovers ? "expand_less" : "expand_more"}
-              className="text-white text-[24px]"
+              className="text-white text-[22px]"
             />
           </button>
         </div>
         <div
-          className={`grid gap-4 sm:gap-5 transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`grid gap-2 sm:gap-2.5 md:gap-3 transition-all duration-300 ease-in-out overflow-hidden ${
             expandedSections.topMovers
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 opacity-100 max-h-[3000px]"
+              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 opacity-100 max-h-[3000px]"
               : "grid-cols-1 opacity-0 max-h-0"
           }`}
         >
@@ -161,38 +161,40 @@ export default function MarketOverview() {
     category: AssetCategory,
     sectionKey: "stocks" | "crypto" | "forex"
   ) => (
-    <section className="mb-6">
+    <section className="mb-4 sm:mb-5">
       <div
-        className="flex items-center justify-between mb-4 cursor-pointer group"
+        className="flex items-center justify-between mb-3 sm:mb-4 cursor-pointer group"
         onClick={() => toggleSection(sectionKey)}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div
-            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md`}
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shadow-md`}
           >
             <Icon
               name={icon}
-              className="text-white text-[20px] sm:text-[24px]"
+              className="text-white text-[18px] sm:text-[20px]"
             />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-white">{title}</h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <h2 className="text-base sm:text-lg font-bold text-white">
+              {title}
+            </h2>
+            <p className="text-[11px] sm:text-xs text-slate-400">
               {quotes.length} assets tracked
             </p>
           </div>
         </div>
-        <button className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+        <button className="p-1.5 sm:p-2 hover:bg-white/5 rounded-lg transition-colors">
           <Icon
             name={expandedSections[sectionKey] ? "expand_less" : "expand_more"}
-            className="text-slate-400 group-hover:text-white text-[24px] transition-colors"
+            className="text-slate-400 group-hover:text-white text-[22px] transition-colors"
           />
         </button>
       </div>
       <div
-        className={`grid gap-4 sm:gap-5 transition-all duration-300 ease-in-out overflow-hidden ${
+        className={`grid gap-2 sm:gap-2.5 md:gap-3 transition-all duration-300 ease-in-out overflow-hidden ${
           expandedSections[sectionKey]
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 opacity-100 max-h-[5000px]"
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 opacity-100 max-h-[5000px]"
             : "grid-cols-1 opacity-0 max-h-0"
         }`}
       >
@@ -200,7 +202,7 @@ export default function MarketOverview() {
           ? Array.from({ length: category === "stock" ? 8 : 4 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 animate-pulse h-32 sm:h-36"
+                className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 animate-pulse h-28"
               />
             ))
           : quotes.map((quote) => (
@@ -265,3 +267,5 @@ export default function MarketOverview() {
     </div>
   );
 }
+
+export default memo(MarketOverview);

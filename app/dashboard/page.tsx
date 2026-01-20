@@ -52,34 +52,30 @@ function DashboardContent() {
           </div>
         </div>
 
-        {/* Watchlist Bar - Compact & Responsive */}
-        <div className="mb-4 sm:mb-6">
-          <WatchlistManager />
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr,1fr] gap-4 sm:gap-5 lg:gap-6 items-start">
+          <div className="min-w-0 space-y-4 sm:space-y-6">
+            {/* Watchlist */}
+            <WatchlistManager />
 
-        {/* Main Grid Layout - Fully Responsive */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr,480px] gap-4 sm:gap-6 items-start">
-          {/* Left Column - Market Overview */}
-          <div className="min-w-0">
             <MarketOverview />
           </div>
 
-          {/* Right Column - Sticky Sidebar (only on XL screens) */}
-          <div className="xl:sticky xl:top-6 space-y-4 sm:space-y-6 xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto xl:pr-2">
-            {/* AI Chat Section - Enhanced Visibility */}
+          {/* Right Column - AI & News (Sticky on large screens) */}
+          <div className="min-w-0 lg:sticky lg:top-6 space-y-4 sm:space-y-6">
+            {/* AI Chat Section */}
             <div className="bg-gradient-to-br from-blue-600/30 via-cyan-500/30 to-purple-600/30 border-2 border-cyan-400/50 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-2xl shadow-cyan-500/20 ring-1 ring-cyan-400/20">
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/50">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/50">
                   <Icon
                     name="psychology"
-                    className="text-white text-[22px] sm:text-[26px]"
+                    className="text-white text-[20px] sm:text-[24px]"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-white truncate">
+                  <h2 className="text-base sm:text-lg font-bold text-white truncate">
                     AI Assistant
                   </h2>
-                  <p className="text-xs sm:text-sm text-cyan-200 truncate">
+                  <p className="text-xs text-cyan-200 truncate">
                     Ask anything about markets
                   </p>
                 </div>
@@ -90,8 +86,8 @@ function DashboardContent() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder=" "
-                  className="w-full p-3 pr-12 sm:p-4 sm:pr-14 border border-cyan-500/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-900/60 backdrop-blur text-white transition-all text-sm peer"
-                  rows={3}
+                  className="w-full p-3 pr-11 sm:p-3.5 sm:pr-12 border border-cyan-500/30 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-900/60 backdrop-blur text-white transition-all text-sm sm:text-base peer"
+                  rows={2}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -100,7 +96,7 @@ function DashboardContent() {
                   }}
                 />
                 {!chatInput && (
-                  <div className="absolute left-3 sm:left-4 top-3 sm:top-4 pointer-events-none text-slate-400 text-xs">
+                  <div className="absolute left-3 sm:left-3.5 top-3 sm:top-3.5 right-14 pointer-events-none text-slate-400 text-sm sm:text-base leading-relaxed">
                     <AnimatedPlaceholder
                       placeholders={placeholders}
                       interval={3500}
@@ -109,15 +105,15 @@ function DashboardContent() {
                 )}
                 <button
                   onClick={handleChatSubmit}
-                  className={`${SEND_BUTTON} w-9 h-9 sm:w-10 sm:h-10 absolute bottom-2.5 sm:bottom-3 right-2.5 sm:right-3 shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className={`${SEND_BUTTON} w-8 h-8 sm:w-9 sm:h-9 absolute right-2.5 top-1/2 -translate-y-1/2 shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed`}
                   disabled={!chatInput.trim()}
                 >
-                  <Icon name="send" className="text-[15px] sm:text-[16px]" />
+                  <Icon name="send" className="text-[14px] sm:text-[15px]" />
                 </button>
               </div>
             </div>
 
-            {/* Market News - Below Chat */}
+            {/* Market News */}
             <MarketNews />
           </div>
         </div>

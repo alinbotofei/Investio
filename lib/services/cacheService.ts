@@ -4,13 +4,13 @@ interface CacheItem<T> {
 }
 
 export const CACHE_TTL = {
-  MARKET_OVERVIEW: 300, // 5 min - date generale dashboard (redus refresh)
-  TICKER_QUOTE: 30, // 30 sec - prețuri live (redus refresh)
-  TICKER_METRICS: 3600, // 1 oră - metrici
-  NEWS: 600, // 10 min - știri (redus refresh)
-  RECOMMENDATIONS: 86400, // 24 ore - recomandări
-  INSIDER_SENTIMENT: 86400, // 24 ore - insider sentiment
-  SYMBOLS: 604800, // 7 zile - liste de simboluri
+  MARKET_OVERVIEW: 300,
+  TICKER_QUOTE: 30,
+  TICKER_METRICS: 3600,
+  NEWS: 600,
+  RECOMMENDATIONS: 86400,
+  INSIDER_SENTIMENT: 86400,
+  SYMBOLS: 604800,
 } as const;
 
 class CacheService {
