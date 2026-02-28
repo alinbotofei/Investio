@@ -9,6 +9,8 @@ export default function SignUp() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
@@ -41,9 +43,11 @@ export default function SignUp() {
     } else if (password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     } else if (!/[A-Z]/.test(password)) {
-      newErrors.password = 'Must contain uppercase letter';
+      newErrors.password = 'Must contain uppercase letter (A-Z)';
     } else if (!/[0-9]/.test(password)) {
-      newErrors.password = 'Must contain a number';
+      newErrors.password = 'Must contain a number (0-9)';
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      newErrors.password = 'Must contain special char (!@#$%^&*...)';
     }
 
     if (!confirmPassword) {
@@ -149,7 +153,7 @@ export default function SignUp() {
               </div>
             )}
 
-            <form onSubmit={handleSignUp} className="space-y-4">
+            <form onSubmit={handleSignUp} className="space-y-5">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-slate-300">
                   Full Name
@@ -163,14 +167,14 @@ export default function SignUp() {
                     errors.name
                       ? 'border-red-500/50 bg-red-950/20'
                       : 'border-slate-600/50 bg-slate-900/50'
-                  } px-4 py-3 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  } px-4 py-3 text-white placeholder-slate-500 transition-all focus:border-blue-500/50 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                   disabled={loading}
                   autoComplete="name"
                 />
                 {errors.name && (
                   <p className="flex items-center gap-1 text-xs text-red-400">
                     <svg
-                      className="h-3 w-3"
+                      className="h-3 w-3 flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -198,14 +202,14 @@ export default function SignUp() {
                     errors.email
                       ? 'border-red-500/50 bg-red-950/20'
                       : 'border-slate-600/50 bg-slate-900/50'
-                  } px-4 py-3 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                  } px-4 py-3 text-white placeholder-slate-500 transition-all focus:border-blue-500/50 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
                   disabled={loading}
                   autoComplete="email"
                 />
                 {errors.email && (
                   <p className="flex items-center gap-1 text-xs text-red-400">
                     <svg
-                      className="h-3 w-3"
+                      className="h-3 w-3 flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -224,23 +228,41 @@ export default function SignUp() {
                 <label className="block text-sm font-medium text-slate-300">
                   Password
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full rounded-lg border ${
-                    errors.password
-                      ? 'border-red-500/50 bg-red-950/20'
-                      : 'border-slate-600/50 bg-slate-900/50'
-                  } px-4 py-3 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-                  disabled={loading}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full rounded-lg border ${
+                      errors.password
+                        ? 'border-red-500/50 bg-red-950/20'
+                        : 'border-slate-600/50 bg-slate-900/50'
+                    } px-4 py-3 pr-12 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                  >
+                    {showPassword ? (
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14zM10 4.5c2.613 0 5.088.875 7.082 2.338a1 1 0 00.894-1.788C14.172 3.156 12.115 2.5 10 2.5a9 9 0 00-7.082 3.938 1 1 0 10.894 1.788C4.912 5.375 7.387 4.5 10 4.5zm6.084 9.116c.177.269.348.547.504.835a1 1 0 01-1.788.894c-.143-.214-.28-.43-.41-.647m-2.906-2.906a1 1 0 10-1.414-1.414 3 3 0 104.242 4.242 1 1 0 10-1.414-1.414 1 1 0 00-.414.914z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.password ? (
                   <p className="flex items-center gap-1 text-xs text-red-400">
                     <svg
-                      className="h-3 w-3"
+                      className="h-3 w-3 flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -255,7 +277,7 @@ export default function SignUp() {
                 ) : password ? (
                   <p className="flex items-center gap-1 text-xs text-green-400">
                     <svg
-                      className="h-3 w-3"
+                      className="h-3 w-3 flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -274,23 +296,41 @@ export default function SignUp() {
                 <label className="block text-sm font-medium text-slate-300">
                   Confirm Password
                 </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full rounded-lg border ${
-                    errors.confirmPassword
-                      ? 'border-red-500/50 bg-red-950/20'
-                      : 'border-slate-600/50 bg-slate-900/50'
-                  } px-4 py-3 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
-                  disabled={loading}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full rounded-lg border ${
+                      errors.confirmPassword
+                        ? 'border-red-500/50 bg-red-950/20'
+                        : 'border-slate-600/50 bg-slate-900/50'
+                    } px-4 py-3 pr-12 text-white placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20`}
+                    disabled={loading}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14zM10 4.5c2.613 0 5.088.875 7.082 2.338a1 1 0 00.894-1.788C14.172 3.156 12.115 2.5 10 2.5a9 9 0 00-7.082 3.938 1 1 0 10.894 1.788C4.912 5.375 7.387 4.5 10 4.5zm6.084 9.116c.177.269.348.547.504.835a1 1 0 01-1.788.894c-.143-.214-.28-.43-.41-.647m-2.906-2.906a1 1 0 10-1.414-1.414 3 3 0 104.242 4.242 1 1 0 10-1.414-1.414 1 1 0 00-.414.914z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="flex items-center gap-1 text-xs text-red-400">
                     <svg
-                      className="h-3 w-3"
+                      className="h-3 w-3 flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >

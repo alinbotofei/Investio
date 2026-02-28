@@ -8,6 +8,7 @@ export default function Login() {
   const [step, setStep] = useState<'email' | 'password'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -130,7 +131,7 @@ export default function Login() {
             )}
 
             {step === 'email' ? (
-              <form onSubmit={handleEmailSubmit} className="space-y-6">
+              <form onSubmit={handleEmailSubmit} className="space-y-5">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-300">
                     Email Address
@@ -168,7 +169,7 @@ export default function Login() {
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-slate-700" />
                   </div>
-                  <div className="relative flex justify-center text-sm">
+                  <div className="relative flex justify-center items-center h-6 text-sm">
                     <span className="bg-slate-800 px-2 text-slate-500">
                       or
                     </span>
@@ -186,7 +187,7 @@ export default function Login() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handlePasswordSubmit} className="space-y-6">
+              <form onSubmit={handlePasswordSubmit} className="space-y-5">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <button
@@ -216,7 +217,7 @@ export default function Login() {
                       <p className="text-sm text-slate-400">
                         Signing in as
                       </p>
-                      <p className="font-medium text-white break-all">{email}</p>
+                      <p className="font-medium text-white break-all text-sm">{email}</p>
                     </div>
                   </div>
                 </div>
@@ -225,15 +226,33 @@ export default function Login() {
                   <label className="block text-sm font-medium text-slate-300">
                     Password
                   </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full rounded-lg border border-slate-600/50 bg-slate-900/50 px-4 py-3 text-white placeholder-slate-500 transition-all focus:border-blue-500/50 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    disabled={loading}
-                    autoComplete="current-password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full rounded-lg border border-slate-600/50 bg-slate-900/50 px-4 py-3 pr-12 text-white placeholder-slate-500 transition-all focus:border-blue-500/50 focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      disabled={loading}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                    >
+                      {showPassword ? (
+                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                          <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-14-14zM10 4.5c2.613 0 5.088.875 7.082 2.338a1 1 0 00.894-1.788C14.172 3.156 12.115 2.5 10 2.5a9 9 0 00-7.082 3.938 1 1 0 10.894 1.788C4.912 5.375 7.387 4.5 10 4.5zm6.084 9.116c.177.269.348.547.504.835a1 1 0 01-1.788.894c-.143-.214-.28-.43-.41-.647m-2.906-2.906a1 1 0 10-1.414-1.414 3 3 0 104.242 4.242 1 1 0 10-1.414-1.414 1 1 0 00-.414.914z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <button
