@@ -422,9 +422,9 @@ function ChatContent() {
                 <div className="mb-6">
                   <button
                     onClick={() => setShowConversations(true)}
-                    className="md:hidden mx-auto px-4 py-2 bg-slate-800/60 hover:bg-slate-700/60 text-white rounded-lg transition flex items-center gap-2"
+                    className="md:hidden mx-auto px-5 py-3 bg-slate-800/95 hover:bg-slate-700/95 text-white rounded-xl transition-all flex items-center gap-2.5 shadow-lg border border-slate-600/60 font-medium backdrop-blur-md"
                   >
-                    <Icon name="history" className="text-[18px]" />
+                    <Icon name="history" className="text-[20px]" />
                     View History
                   </button>
                 </div>
