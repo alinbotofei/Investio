@@ -454,7 +454,7 @@ function ChatContent() {
                       }}
                     />
                     {!value && (
-                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-5 md:right-8 pointer-events-none text-white/60 text-base md:text-lg text-left leading-relaxed">
+                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-5 md:right-8 pointer-events-none text-white/60 text-base md:text-lg text-left">
                         <span>Ask anything about </span>
                         <span
                           key={placeholderIndex}
