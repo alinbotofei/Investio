@@ -1,5 +1,3 @@
-import { cache, CACHE_TTL } from "./cacheService";
-
 export interface QuoteSimple {
   symbol: string;
   price: number;
@@ -52,20 +50,11 @@ class MarketService {
   }
 
   async getMarketOverview(): Promise<MarketOverviewData | null> {
-    const cacheKey = "investio:market:overview";
-    const cached = cache.get<MarketOverviewData>(cacheKey);
-
-    if (cached) {
-      return cached;
-    }
-
     try {
       const response = await fetch("/api/market/overview");
       if (!response.ok) return null;
 
       const data = await response.json();
-      cache.set(cacheKey, data, CACHE_TTL.MARKET_OVERVIEW);
-
       return data;
     } catch (error) {
       console.error("Market overview fetch error:", error);
@@ -74,20 +63,11 @@ class MarketService {
   }
 
   async getTickerAggregate(symbol: string) {
-    const cacheKey = `investio:ticker:${symbol}:aggregate`;
-    const cached = cache.get(cacheKey);
-
-    if (cached) {
-      return cached;
-    }
-
     try {
       const response = await fetch(`/api/ticker/${symbol}/aggregate`);
       if (!response.ok) return null;
 
       const data = await response.json();
-      cache.set(cacheKey, data, CACHE_TTL.TICKER_QUOTE);
-
       return data;
     } catch (error) {
       console.error("Ticker aggregate fetch error:", error);
