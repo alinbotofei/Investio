@@ -8,11 +8,14 @@ export const smoothScrollToBottom = (
     element.scrollHeight - element.scrollTop - element.clientHeight < 100;
 
   if (force || isNearBottom) {
-    requestAnimationFrame(() => {
-      element.scrollTo({
-        top: element.scrollHeight,
-        behavior: "smooth",
+    // Use setTimeout to ensure DOM has updated
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        element.scrollTo({
+          top: element.scrollHeight,
+          behavior: "smooth",
+        });
       });
-    });
+    }, 0);
   }
 };

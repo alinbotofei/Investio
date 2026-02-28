@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DashboardLayout from "@/app/components/layout/DashboardLayout";
 import { WatchlistManager } from "@/app/components/dashboard";
 import MarketOverview from "./_components/MarketOverview";
@@ -12,7 +13,9 @@ import { SEND_BUTTON } from "@/app/lib/constants";
 
 function DashboardContent() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [chatInput, setChatInput] = useState("");
+  const userName = session?.user?.name?.split(" ")[0] || "User";
 
   const placeholders = [
     "What are the top performing stocks today?",
@@ -32,6 +35,21 @@ function DashboardContent() {
     <DashboardLayout>
       <div className="w-full h-full p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
         <div className="mb-6 sm:mb-8">
+          <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/30 rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
+                {userName?.charAt(0).toUpperCase() || "U"}
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">
+                  Welcome back, {userName}!
+                </h2>
+                <p className="text-sm text-slate-300">
+                  Ready to explore the markets?
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">
@@ -44,7 +62,7 @@ function DashboardContent() {
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-xs text-slate-500">Last Updated</p>
-                <p className="text-xs sm:text-sm text-slate-300 font-medium">
+                <p className="text-xs sm:text-sm text-left text-slate-300 font-medium">
                   {new Date().toLocaleTimeString()}
                 </p>
               </div>

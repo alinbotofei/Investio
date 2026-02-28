@@ -130,7 +130,7 @@ export default function Header() {
 
             <nav className="p-6 space-y-2">
               <Link
-                href="/"
+                href="/dashboard"
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 text-white rounded-lg transition ${
                   pathname === "/" || pathname === "/dashboard"

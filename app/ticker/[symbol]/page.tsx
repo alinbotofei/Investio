@@ -11,20 +11,21 @@ import {
   InsiderSentimentBadge,
   ChatWidget,
 } from "@/app/components/dashboard";
-import { watchlistManager, assetHelpers } from "@/app/lib/utils/watchlist";
+import { assetHelpers } from "@/app/lib/utils/watchlist";
 import { AssetCategory } from "@/lib/types/assets";
 import { formatNumber, formatPrice } from "@/app/lib/utils/format";
 import { fetchTickerData } from "@/app/lib/utils/dataFetching";
-import { emitWatchlistUpdate } from "@/app/lib/utils/events";
+import { useWatchlist } from "@/app/contexts/WatchlistContext";
+import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
 
 export default function TickerPage() {
   const params = useParams();
   const router = useRouter();
   const encodedSymbol = params.symbol as string;
   const symbol = decodeURIComponent(encodedSymbol);
+  const { isInWatchlist, addToWatchlist, removeFromWatchlist } = useWatchlist();
 
   const [category, setCategory] = useState<AssetCategory>("stock");
-  const [inWatchlist, setInWatchlist] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quote, setQuote] = useState<any>(null);
@@ -34,6 +35,10 @@ export default function TickerPage() {
   const [watchlistFeedback, setWatchlistFeedback] = useState<string | null>(
     null
   );
+  const [logoError, setLogoError] = useState(false);
+
+  const inWatchlist = isInWatchlist(symbol);
+  const logoInfo = getAssetLogoUrl(symbol, category, quote?.logo);
 
   useEffect(() => {
     const upperSymbol = symbol.toUpperCase();
@@ -42,10 +47,6 @@ export default function TickerPage() {
     } else {
       setCategory("stock");
     }
-  }, [symbol]);
-
-  useEffect(() => {
-    setInWatchlist(watchlistManager.isInWatchlist(symbol));
   }, [symbol]);
 
   const loadData = useCallback(async () => {
@@ -92,37 +93,39 @@ export default function TickerPage() {
     loadData();
   }, [loadData]);
 
-  useEffect(() => {
-    setInWatchlist(watchlistManager.isInWatchlist(symbol));
-  }, [symbol]);
-
-  const toggleWatchlist = () => {
-    const newInWatchlist = !inWatchlist;
-    setInWatchlist(newInWatchlist);
-
-    if (!newInWatchlist) {
-      watchlistManager.removeFromWatchlist(symbol);
-      setWatchlistFeedback(`Removed from watchlist`);
+  const toggleWatchlist = async () => {
+    let success = false;
+    
+    if (inWatchlist) {
+      success = await removeFromWatchlist(symbol);
+      if (success) {
+        setWatchlistFeedback(`✓ Removed from watchlist`);
+      } else {
+        setWatchlistFeedback(`✗ Failed to remove from watchlist`);
+      }
     } else {
-      watchlistManager.addToWatchlist({
-        symbol,
-        name: quote?.name || symbol,
-        category,
-      });
-      setWatchlistFeedback(`Added to watchlist`);
+      success = await addToWatchlist(symbol, category);
+      if (success) {
+        setWatchlistFeedback(`✓ Added to watchlist`);
+      } else {
+        setWatchlistFeedback(`✗ Failed to add to watchlist`);
+      }
     }
 
-    emitWatchlistUpdate();
-    setTimeout(() => setWatchlistFeedback(null), 2000);
+    setTimeout(() => setWatchlistFeedback(null), 2500);
   };
 
   if (initialLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-slate-400 text-sm">Loading {symbol} data...</p>
+            <div className="relative w-20 h-20 mx-auto mb-6">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-20 animate-ping"></div>
+              <div className="relative w-20 h-20 border-4 border-transparent border-t-cyan-500 border-r-blue-500 rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">Loading {symbol}</h3>
+            <p className="text-slate-400 text-sm">Fetching market data...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -155,13 +158,20 @@ export default function TickerPage() {
     <DashboardLayout>
       {/* Watchlist Feedback Toast */}
       {watchlistFeedback && (
-        <div className="fixed top-24 right-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2">
-          <Icon name="check_circle" className="text-[20px]" />
-          <span className="font-medium">{watchlistFeedback}</span>
+        <div className={`fixed top-24 right-6 px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2 ${
+          watchlistFeedback.startsWith('✓')
+            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
+            : 'bg-gradient-to-r from-red-500 to-pink-500'
+        } text-white`}>
+          <Icon 
+            name={watchlistFeedback.startsWith('✓') ? "check_circle" : "error"} 
+            className="text-[20px]" 
+          />
+          <span className="font-medium">{watchlistFeedback.substring(2)}</span>
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
+      <div className="max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
         <button
           onClick={() => router.back()}
           className="mb-4 sm:mb-6 flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-lg transition-all group"
@@ -182,11 +192,25 @@ export default function TickerPage() {
         >
           <div className="flex items-start justify-between flex-wrap gap-3 sm:gap-4">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0">
-                <Icon
-                  name={assetHelpers.getCategoryIcon(category)}
-                  className="text-white text-[24px] sm:text-[28px] md:text-[32px]"
-                />
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                logoInfo.type === "url" && !logoError
+                  ? "bg-white/95 backdrop-blur p-2"
+                  : "bg-white/20 backdrop-blur"
+              }`}>
+                {logoInfo.type === "url" && !logoError ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoInfo.value}
+                    alt={symbol}
+                    onError={() => setLogoError(true)}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <Icon
+                    name={logoInfo.type === "icon" ? logoInfo.value : assetHelpers.getCategoryIcon(category)}
+                    className="text-white text-[24px] sm:text-[28px] md:text-[32px]"
+                  />
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-0.5 sm:mb-1 truncate">
@@ -240,16 +264,19 @@ export default function TickerPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr,400px] gap-4 sm:gap-6">
-          {/* Left Column - Chart + Widgets */}
-          <div className="space-y-4 sm:space-y-6 min-w-0">
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr,500px] xl:grid-cols-[1fr,600px] 2xl:grid-cols-[1fr,700px] gap-4 sm:gap-6 lg:gap-8">
+          {/* Left Column - All Information */}
+          <div className="space-y-4 sm:space-y-6 min-w-0 order-2 lg:order-1">
+            {/* Chart */}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 xl:p-8 backdrop-blur-sm">
+              <h3 className="text-base sm:text-lg xl:text-xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                <Icon name="show_chart" className="text-cyan-400 text-[20px] xl:text-[24px]" />
                 Price Chart
               </h3>
               <SimpleChart symbol={symbol} height={400} />
             </div>
 
+            {/* Stock-specific widgets */}
             {category === "stock" && (
               <>
                 <RecommendationsWidget
@@ -263,25 +290,12 @@ export default function TickerPage() {
               </>
             )}
 
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
-              <ChatWidget
-                context={`Ticker: ${symbol}, Current Price: $${quote?.price?.toFixed(
-                  2
-                )}, Category: ${category}`}
-                placeholder={`Ask me anything about ${
-                  quote?.name || assetHelpers.formatSymbol(symbol)
-                }...`}
-                compact
-              />
-            </div>
-          </div>
-
-          <div className="xl:sticky xl:top-6 space-y-4 sm:space-y-6">
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5">
-              <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+            {/* Key Metrics */}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5 xl:p-6 backdrop-blur-sm">
+              <h3 className="text-base sm:text-lg xl:text-xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                 <Icon
                   name="analytics"
-                  className="text-cyan-400 text-[18px] sm:text-[20px]"
+                  className="text-cyan-400 text-[18px] sm:text-[20px] xl:text-[24px]"
                 />
                 Key Metrics
               </h3>
@@ -330,8 +344,33 @@ export default function TickerPage() {
               </div>
             </div>
 
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5">
+            {/* News Feed */}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5 xl:p-6 backdrop-blur-sm">
               <NewsFeed symbol={symbol} limit={8} />
+            </div>
+          </div>
+
+          {/* Right Column - AI Chat (Prominent & Sticky) */}
+          <div className="lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-120px)] order-1 lg:order-2">
+            <div className="relative bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-2 border-cyan-500/30 rounded-2xl p-1 backdrop-blur-sm shadow-2xl shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-300">
+              <div className="bg-slate-900/80 rounded-xl overflow-hidden backdrop-blur-xl border border-slate-700/50">
+                <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 px-4 xl:px-6 py-3 xl:py-4 border-b border-cyan-500/20">
+                  <h3 className="text-lg xl:text-xl font-bold text-white flex items-center gap-2">
+                    <Icon name="psychology" className="text-cyan-400 text-[22px] xl:text-[26px]" />
+                    Ask About {quote?.name || symbol}
+                  </h3>
+                  <p className="text-xs xl:text-sm text-slate-300 mt-1">Get instant AI-powered insights and analysis</p>
+                </div>
+                <ChatWidget
+                  context={`Ticker: ${symbol}, Current Price: $${quote?.price?.toFixed(
+                    2
+                  )}, Category: ${category}`}
+                  placeholder={`Ask me anything about ${
+                    quote?.name || assetHelpers.formatSymbol(symbol)
+                  }...`}
+                  compact
+                />
+              </div>
             </div>
           </div>
         </div>
