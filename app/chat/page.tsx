@@ -419,22 +419,22 @@ function ChatContent() {
           {messages.length === 0 ? (
             <div className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 overflow-y-auto custom-scrollbar">
               <div className="max-w-3xl w-full text-center">
-                <div className="mb-6">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
+                  Your AI Investment Partner
+                </h1>
+                <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-4 md:mb-6">
+                  Ask me anything about markets, stocks, crypto, or investment strategies.
+                </p>
+                
+                <div className="mb-6 md:hidden">
                   <button
                     onClick={() => setShowConversations(true)}
-                    className="md:hidden mx-auto px-5 py-3 bg-slate-800/95 hover:bg-slate-700/95 text-white rounded-xl transition-all flex items-center gap-2.5 shadow-lg border border-slate-600/60 font-medium backdrop-blur-md"
+                    className="mx-auto px-5 py-3 bg-slate-800/95 hover:bg-slate-700/95 text-white rounded-xl transition-all flex items-center gap-2.5 shadow-lg border border-slate-600/60 font-medium backdrop-blur-md"
                   >
                     <Icon name="history" className="text-[20px]" />
                     View History
                   </button>
                 </div>
-                
-                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
-                  Your AI Investment Partner
-                </h1>
-                <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-6 md:mb-8">
-                  Ask me anything about markets, stocks, crypto, or investment strategies.
-                </p>
 
                 <div className="mt-6 md:mt-10 flex items-center justify-center">{" "}
                 <div className="relative w-full md:mx-auto md:max-w-3xl">
@@ -454,7 +454,7 @@ function ChatContent() {
                       }}
                     />
                     {!value && (
-                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-5 md:right-8 pointer-events-none text-white/60 text-base md:text-lg text-left whitespace-nowrap overflow-hidden">
+                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-5 md:right-8 pointer-events-none text-white/60 text-base md:text-lg text-left leading-relaxed">
                         <span>Ask anything about </span>
                         <span
                           key={placeholderIndex}
