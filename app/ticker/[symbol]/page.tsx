@@ -377,7 +377,8 @@ export default function TickerPage() {
           </div>
         </div>
       </div>
-      </div>
+    </div>
+    </div>
     </DashboardLayout>
   );
 }
