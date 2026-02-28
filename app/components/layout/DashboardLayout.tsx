@@ -11,18 +11,18 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({
   children,
   sidebarItems = [
-    { label: "Dashboard", href: "/", active: true },
+    { label: "Dashboard", href: "/dashboard", active: true },
     { label: "Chat", href: "/chat" },
   ],
 }: DashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen">
-      <aside className="w-16 md:hover:w-64 header hidden md:block sticky top-0 h-screen overflow-y-auto transition-all duration-300">
+    <div className="flex min-h-screen h-screen">
+      <aside className="w-16 md:hover:w-64 header hidden md:block sticky top-0 h-screen overflow-y-auto transition-all duration-300 flex-shrink-0">
         <Sidebar items={sidebarItems} />
       </aside>
-      <div className="flex-1 flex flex-col main-area">
+      <div className="flex-1 flex flex-col main-area min-w-0">
         <Header />
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
