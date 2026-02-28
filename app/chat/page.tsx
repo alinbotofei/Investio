@@ -417,8 +417,8 @@ function ChatContent() {
 
         <div className="flex-1 flex flex-col overflow-hidden h-full min-w-0">
           {messages.length === 0 ? (
-            <div className="flex-1 flex items-start sm:items-center justify-center px-4 sm:px-6 md:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar">
-              <div className="max-w-3xl w-full text-center pt-8 sm:pt-0">
+            <div className="flex-1 flex flex-col items-start sm:items-center justify-start sm:justify-center px-4 sm:px-6 md:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar min-h-0">
+              <div className="max-w-3xl w-full text-center pt-8 sm:pt-0 flex-shrink-0">
                 <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-2 sm:mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
                   Your AI Investment Partner
                 </h1>
@@ -601,7 +601,7 @@ function ChatContent() {
             </div>
             <div
               ref={messagesRef}
-              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 custom-scrollbar"
+              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 custom-scrollbar min-h-0"
               style={{
                 scrollBehavior: "smooth",
               }}

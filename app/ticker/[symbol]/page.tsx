@@ -118,7 +118,7 @@ export default function TickerPage() {
   if (initialLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
           <div className="text-center">
             <div className="relative w-20 h-20 mx-auto mb-6">
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-20 animate-ping"></div>
@@ -135,7 +135,7 @@ export default function TickerPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center h-full">
           <div className="text-center max-w-md">
             <Icon name="error_outline" className="text-red-400 text-5xl mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">
@@ -171,7 +171,9 @@ export default function TickerPage() {
         </div>
       )}
 
-      <div className="max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
+      <div className="flex flex-col h-full min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
         <button
           onClick={() => router.back()}
           className="mb-4 sm:mb-6 flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-lg transition-all group"
@@ -374,6 +376,7 @@ export default function TickerPage() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </DashboardLayout>
   );
