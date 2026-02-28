@@ -284,7 +284,7 @@ function ChatContent() {
                   <h3 className="text-xl font-bold text-white mb-2">Delete Conversation</h3>
                   {conversationToDelete && (
                     <p className="text-sm text-cyan-400/90 mb-3 italic">
-                      "{conversations.find(c => c.id === conversationToDelete)?.title || 'Untitled Conversation'}"
+                      &quot;{conversations.find(c => c.id === conversationToDelete)?.title || 'Untitled Conversation'}&quot;
                     </p>
                   )}
                   <p className="text-sm text-slate-300 leading-relaxed">
