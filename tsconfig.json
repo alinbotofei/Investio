@@ -38,6 +38,8 @@
   "include": [
     "next-env.d.ts",
     "app/**/*",
+    "lib/**/*",
+    "types/**/*",
     ".next/types/**/*.ts"
   ],
   "exclude": [

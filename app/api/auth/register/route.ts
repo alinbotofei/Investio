@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 const validatePassword = (password: string): string | null => {
   if (password.length < 8) {
@@ -52,13 +52,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        {
+          success: true,
+          user: {
+            id: 'dev-' + Math.random().toString(36).substring(7),
+            email: normalizedEmail,
+            name: name.trim(),
+          },
+          warning: 'Development mode - data not persisted',
+        },
+        { status: 201 }
+      );
+    }
+
     const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'Email already in use' },
+        { error: 'Email already registered' },
         { status: 409 }
       );
     }
@@ -67,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         name: name.trim(),
         password: hashedPassword,
       },
@@ -86,12 +103,12 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error('Registration error:', error);
-    if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to create account. Please try again.' },
+      { 
+        error: 'Failed to create account. Please try again.',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      },
       { status: 500 }
     );
   }

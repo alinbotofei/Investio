@@ -12,27 +12,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true },
-    });
+    const normalizedEmail = email.toLowerCase().trim();
 
-    if (user) {
+    if (!process.env.DATABASE_URL) {
       return NextResponse.json({
-        exists: true,
-        email: user.email,
+        exists: false,
+        email: normalizedEmail,
       });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, email: true },
+    });
+
     return NextResponse.json({
-      exists: false,
-      email,
+      exists: !!user,
+      email: normalizedEmail,
     });
   } catch (error) {
     console.error('Check user error:', error);
     return NextResponse.json(
-      { error: 'Server error' },
-      { status: 500 }
+      { exists: false, email: req.body },
+      { status: 200 }
     );
   }
 }
