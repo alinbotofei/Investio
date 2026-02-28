@@ -3,8 +3,7 @@
 import { useState, useEffect, memo } from "react";
 import Icon from "../../components/ui/Icon";
 import TickerCard from "./TickerCard";
-import { watchlistManager } from "@/app/lib/utils/watchlist";
-import { emitWatchlistUpdate } from "@/app/lib/utils/events";
+import { useWatchlist } from "@/app/contexts/WatchlistContext";
 import {
   marketService,
   type MarketOverviewData,
@@ -15,10 +14,10 @@ import type { AssetCategory } from "@/lib/types/assets";
 function MarketOverview() {
   const [data, setData] = useState<MarketOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [watchlist, setWatchlist] = useState<any[]>([]);
   const [watchlistFeedback, setWatchlistFeedback] = useState<string | null>(
     null
   );
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
 
   const [expandedSections, setExpandedSections] = useState({
     topMovers: true,
@@ -39,36 +38,33 @@ function MarketOverview() {
     };
 
     fetchData();
-    setWatchlist(watchlistManager.getWatchlist());
 
     const interval = setInterval(fetchData, 300000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAddToWatchlist = (symbol: string, category: AssetCategory) => {
-    const existing = watchlist.find((w) => w.symbol === symbol);
-    if (existing) {
-      watchlistManager.removeFromWatchlist(symbol);
-      setWatchlistFeedback(`${symbol} removed from watchlist`);
+  const handleAddToWatchlist = async (symbol: string, category: AssetCategory) => {
+    const inWatchlist = isInWatchlist(symbol);
+    let success = false;
+    
+    if (inWatchlist) {
+      success = await removeFromWatchlist(symbol);
+      if (success) {
+        setWatchlistFeedback(`${symbol} removed from watchlist`);
+      }
     } else {
-      watchlistManager.addToWatchlist({
-        symbol,
-        name: symbol,
-        category,
-      });
-      setWatchlistFeedback(`${symbol} added to watchlist`);
+      success = await addToWatchlist(symbol, category);
+      if (success) {
+        setWatchlistFeedback(`${symbol} added to watchlist`);
+      }
     }
-    setWatchlist(watchlistManager.getWatchlist());
 
-    emitWatchlistUpdate();
-
-    setTimeout(() => setWatchlistFeedback(null), 2000);
+    if (success) {
+      setTimeout(() => setWatchlistFeedback(null), 2000);
+    }
   };
 
-  const isInWatchlist = (symbol: string) => {
-    return watchlist.some((w) => w.symbol === symbol);
-  };
 
   const getTopMovers = (quotes: QuoteSimple[], limit: number = 6) => {
     return [...quotes]

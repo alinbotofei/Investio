@@ -34,7 +34,7 @@ export default function TickerCard({
       case "stock":
         return "from-blue-600 to-cyan-500";
       case "crypto":
-        return "from-orange-500 to-yellow-500";
+        return "from-cyan-600 to-blue-500";
     }
   };
 

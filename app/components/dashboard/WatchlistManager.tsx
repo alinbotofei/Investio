@@ -3,38 +3,26 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Icon from "../ui/Icon";
-import { watchlistManager, assetHelpers } from "@/app/lib/utils/watchlist";
+import { assetHelpers } from "@/app/lib/utils/watchlist";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
-import { WatchlistItem, AssetCategory } from "@/lib/types/assets";
+import { AssetCategory } from "@/lib/types/assets";
+import { useWatchlist } from "@/app/contexts/WatchlistContext";
 
 export default function WatchlistManager() {
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const { watchlist, loading, removeFromWatchlist } = useWatchlist();
   const [filter, setFilter] = useState<AssetCategory | "all">("all");
   const [isExpanded, setIsExpanded] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setWatchlist(watchlistManager.getWatchlist());
-
-    const handleWatchlistUpdate = () => {
-      setWatchlist(watchlistManager.getWatchlist());
-    };
-
-    window.addEventListener("watchlist-updated", handleWatchlistUpdate);
-    return () =>
-      window.removeEventListener("watchlist-updated", handleWatchlistUpdate);
-  }, []);
-
   const filteredWatchlist =
     filter === "all"
       ? watchlist
       : watchlist.filter((item) => item.category === filter);
 
-  const handleRemove = (symbol: string) => {
-    watchlistManager.removeFromWatchlist(symbol);
-    setWatchlist(watchlistManager.getWatchlist());
+  const handleRemove = async (symbol: string) => {
+    await removeFromWatchlist(symbol);
   };
 
   const scroll = (direction: "left" | "right") => {
@@ -129,7 +117,12 @@ export default function WatchlistManager() {
             </div>
           )}
 
-          {filteredWatchlist.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="animate-spin w-8 h-8 border-3 border-cyan-500 border-t-transparent rounded-full mb-2"></div>
+              <p className="text-sm text-slate-400">Loading watchlist...</p>
+            </div>
+          ) : filteredWatchlist.length === 0 ? (
             <div className="text-center py-6">
               <Icon
                 name="bookmark_border"
