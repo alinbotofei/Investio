@@ -24,7 +24,6 @@ function MarketOverview() {
     topMovers: true,
     stocks: true,
     crypto: true,
-    forex: true,
   });
 
   useEffect(() => {
@@ -90,7 +89,6 @@ function MarketOverview() {
     const allQuotes = [
       ...(data.stocks || []),
       ...(data.crypto || []),
-      ...(data.forex || []),
     ];
     const topMovers = getTopMovers(allQuotes, 6);
 
@@ -133,8 +131,6 @@ function MarketOverview() {
           {topMovers.map((quote) => {
             const category = quote.symbol.includes("BINANCE:")
               ? "crypto"
-              : quote.symbol.includes("OANDA:")
-              ? "forex"
               : "stock";
             return (
               <TickerCard
@@ -159,7 +155,7 @@ function MarketOverview() {
     gradient: string,
     quotes: QuoteSimple[],
     category: AssetCategory,
-    sectionKey: "stocks" | "crypto" | "forex"
+    sectionKey: "stocks" | "crypto"
   ) => (
     <section className="mb-4 sm:mb-5">
       <div
@@ -252,17 +248,6 @@ function MarketOverview() {
           data.crypto,
           "crypto",
           "crypto"
-        )}
-
-      {data?.forex &&
-        data.forex.length > 0 &&
-        renderSection(
-          "Forex",
-          "currency_exchange",
-          "from-green-600 to-emerald-500",
-          data.forex,
-          "forex",
-          "forex"
         )}
     </div>
   );

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Icon from "../ui/Icon";
 import { AssetCategory } from "@/lib/types/assets";
 import { assetHelpers, watchlistManager } from "@/app/lib/utils/watchlist";
-import { POPULAR_CRYPTO, POPULAR_FOREX } from "@/app/lib/constants";
+import { POPULAR_CRYPTO } from "@/app/lib/constants";
 
 interface AssetSuggestion {
   symbol: string;
@@ -41,14 +41,6 @@ export default function AssetExplorer() {
           category: "crypto" as const,
         }))
       );
-    } else {
-      setSuggestions(
-        POPULAR_FOREX.map((symbol) => ({
-          symbol,
-          name: symbol.replace("OANDA:", "").replace("_", "/"),
-          category: "forex" as const,
-        }))
-      );
     }
   }, [category]);
 
@@ -68,7 +60,7 @@ export default function AssetExplorer() {
       </div>
 
       <div className="flex gap-2">
-        {(["stock", "crypto", "forex"] as AssetCategory[]).map((cat) => (
+        {(["stock", "crypto"] as AssetCategory[]).map((cat) => (
           <button
             key={cat}
             onClick={() => setCategory(cat)}

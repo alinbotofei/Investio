@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { useState } from "react";
 import Icon from "@/app/components/ui/Icon";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
 import type { AssetCategory } from "@/lib/types/assets";
@@ -27,14 +27,14 @@ export default function TickerCard({
   onAddToWatchlist,
   inWatchlist,
 }: TickerCardProps) {
+  const [imageError, setImageError] = useState(false);
+
   const getCategoryColor = (cat: AssetCategory) => {
     switch (cat) {
       case "stock":
         return "from-blue-600 to-cyan-500";
       case "crypto":
         return "from-orange-500 to-yellow-500";
-      case "forex":
-        return "from-green-600 to-emerald-500";
     }
   };
 
@@ -50,7 +50,7 @@ export default function TickerCard({
   };
 
   const isPositive = quote.change >= 0;
-  const logoInfo = getIcon();
+  const logoInfo = imageError ? { type: "icon", value: "image" } : getIcon();
 
   return (
     <Link
@@ -69,19 +69,18 @@ export default function TickerCard({
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <div
               className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex-shrink-0 ${
-                logoInfo.type === "url"
+                logoInfo.type === "url" && !imageError
                   ? "bg-white/95"
                   : `bg-gradient-to-br ${getCategoryColor(category)}`
               } flex items-center justify-center shadow-md p-1.5`}
             >
-              {logoInfo.type === "url" ? (
-                <Image
+              {logoInfo.type === "url" && !imageError ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
                   src={logoInfo.value}
-                  alt={quote.symbol}
-                  width={40}
-                  height={40}
+                  alt={formatSymbol(quote.symbol)}
+                  onError={() => setImageError(true)}
                   className="w-full h-full object-contain rounded"
-                  unoptimized
                 />
               ) : (
                 <Icon
@@ -121,7 +120,7 @@ export default function TickerCard({
 
         <div className="mb-2">
           <div className="text-base sm:text-lg font-bold text-white leading-tight break-words">
-            ${quote.price.toFixed(category === "forex" ? 4 : 2)}
+            ${quote.price.toFixed(category === "crypto" ? 4 : 2)}
           </div>
         </div>
 

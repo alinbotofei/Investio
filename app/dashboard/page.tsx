@@ -17,7 +17,7 @@ function DashboardContent() {
   const placeholders = [
     "What are the top performing stocks today?",
     "Compare Bitcoin vs Ethereum performance",
-    "Analyze forex market trends",
+    "Analyze crypto market sentiment",
     "Should I invest in tech stocks?",
     "What's moving the market today?",
   ];

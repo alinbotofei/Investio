@@ -1,50 +1,64 @@
 import { prisma } from "@/lib/prisma";
 
 export async function addToWatchlist(userId: string, symbol: string, category: string) {
-  return await prisma.watchlist.upsert({
-    where: {
-      userId_symbol: {
+  try {
+    const watchlistItem = await prisma.watchlist.create({
+      data: {
         userId,
         symbol,
+        category,
       },
-    },
-    update: {
-      addedAt: new Date(),
-    },
-    create: {
-      userId,
-      symbol,
-      category,
-    },
-  });
+    });
+    return watchlistItem;
+  } catch (error) {
+    console.error('Error adding to watchlist:', error);
+    return null;
+  }
 }
 
 export async function removeFromWatchlist(userId: string, symbol: string) {
-  return await prisma.watchlist.delete({
-    where: {
-      userId_symbol: {
-        userId,
-        symbol,
+  try {
+    await prisma.watchlist.delete({
+      where: {
+        userId_symbol: {
+          userId,
+          symbol,
+        },
       },
-    },
-  });
+    });
+    return true;
+  } catch (error) {
+    console.error('Error removing from watchlist:', error);
+    return false;
+  }
 }
 
 export async function getUserWatchlist(userId: string) {
-  return await prisma.watchlist.findMany({
-    where: { userId },
-    orderBy: { addedAt: "desc" },
-  });
+  try {
+    const watchlist = await prisma.watchlist.findMany({
+      where: { userId },
+      orderBy: { addedAt: 'desc' },
+    });
+    return watchlist;
+  } catch (error) {
+    console.error('Error fetching watchlist:', error);
+    return [];
+  }
 }
 
 export async function isInWatchlist(userId: string, symbol: string) {
-  const item = await prisma.watchlist.findUnique({
-    where: {
-      userId_symbol: {
-        userId,
-        symbol,
+  try {
+    const item = await prisma.watchlist.findUnique({
+      where: {
+        userId_symbol: {
+          userId,
+          symbol,
+        },
       },
-    },
-  });
-  return !!item;
+    });
+    return !!item;
+  } catch (error) {
+    console.error('Error checking watchlist:', error);
+    return false;
+  }
 }

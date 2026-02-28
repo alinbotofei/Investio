@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import Icon from "../ui/Icon";
 import { watchlistManager, assetHelpers } from "@/app/lib/utils/watchlist";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
@@ -13,6 +12,7 @@ export default function WatchlistManager() {
   const [filter, setFilter] = useState<AssetCategory | "all">("all");
   const [isExpanded, setIsExpanded] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function WatchlistManager() {
               >
                 All
               </button>
-              {(["stock", "crypto", "forex"] as AssetCategory[]).map((cat) => (
+              {(["stock", "crypto"] as AssetCategory[]).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setFilter(cat)}
@@ -211,21 +211,25 @@ export default function WatchlistManager() {
                         <div className="flex items-center justify-between mb-1.5">
                           <div
                             className={`w-8 h-8 rounded-lg ${
-                              logoInfo.type === "url"
+                              logoInfo.type === "url" && !imageErrors[item.symbol]
                                 ? "bg-white/95"
                                 : `bg-gradient-to-br ${assetHelpers.getCategoryColor(
                                     item.category
                                   )}`
                             } flex items-center justify-center flex-shrink-0 shadow-md p-1`}
                           >
-                            {logoInfo.type === "url" ? (
-                              <Image
+                            {logoInfo.type === "url" && !imageErrors[item.symbol] ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
                                 src={logoInfo.value}
                                 alt={item.symbol}
-                                width={28}
-                                height={28}
+                                onError={() =>
+                                  setImageErrors((prev) => ({
+                                    ...prev,
+                                    [item.symbol]: true,
+                                  }))
+                                }
                                 className="w-full h-full object-contain rounded"
-                                unoptimized
                               />
                             ) : (
                               <Icon
