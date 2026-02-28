@@ -22,11 +22,12 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const isAuthPage = 
+        const isPublicPage = 
           req.nextUrl.pathname.startsWith('/login') ||
-          req.nextUrl.pathname.startsWith('/auth/signup');
+          req.nextUrl.pathname.startsWith('/auth/signup') ||
+          req.nextUrl.pathname.startsWith('/terms-condition');
 
-        if (isAuthPage) {
+        if (isPublicPage) {
           return true;
         }
 
