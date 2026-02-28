@@ -417,16 +417,16 @@ function ChatContent() {
 
         <div className="flex-1 flex flex-col overflow-hidden h-full min-w-0">
           {messages.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center px-4 sm:px-6 md:px-8 py-6 overflow-y-auto custom-scrollbar">
-              <div className="max-w-3xl w-full text-center">
-                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
+            <div className="flex-1 flex items-start sm:items-center justify-center px-4 sm:px-6 md:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar">
+              <div className="max-w-3xl w-full text-center pt-8 sm:pt-0">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-2 sm:mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
                   Your AI Investment Partner
                 </h1>
-                <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-4 md:mb-6">
+                <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-6">
                   Ask me anything about markets, stocks, crypto, or investment strategies.
                 </p>
                 
-                <div className="mb-6 md:hidden">
+                <div className="mb-4 sm:mb-6 md:hidden">
                   <button
                     onClick={() => setShowConversations(true)}
                     className="mx-auto px-5 py-3 bg-slate-800/95 hover:bg-slate-700/95 text-white rounded-xl transition-all flex items-center gap-2.5 shadow-lg border border-slate-600/60 font-medium backdrop-blur-md"
@@ -436,7 +436,7 @@ function ChatContent() {
                   </button>
                 </div>
 
-                <div className="mt-6 md:mt-10 flex items-center justify-center">{" "}
+                <div className="mt-4 sm:mt-6 md:mt-10 flex items-center justify-center">{" "}
                 <div className="relative w-full md:mx-auto md:max-w-3xl">
                   <div className="relative">
                     <textarea
