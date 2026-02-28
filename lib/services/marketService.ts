@@ -11,7 +11,6 @@ export interface QuoteSimple {
 export interface MarketOverviewData {
   stocks: QuoteSimple[];
   crypto: QuoteSimple[];
-  forex: QuoteSimple[];
   timestamp: number;
 }
 

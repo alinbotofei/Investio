@@ -28,18 +28,9 @@ export const POPULAR_CRYPTO = [
   "BINANCE:ADAUSDT",
 ];
 
-export const POPULAR_FOREX = [
-  "OANDA:EUR_USD",
-  "OANDA:GBP_USD",
-  "OANDA:USD_JPY",
-  "OANDA:USD_CHF",
-  "OANDA:AUD_USD",
-];
-
 export const CATEGORY_COLORS = {
   stock: "from-blue-600 to-cyan-500",
   crypto: "from-orange-500 to-yellow-500",
-  forex: "from-green-600 to-emerald-500",
 } as const;
 
 export const CHAT_PLACEHOLDERS = [

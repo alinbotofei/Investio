@@ -9,12 +9,6 @@ const CRYPTO = [
   "BINANCE:BNBUSDT",
   "BINANCE:SOLUSDT",
 ];
-const FOREX = [
-  "OANDA:EUR_USD",
-  "OANDA:GBP_USD",
-  "OANDA:USD_JPY",
-  "OANDA:AUD_USD",
-];
 
 interface QuoteSimple {
   symbol: string;
@@ -95,66 +89,6 @@ async function fetchCryptoQuote(symbol: string): Promise<QuoteSimple | null> {
   }
 }
 
-const FOREX_PAIRS: Record<string, { base: string; quote: string }> = {
-  "OANDA:EUR_USD": { base: "EUR", quote: "USD" },
-  "OANDA:GBP_USD": { base: "GBP", quote: "USD" },
-  "OANDA:USD_JPY": { base: "USD", quote: "JPY" },
-  "OANDA:AUD_USD": { base: "AUD", quote: "USD" },
-};
-
-interface ForexCache {
-  rates: Record<string, number>;
-  timestamp: number;
-}
-
-let forexCache: ForexCache | null = null;
-
-async function fetchForexQuote(symbol: string): Promise<QuoteSimple | null> {
-  try {
-    const pair = FOREX_PAIRS[symbol];
-    if (!pair) return null;
-
-    const now = Date.now();
-    if (!forexCache || now - forexCache.timestamp > 300000) {
-      const url = `https://api.exchangerate-api.com/v4/latest/USD`;
-      const res = await fetch(url, { next: { revalidate: 300 } });
-
-      if (!res.ok) return null;
-
-      const data = await res.json();
-      forexCache = {
-        rates: data.rates,
-        timestamp: now,
-      };
-    }
-
-    const { base, quote } = pair;
-
-    let rate: number;
-    if (base === "USD") {
-      rate = forexCache.rates[quote];
-    } else if (quote === "USD") {
-      rate = 1 / forexCache.rates[base];
-    } else {
-      // Cross rate: base/quote = (USD/quote) / (USD/base)
-      rate = forexCache.rates[quote] / forexCache.rates[base];
-    }
-
-    const changePercent = (Math.random() - 0.5) * 0.5; // +/- 0.25%
-    const change = rate * (changePercent / 100);
-
-    return {
-      symbol,
-      price: rate,
-      change,
-      changePercent,
-    };
-  } catch (error) {
-    console.error(`Error fetching forex ${symbol}:`, error);
-    return null;
-  }
-}
-
 async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -173,17 +107,9 @@ export async function GET() {
       Boolean
     ) as QuoteSimple[];
 
-    await delay(200);
-
-    const forexPromises = FOREX.map((s) => fetchForexQuote(s));
-    const forex = (await Promise.all(forexPromises)).filter(
-      Boolean
-    ) as QuoteSimple[];
-
     return NextResponse.json({
       stocks,
       crypto,
-      forex,
       timestamp: Date.now(),
     });
   } catch (error) {

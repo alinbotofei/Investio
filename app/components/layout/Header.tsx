@@ -5,6 +5,7 @@ import Icon from "../ui/Icon";
 import GlobalSearch from "../ui/GlobalSearch";
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 export default function Header() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,6 +20,10 @@ export default function Header() {
     } else {
       router.push("/chat");
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: true, callbackUrl: "/login" });
   };
 
   return (
@@ -65,6 +70,15 @@ export default function Header() {
           <div className="hidden md:block flex-1 max-w-md mx-4">
             <GlobalSearch />
           </div>
+
+          <button
+            onClick={handleSignOut}
+            className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/60 hover:bg-slate-600/70 text-slate-200 hover:text-white transition-all duration-200 font-medium text-sm border border-slate-600/50 hover:border-slate-500/70 backdrop-blur-sm shadow-lg hover:shadow-slate-900/20"
+            title="Sign out"
+          >
+            <Icon name="logout" className="text-[16px]" />
+            <span>Sign Out</span>
+          </button>
 
           <div className="w-10 md:hidden"></div>
         </div>
@@ -138,6 +152,19 @@ export default function Header() {
                 <Icon name="chat" />
                 <span className="font-semibold">Chat</span>
               </button>
+
+              <div className="border-t border-white/10 pt-4 mt-4">
+                <button
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    handleSignOut();
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-slate-200 hover:text-white bg-slate-700/40 hover:bg-slate-600/50 rounded-lg transition-all border border-slate-600/30 hover:border-slate-500/50"
+                >
+                  <Icon name="logout" />
+                  <span className="font-semibold">Sign Out</span>
+                </button>
+              </div>
             </nav>
           </aside>
         </div>

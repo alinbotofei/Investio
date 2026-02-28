@@ -1,4 +1,4 @@
-export type AssetCategory = "stock" | "crypto" | "forex";
+export type AssetCategory = "stock" | "crypto";
 
 export interface WatchlistItem {
   symbol: string;
@@ -32,10 +32,6 @@ export interface StockData extends BaseAssetData {
 
 export interface CryptoData extends BaseAssetData {
   category: "crypto";
-}
-
-export interface ForexData extends BaseAssetData {
-  category: "forex";
 }
 
 export interface AnalystRecommendation {

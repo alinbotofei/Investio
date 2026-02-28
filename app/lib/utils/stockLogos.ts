@@ -41,14 +41,10 @@ const CRYPTO_LOGOS: Record<string, string> = {
 };
 
 const FOREX_ICONS: Record<string, string> = {
-  "OANDA:EUR_USD": "euro",
-  "OANDA:GBP_USD": "currency_pound",
-  "OANDA:USD_JPY": "currency_yen",
-  "OANDA:AUD_USD": "attach_money",
-  EUR_USD: "euro",
-  GBP_USD: "currency_pound",
-  USD_JPY: "currency_yen",
-  AUD_USD: "attach_money",
+  "EUR/USD": "currency_exchange",
+  "GBP/USD": "currency_exchange",
+  "USD/JPY": "currency_exchange",
+  "USD/CHF": "currency_exchange",
 };
 
 export interface AssetLogoResult {

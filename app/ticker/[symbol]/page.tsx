@@ -39,8 +39,6 @@ export default function TickerPage() {
     const upperSymbol = symbol.toUpperCase();
     if (upperSymbol.includes("BINANCE:") || upperSymbol.includes("USDT")) {
       setCategory("crypto");
-    } else if (upperSymbol.includes("OANDA:") || upperSymbol.includes("/")) {
-      setCategory("forex");
     } else {
       setCategory("stock");
     }
@@ -57,24 +55,18 @@ export default function TickerPage() {
     const isValidCrypto =
       category === "crypto" &&
       (upperSymbol.includes("BINANCE:") || upperSymbol.includes("USDT"));
-    const isValidForex =
-      category === "forex" &&
-      (upperSymbol.includes("OANDA:") || upperSymbol.includes("/"));
     const isValidStock =
       category === "stock" &&
       !upperSymbol.includes("BINANCE:") &&
-      !upperSymbol.includes("OANDA:");
+      !upperSymbol.includes("USDT");
 
-    if (!isValidCrypto && !isValidForex && !isValidStock) {
+    if (!isValidCrypto && !isValidStock) {
       setError(`Invalid ${category} symbol format`);
       setInitialLoading(false);
       return;
     }
 
-    const isFirstLoad = !quote;
-    if (isFirstLoad) {
-      setInitialLoading(true);
-    }
+    setInitialLoading(true);
     setError(null);
 
     try {
@@ -94,7 +86,7 @@ export default function TickerPage() {
     } finally {
       setInitialLoading(false);
     }
-  }, [symbol, category, quote]);
+  }, [symbol, category]);
 
   useEffect(() => {
     loadData();
