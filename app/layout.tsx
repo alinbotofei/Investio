@@ -17,15 +17,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+        />
+      </head>
       <body
-        className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen"
+        className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen overflow-x-hidden"
         suppressHydrationWarning
+        style={{ scrollBehavior: 'smooth' }}
       >
         <AuthProvider>
-          <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=optional"
-          />
           {children}
         </AuthProvider>
       </body>
