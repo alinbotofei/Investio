@@ -132,7 +132,7 @@ export default function GlobalSearch() {
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full mt-2 w-full bg-slate-850/98 backdrop-blur-xl border border-slate-600/50 rounded-lg shadow-2xl max-h-96 overflow-hidden z-50 animate-in fade-in duration-150">
+        <div className="absolute top-full mt-2 w-full bg-slate-900/98 backdrop-blur-xl border border-slate-600/60 rounded-lg shadow-2xl max-h-96 overflow-hidden z-50 animate-in fade-in duration-150">
           <div className="overflow-y-auto max-h-96 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {results.map((result, index) => (
               <button
@@ -140,8 +140,8 @@ export default function GlobalSearch() {
                 onClick={() => handleSelect(result)}
                 className={`w-full px-4 py-3 flex items-center gap-3 transition-all duration-150 text-left border-b border-slate-700/40 last:border-0 group ${
                   index === selectedIndex
-                    ? "bg-gradient-to-r from-cyan-500/15 to-blue-500/15 border-l-2 border-l-cyan-400"
-                    : "hover:bg-slate-800/50"
+                    ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-l-2 border-l-cyan-400"
+                    : "hover:bg-slate-800/70"
                 }`}
               >
                 <div
@@ -176,7 +176,7 @@ export default function GlobalSearch() {
       )}
 
       {isOpen && query && results.length === 0 && !loading && (
-        <div className="absolute top-full mt-2 w-full bg-slate-850/98 backdrop-blur-xl border border-slate-600/50 rounded-lg shadow-2xl p-8 z-50 animate-in fade-in duration-150">
+        <div className="absolute top-full mt-2 w-full bg-slate-900/98 backdrop-blur-xl border border-slate-600/60 rounded-lg shadow-2xl p-8 z-50 animate-in fade-in duration-150">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-slate-800/50 flex items-center justify-center">
               <Icon name="search_off" className="text-slate-500 text-[32px]" />
