@@ -17,9 +17,8 @@ export async function GET(
     const decodedSymbol = decodeURIComponent(symbol);
     const upperSymbol = decodedSymbol.toUpperCase();
 
-    const inferCategory = (sym: string): "stock" | "crypto" | "forex" => {
+    const inferCategory = (sym: string): "stock" | "crypto" => {
       if (sym.includes("BINANCE:") || sym.includes("USDT")) return "crypto";
-      if (sym.includes("OANDA:") || sym.includes("/")) return "forex";
       return "stock";
     };
 
@@ -33,16 +32,10 @@ export async function GET(
                 request.nextUrl.origin
               }/api/stocks/quote?symbol=${encodeURIComponent(decodedSymbol)}`
             ).then((r) => (r.ok ? r.json() : null))
-          : category === "crypto"
-          ? fetch(
-              `${
-                request.nextUrl.origin
-              }/api/crypto/quote?symbol=${encodeURIComponent(decodedSymbol)}`
-            ).then((r) => (r.ok ? r.json() : null))
           : fetch(
               `${
                 request.nextUrl.origin
-              }/api/forex/quote?symbol=${encodeURIComponent(decodedSymbol)}`
+              }/api/crypto/quote?symbol=${encodeURIComponent(decodedSymbol)}`
             ).then((r) => (r.ok ? r.json() : null)),
 
         category === "stock"

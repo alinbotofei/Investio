@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [stocksRes, cryptoRes, forexRes] = await Promise.all([
+    const [stocksRes, cryptoRes] = await Promise.all([
       fetch(
         `${BASE_URL}/search?q=${encodeURIComponent(
           query
@@ -28,13 +28,11 @@ export async function GET(request: NextRequest) {
       fetch(
         `${BASE_URL}/crypto/symbol?exchange=binance&token=${FINNHUB_API_KEY}`
       ),
-      fetch(`${BASE_URL}/forex/symbol?exchange=oanda&token=${FINNHUB_API_KEY}`),
     ]);
 
-    const [stocks, cryptoAll, forexAll] = await Promise.all([
+    const [stocks, cryptoAll] = await Promise.all([
       stocksRes.ok ? stocksRes.json() : { result: [] },
       cryptoRes.ok ? cryptoRes.json() : [],
-      forexRes.ok ? forexRes.json() : [],
     ]);
 
     const results = [];
@@ -62,19 +60,6 @@ export async function GET(request: NextRequest) {
         symbol: item.symbol,
         name: item.description,
         category: "crypto" as const,
-      }))
-    );
-
-    const forexFiltered = forexAll
-      .filter((item: any) =>
-        item.description.toLowerCase().includes(query.toLowerCase())
-      )
-      .slice(0, 5);
-    results.push(
-      ...forexFiltered.map((item: any) => ({
-        symbol: item.displaySymbol,
-        name: item.description,
-        category: "forex" as const,
       }))
     );
 
