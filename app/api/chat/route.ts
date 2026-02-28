@@ -1,31 +1,46 @@
 import { NextRequest } from "next/server";
+import { getServerSession } from "next-auth";
+import { conversationService } from "@/lib/services/conversationService";
+import { getUserIdFromEmail } from "@/lib/services/userService";
 
 const API_CONFIG = {
   OPENAI_MODEL: "gpt-4-turbo-preview",
-  MAX_TOKENS: 2048,
-  TEMPERATURE: 0.7,
+  MAX_TOKENS: 1500,
+  TEMPERATURE: 0.6,
 } as const;
 
-const INVESTIO_PROMPT = `You are Investio, a friendly and knowledgeable financial assistant.
+const INVESTIO_PROMPT = `You are Investio, an expert investment assistant specializing in financial markets, stocks, cryptocurrencies, and portfolio management.
 
-Personality:
-- Clear and professional, but warm and conversational  
-- Helpful without being pushy
-- Honest about uncertainties
-- Concise and to the point
+Core principles:
+- Provide clear, actionable financial insights
+- Use data-driven analysis when discussing specific assets
+- Structure responses with markdown (bold, lists, tables)
+- Be concise and professional
+- Acknowledge limitations and uncertainties
+- Never guarantee returns or provide financial advice as a licensed advisor
+- Focus on education and information
 
-Guidelines:
-- Use markdown for better readability (**bold**, lists, tables, code blocks)
-- Structure responses clearly
-- Provide balanced insights
-- Be transparent about data limitations
-- Never guarantee returns
+Response guidelines:
+- For stocks/crypto: provide market context, recent trends, key metrics
+- For portfolio discussions: discuss diversification, risk management, asset allocation
+- For general questions: educate on investment concepts
+- Keep responses focused and under 300 words unless detailed analysis is requested
 
-Keep it focused and helpful.`;
+You help users make informed investment decisions through education and analysis.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const userId = await getUserIdFromEmail(session.user.email);
+    if (!userId) {
+      return new Response("User not found", { status: 404 });
+    }
+
+    const { message, conversationId, history } = await request.json();
 
     if (!message) {
       return new Response("Missing message", { status: 400 });
@@ -42,9 +57,26 @@ export async function POST(request: NextRequest) {
       ? message.replace(/\[Stock: [A-Z]+\]\s*/, "")
       : message;
 
+    const userName = session.user.name || "there";
     const systemContext = stockSymbol
-      ? `${INVESTIO_PROMPT}\n\nContext: User is asking about ${stockSymbol}. Provide specific insights.`
-      : INVESTIO_PROMPT;
+      ? `${INVESTIO_PROMPT}\n\nUser: ${userName}\nContext: User is asking about ${stockSymbol}. Provide specific insights about this asset.`
+      : `${INVESTIO_PROMPT}\n\nUser: ${userName}`;
+
+    const messages: Array<{ role: string; content: string }> = [
+      { role: "system", content: systemContext },
+    ];
+
+    if (history && Array.isArray(history) && history.length > 0) {
+      const recentHistory = history.slice(-6);
+      recentHistory.forEach((msg: { role: string; text: string }) => {
+        messages.push({ role: msg.role, content: msg.text });
+      });
+    }
+
+    messages.push({ role: "user", content: userMessage });
+
+    let fullResponse = "";
+    let currentConversationId = conversationId;
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -60,10 +92,7 @@ export async function POST(request: NextRequest) {
               },
               body: JSON.stringify({
                 model: API_CONFIG.OPENAI_MODEL,
-                messages: [
-                  { role: "system", content: systemContext },
-                  { role: "user", content: userMessage },
-                ],
+                messages,
                 max_tokens: API_CONFIG.MAX_TOKENS,
                 temperature: API_CONFIG.TEMPERATURE,
                 stream: true,
@@ -110,15 +139,45 @@ export async function POST(request: NextRequest) {
                   const content = json.choices?.[0]?.delta?.content;
 
                   if (content) {
+                    fullResponse += content;
                     controller.enqueue(
                       encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
                     );
                   }
                 } catch (e) {
-                  // Skip invalid JSON
+                  
                 }
               }
             }
+          }
+
+          if (fullResponse) {
+            if (!currentConversationId) {
+              const firstWords = userMessage.split(" ").slice(0, 6).join(" ");
+              const title = firstWords.length > 30 ? firstWords.slice(0, 30) + "..." : firstWords;
+              const newConversation = await conversationService.createConversation(
+                userId,
+                title
+              );
+              currentConversationId = newConversation.id;
+
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({ conversationId: currentConversationId })}\n\n`
+                )
+              );
+            }
+
+            await conversationService.addMessage(
+              currentConversationId,
+              "user",
+              userMessage
+            );
+            await conversationService.addMessage(
+              currentConversationId,
+              "assistant",
+              fullResponse
+            );
           }
 
           controller.close();
