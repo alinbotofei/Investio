@@ -5,8 +5,9 @@ import { getUserIdFromEmail } from "@/lib/services/userService";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,7 +19,7 @@ export async function GET(
   }
 
   const conversation = await conversationService.getConversationById(
-    params.id,
+    id,
     userId
   );
 
@@ -31,8 +32,9 @@ export async function GET(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -43,14 +45,15 @@ export async function DELETE(
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  await conversationService.deleteConversation(params.id, userId);
+  await conversationService.deleteConversation(id, userId);
   return NextResponse.json({ success: true });
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,7 +67,7 @@ export async function PATCH(
   const body = await request.json();
   const { title } = body;
   await conversationService.updateConversationTitle(
-    params.id,
+    id,
     userId,
     title
   );
