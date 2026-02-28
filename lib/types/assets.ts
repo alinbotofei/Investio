@@ -2,7 +2,7 @@ export type AssetCategory = "stock" | "crypto";
 
 export interface WatchlistItem {
   symbol: string;
-  name: string;
+  name?: string;
   category: AssetCategory;
   addedAt: number;
 }

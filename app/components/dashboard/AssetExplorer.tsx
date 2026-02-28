@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Icon from "../ui/Icon";
 import { AssetCategory } from "@/lib/types/assets";
-import { assetHelpers, watchlistManager } from "@/app/lib/utils/watchlist";
+import { assetHelpers } from "@/app/lib/utils/watchlist";
+import { useWatchlist } from "@/app/contexts/WatchlistContext";
 import { POPULAR_CRYPTO } from "@/app/lib/constants";
 
 interface AssetSuggestion {
@@ -23,12 +24,7 @@ const STOCK_SUGGESTIONS: AssetSuggestion[] = [
 export default function AssetExplorer() {
   const [category, setCategory] = useState<AssetCategory>("stock");
   const [suggestions, setSuggestions] = useState<AssetSuggestion[]>([]);
-  const [watchlist, setWatchlist] = useState<string[]>([]);
-
-  useEffect(() => {
-    const wl = watchlistManager.getWatchlist();
-    setWatchlist(wl.map((item) => item.symbol));
-  }, []);
+  const { addToWatchlist, isInWatchlist } = useWatchlist();
 
   useEffect(() => {
     if (category === "stock") {
@@ -44,13 +40,9 @@ export default function AssetExplorer() {
     }
   }, [category]);
 
-  const handleAdd = (suggestion: AssetSuggestion) => {
-    watchlistManager.addToWatchlist(suggestion);
-    const wl = watchlistManager.getWatchlist();
-    setWatchlist(wl.map((item) => item.symbol));
+  const handleAdd = async (suggestion: AssetSuggestion) => {
+    await addToWatchlist(suggestion.symbol, suggestion.category);
   };
-
-  const isInWatchlist = (symbol: string) => watchlist.includes(symbol);
 
   return (
     <div className="space-y-4">

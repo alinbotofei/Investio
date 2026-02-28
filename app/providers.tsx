@@ -1,6 +1,7 @@
 'use client';
 
 import { SessionProvider } from 'next-auth/react';
+import { WatchlistProvider } from './contexts/WatchlistContext';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +9,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refetchInterval={0}
       refetchOnWindowFocus={false}
     >
-      {children}
+      <WatchlistProvider>
+        {children}
+      </WatchlistProvider>
     </SessionProvider>
   );
 }
