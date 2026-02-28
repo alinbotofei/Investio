@@ -7,6 +7,7 @@ yarn-error.log*
 # Next.js
 .next/
 out/
+*.tsbuildinfo
 
 # Build output
 build/

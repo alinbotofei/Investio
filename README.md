@@ -1,45 +1,36 @@
 # Investio
 
-## Project Overview
+Modern investment dashboard with real-time market data, portfolio tracking, and AI-powered analysis.
 
-Investio is a modern investment platform designed to provide real-time market intelligence and portfolio management capabilities. The platform combines live market data from global exchanges with AI-powered analysis to help users make informed investment decisions.
+## Features
 
-The application addresses the need for a unified dashboard where investors can track stocks, cryptocurrencies, and receive intelligent insights through a conversational AI interface.
-
-## Key Features
-
-- Real-time market data integration for stocks and cryptocurrencies
-- AI-powered chat assistant for market analysis and investment queries
-- Interactive charting and technical indicators
+- Real-time stock and cryptocurrency market data
+- AI chat assistant for market analysis
+- Interactive charts and technical indicators
 - Portfolio tracking and watchlist management
-- Secure user authentication and session management
-- Responsive design optimized for desktop and mobile devices
-- Advanced search functionality across multiple asset classes
+- Secure authentication with NextAuth
+- Responsive design for desktop and mobile
+- Multi-asset search across stocks and crypto
 
 ## Technology Stack
 
 ### Core Framework
-- Next.js 15 (App Router) - React framework with server-side rendering
-- React 19 - UI component library
-- TypeScript - Type-safe development
+- Next.js 15 (App Router)
+- React 19
+- TypeScript
 
 ### Backend & Database
-- PostgreSQL - Relational database
-- Prisma ORM - Database toolkit and migrations
-- NextAuth.js - Authentication and session management
+- PostgreSQL
+- Prisma ORM
+- NextAuth.js
 
 ### Styling & UI
-- Tailwind CSS - Utility-first CSS framework
-- Custom components with modern design patterns
+- Tailwind CSS
 
 ### APIs & Integrations
-- Finnhub API - Stock market data and financial information
-- CoinGecko API - Cryptocurrency market data
-- OpenAI API - AI chat assistant functionality
-
-### Deployment
-- Vercel - Serverless deployment platform
-- Edge functions for optimal performance
+- Finnhub API (Stock market data)
+- CoinGecko API (Cryptocurrency data)
+- OpenAI API (Chat assistant)
 
 ## Getting Started
 
