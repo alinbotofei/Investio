@@ -454,11 +454,11 @@ function ChatContent() {
                       }}
                     />
                     {!value && (
-                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-5 md:right-8 pointer-events-none text-white/60 text-base md:text-lg text-left">
+                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-16 pointer-events-none text-white/60 text-base md:text-lg text-left">
                         <span>Ask anything about </span>
                         <span
                           key={placeholderIndex}
-                          className="inline-block"
+                          className="inline"
                           style={{
                             animation:
                               "placeholderFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
