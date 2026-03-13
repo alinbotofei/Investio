@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import {
   createChart,
   IChartApi,
+  ISeriesApi,
   ColorType,
   CrosshairMode,
   LineStyle,
@@ -78,8 +79,7 @@ export default function TradingChart({
 }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef     = useRef<IChartApi | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const seriesRef    = useRef<any>(null);
+  const seriesRef    = useRef<ISeriesApi<"Candlestick"> | ISeriesApi<"Area"> | null>(null);
   const candlesRef   = useRef<{ ts: number; o: number; h: number; l: number; c: number; v: number }[]>([]);
 
   const [timeframe,    setTimeframe]    = useState<Timeframe>("1M");
