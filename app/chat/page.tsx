@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Icon from "../components/ui/Icon";
+import AnimatedPlaceholder from "../components/ui/AnimatedPlaceholder";
 import { Message } from "../lib/types";
 import { useConversations } from "../hooks/useConversations";
 import {
@@ -26,7 +27,6 @@ function ChatContent() {
   const [value, setValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [showConversations, setShowConversations] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -67,7 +67,7 @@ function ChatContent() {
 
   useEffect(() => {
     if (!userScrolledRef.current && messages.length > 0) {
-      smoothScrollToBottom(messagesRef.current);
+      smoothScrollToBottom(messagesRef.current, true);
     }
   }, [messages]);
 
@@ -77,13 +77,6 @@ function ChatContent() {
     ta.style.height = "auto";
     ta.style.height = `${Math.min(140, ta.scrollHeight)}px`;
   }, [value]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % CHAT_PLACEHOLDERS.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -149,7 +142,6 @@ function ChatContent() {
   async function handleSend(messageText?: string) {
     const textToSend = messageText || value.trim();
     if (!textToSend) return;
-
     userScrolledRef.current = false;
 
     const id = String(Date.now());
@@ -266,12 +258,7 @@ function ChatContent() {
       )}
 
       <div className="w-full h-full flex bg-transparent overflow-hidden relative">
-        {showConversations && (
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
-            onClick={() => setShowConversations(false)}
-          />
-        )}
+
 
         {showDeleteModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center p-4">
@@ -314,106 +301,80 @@ function ChatContent() {
           </div>
         )}
         
-        <aside
-          className={`fixed md:relative top-0 left-0 h-full md:h-full w-80 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-700/50 z-50 transform transition-transform duration-300 flex flex-col shadow-2xl flex-shrink-0 ${
-            showConversations ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          }`}
-        >
-          <div className="p-5 border-b border-slate-700/30 flex items-center justify-between bg-gradient-to-r from-blue-600/10 to-cyan-500/10 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Icon name="chat_bubble" className="text-cyan-400 text-[22px]" />
-              <h2 className="text-lg font-bold text-white">Chat History</h2>
-            </div>
-            <button
-              onClick={() => setShowConversations(false)}
-              className="md:hidden text-slate-400 hover:text-white transition"
-            >
-              <Icon name="close" className="text-[20px]" />
-            </button>
-          </div>
-          
-          <button
-            onClick={startNewConversation}
-            className="m-4 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:scale-[1.02] transition-all shadow-lg hover:shadow-cyan-500/30 flex items-center justify-center gap-2 font-semibold flex-shrink-0"
+        {showConversations && (
+          <div
+            className="fixed inset-0 z-40 flex items-start justify-end pt-14"
+            onClick={() => setShowConversations(false)}
           >
-            <Icon name="add_circle" className="text-[22px]" />
-            New Conversation
-          </button>
-
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 custom-scrollbar min-h-0">
-            {conversationsLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4">
-                <div className="animate-spin w-10 h-10 border-3 border-cyan-500 border-t-transparent rounded-full mb-3"></div>
-                <p className="text-sm text-slate-400">Loading conversations...</p>
-              </div>
-            ) : conversationsError ? (
-              <div className="text-center py-8 px-4">
-                <Icon name="error_outline" className="text-red-400 text-[40px] mx-auto mb-3" />
-                <p className="text-sm text-red-400 mb-2">{conversationsError}</p>
+            <div
+              className="relative mr-2 mt-1 w-72 max-h-[calc(100dvh-80px)] bg-slate-900/95 backdrop-blur-md border border-slate-700/60 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/40">
+                <div className="flex items-center gap-2">
+                  <Icon name="history" className="text-cyan-400 text-[18px]" />
+                  <span className="text-sm font-semibold text-white">History</span>
+                  {conversations.length > 0 && (
+                    <span className="text-xs bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded-full">{conversations.length}</span>
+                  )}
+                </div>
                 <button
-                  onClick={loadConversations}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 underline"
+                  onClick={startNewConversation}
+                  className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 px-2.5 py-1.5 rounded-lg transition"
                 >
-                  Try again
+                  <Icon name="add" className="text-[14px]" />
+                  New
                 </button>
               </div>
-            ) : conversations.length === 0 ? (
-              <div className="text-center py-8 px-4">
-                <Icon name="chat_bubble_outline" className="text-slate-600 text-[40px] mx-auto mb-3" />
-                <p className="text-sm text-slate-500">No conversations yet</p>
-                <p className="text-xs text-slate-600 mt-1">Start chatting to create your first conversation</p>
-              </div>
-            ) : (
-              conversations.map((conv) => {
-                const lastMessage = conv.messages?.[0];
-                const preview = lastMessage?.text.slice(0, 60) || "New conversation";
-                const isActive = conv.id === currentConversationId;
-                
-                return (
-                  <div key={conv.id} className="relative group">
-                    <button
-                      onClick={() => loadConversation(conv.id)}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/50 shadow-lg shadow-blue-500/10"
-                          : "bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/30 hover:border-slate-600/50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2 mb-2">
-                        <Icon name="chat" className={`text-[16px] mt-0.5 ${
-                          isActive ? "text-cyan-400" : "text-slate-500"
-                        }`} />
-                        <h3 className="text-sm font-semibold text-white truncate flex-1">
-                          {conv.title || "Untitled Conversation"}
-                        </h3>
-                      </div>
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-2">{preview}...</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-slate-500">
-                          {new Date(conv.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
-                        {isActive && (
-                          <span className="text-xs text-cyan-400 font-medium">Active</span>
-                        )}
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConversationToDelete(conv.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-red-500/50 rounded-lg"
-                      title="Delete conversation"
-                    >
-                      <Icon name="delete" className="text-red-400 hover:text-red-300 text-[16px]" />
-                    </button>
+              {/* Conversation list */}
+              <div className="flex-1 overflow-y-auto py-2 px-2 space-y-1 custom-scrollbar">
+                {conversationsLoading ? (
+                  <div className="flex items-center justify-center py-8 gap-2 text-slate-400 text-sm">
+                    <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                    Loading...
                   </div>
-                );
-              })
-            )}
+                ) : conversationsError ? (
+                  <div className="text-center py-6 px-3">
+                    <p className="text-xs text-red-400 mb-2">{conversationsError}</p>
+                    <button onClick={loadConversations} className="text-xs text-cyan-400 hover:underline">Retry</button>
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="text-center py-8 px-3">
+                    <Icon name="chat_bubble_outline" className="text-slate-600 text-[32px] mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">No conversations yet</p>
+                  </div>
+                ) : (
+                  conversations.map((conv) => {
+                    const preview = conv.messages?.[0]?.text.slice(0, 50) || "New conversation";
+                    const isActive = conv.id === currentConversationId;
+                    return (
+                      <div key={conv.id} className="relative group">
+                        <button
+                          onClick={() => { loadConversation(conv.id); setShowConversations(false); }}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl transition-all ${
+                            isActive
+                              ? "bg-cyan-500/15 border border-cyan-500/40"
+                              : "hover:bg-slate-800/70 border border-transparent hover:border-slate-700/50"
+                          }`}
+                        >
+                          <p className="text-xs font-medium text-white truncate">{conv.title || "Untitled"}</p>
+                          <p className="text-xs text-slate-500 truncate mt-0.5">{preview}...</p>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConversationToDelete(conv.id); setShowDeleteModal(true); }}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/30 rounded-lg transition"
+                        >
+                          <Icon name="delete" className="text-red-400 text-[14px]" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
-        </aside>
+        )}
 
         <div className="flex-1 flex flex-col overflow-hidden h-full min-w-0">
           {messages.length === 0 ? (
@@ -426,13 +387,16 @@ function ChatContent() {
                   Ask me anything about markets, stocks, crypto, or investment strategies.
                 </p>
                 
-                <div className="mb-4 sm:mb-6 md:hidden">
+                <div className="mb-4 sm:mb-6">
                   <button
                     onClick={() => setShowConversations(true)}
-                    className="mx-auto px-5 py-3 bg-slate-800/95 hover:bg-slate-700/95 text-white rounded-xl transition-all flex items-center gap-2.5 shadow-lg border border-slate-600/60 font-medium backdrop-blur-md"
+                    className="mx-auto px-4 py-2 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white rounded-xl transition-all flex items-center gap-2 shadow-md border border-slate-700/50 text-sm font-medium backdrop-blur-md"
                   >
-                    <Icon name="history" className="text-[20px]" />
-                    View History
+                    <Icon name="history" className="text-[18px] text-slate-400" />
+                    History
+                    {conversations.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 bg-slate-700 rounded-md text-xs text-slate-300">{conversations.length}</span>
+                    )}
                   </button>
                 </div>
 
@@ -455,17 +419,12 @@ function ChatContent() {
                     />
                     {!value && (
                       <div className="absolute left-4 md:left-6 top-4 md:top-6 right-16 pointer-events-none text-white/60 text-base text-left">
-                        <span>Ask anything about </span>
-                        <span
-                          key={placeholderIndex}
-                          className="inline placeholder-animated"
-                          style={{
-                            animation:
-                              "placeholderFade 3.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
-                          }}
-                        >
-                          {CHAT_PLACEHOLDERS[placeholderIndex]}...
-                        </span>
+                        <AnimatedPlaceholder
+                          placeholders={CHAT_PLACEHOLDERS.map((p) => `Ask anything about ${p}...`)}
+                          typingSpeed={50}
+                          deletingSpeed={25}
+                          pauseAfterTyping={2200}
+                        />
                       </div>
                     )}
                   </div>
@@ -581,22 +540,22 @@ function ChatContent() {
           </div>
         ) : (
           <>
-            <div className="p-3 md:p-4 border-b border-slate-700/30 flex items-center gap-3 bg-gradient-to-r from-slate-900/50 to-slate-800/30 backdrop-blur-sm flex-shrink-0">
+            <div className="px-4 py-2.5 border-b border-slate-700/30 flex items-center gap-2 bg-gradient-to-r from-slate-900/60 to-slate-800/40 backdrop-blur-sm flex-shrink-0">
               <button
                 onClick={() => setShowConversations(true)}
-                className="md:hidden p-2 hover:bg-slate-800 rounded-lg transition-all"
-                title="View conversations"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition-all text-xs font-medium border border-slate-700/40 hover:border-slate-600/60"
               >
-                <Icon name="menu" className="text-white text-[20px]" />
+                <Icon name="history" className="text-[16px]" />
+                <span className="hidden sm:inline">History</span>
+                {conversations.length > 0 && <span className="text-[10px] text-slate-500">({conversations.length})</span>}
               </button>
               <div className="flex-1" />
               <button
                 onClick={startNewConversation}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-800/60 rounded-lg transition-all text-cyan-400 hover:text-cyan-300"
-                title="New conversation"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-blue-600/80 to-cyan-500/80 hover:from-blue-600 hover:to-cyan-500 text-white rounded-lg transition-all text-xs font-semibold shadow-sm"
               >
-                <Icon name="add_circle" className="text-[20px]" />
-                <span className="text-sm font-medium hidden sm:inline">New Chat</span>
+                <Icon name="add" className="text-[16px]" />
+                <span>New Chat</span>
               </button>
             </div>
             <div
