@@ -90,7 +90,7 @@ export default function Header() {
           onClick={() => setSidebarOpen(false)}
         >
           <aside
-            className="fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl transform transition-transform duration-300 ease-out overflow-y-auto"
+            className="fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl transform transition-transform duration-150 ease-out overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-gradient-to-b from-slate-900 to-slate-900/95 backdrop-blur-sm p-6 border-b border-white/5 z-10">

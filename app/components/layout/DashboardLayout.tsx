@@ -29,7 +29,7 @@ export default function DashboardLayout({
   ];
   return (
     <div className="flex min-h-screen h-screen">
-      <aside className="w-16 md:hover:w-64 header hidden md:block sticky top-0 h-screen overflow-y-auto transition-all duration-300 flex-shrink-0">
+      <aside className="w-16 md:hover:w-64 header hidden md:block sticky top-0 h-screen overflow-y-auto transition-all duration-200 flex-shrink-0">
         <Sidebar items={resolvedItems} />
       </aside>
       <div className="flex-1 flex flex-col main-area min-w-0">

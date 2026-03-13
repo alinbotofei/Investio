@@ -230,7 +230,7 @@ export default function TickerPage() {
             </div>
             <button
               onClick={toggleWatchlist}
-              className={`group/watch relative px-3 py-2 rounded-xl transition-all duration-300 flex-shrink-0 border flex items-center gap-2 ${
+              className={`group/watch relative px-3 py-2 rounded-xl transition-all duration-150 flex-shrink-0 border flex items-center gap-2 ${
                 inWatchlist
                   ? "bg-gradient-to-br from-cyan-500 to-blue-600 border-cyan-400/60 shadow-[0_0_0_2px_rgba(6,182,212,0.25),0_6px_18px_-4px_rgba(37,99,235,0.45)] hover:shadow-[0_0_0_3px_rgba(6,182,212,0.35),0_8px_24px_-4px_rgba(37,99,235,0.6)] hover:scale-105"
                   : "bg-slate-800/90 border-slate-500/70 border-dashed hover:border-cyan-400/50 hover:bg-slate-700/80 hover:scale-105"
@@ -239,7 +239,7 @@ export default function TickerPage() {
             >
               <Icon
                 name={inWatchlist ? "bookmark" : "bookmark_add"}
-                className={`text-[20px] sm:text-[22px] leading-none transition-all duration-300 ${
+                className={`text-[20px] sm:text-[22px] leading-none transition-all duration-150 ${
                   inWatchlist ? "text-white" : "text-slate-300 group-hover/watch:text-cyan-400"
                 }`}
               />

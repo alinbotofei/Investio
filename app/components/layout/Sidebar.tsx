@@ -62,7 +62,7 @@ export default function Sidebar({ items }: SidebarProps) {
               className="text-[20px] text-white/70 flex-shrink-0"
             />
             <span
-              className={`text-sm whitespace-nowrap transition-all duration-300 overflow-hidden ${
+              className={`text-sm whitespace-nowrap transition-all duration-200 overflow-hidden ${
                 isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
               }`}
             >

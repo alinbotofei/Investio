@@ -118,7 +118,7 @@ function MarketOverview() {
           </button>
         </div>
         <div
-          className={`grid gap-2 sm:gap-2.5 md:gap-3 transition-all duration-300 ease-in-out overflow-hidden ${
+          className={`grid gap-2 sm:gap-2.5 md:gap-3 transition-all duration-150 ease-in-out overflow-hidden ${
             expandedSections.topMovers
               ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 opacity-100 max-h-[3000px]"
               : "grid-cols-1 opacity-0 max-h-0"
