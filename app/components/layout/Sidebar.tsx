@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Icon from "../ui/Icon";
 import { NavItem } from "../../lib/types";
+import { emitChatReset } from "../../lib/utils/events";
 
 interface SidebarProps {
   items: NavItem[];
@@ -11,6 +13,7 @@ interface SidebarProps {
 
 export default function Sidebar({ items }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const pathname = usePathname();
 
   const iconFor = (label: string) => {
     if (label.toLowerCase().includes("dash")) return "dashboard";
@@ -50,6 +53,13 @@ export default function Sidebar({ items }: SidebarProps) {
             key={item.label}
             href={item.href}
             prefetch={true}
+            onClick={(e) => {
+              // If clicking the already-active /chat link, reset chat to landing state
+              if (item.href === "/chat" && pathname === "/chat") {
+                e.preventDefault();
+                emitChatReset();
+              }
+            }}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-100 relative group/item overflow-hidden ${
               item.active
                 ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/20 text-white"

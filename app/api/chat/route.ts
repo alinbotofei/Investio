@@ -4,7 +4,7 @@ import { conversationService } from "@/lib/services/conversationService";
 import { getUserIdFromEmail } from "@/lib/services/userService";
 
 const API_CONFIG = {
-  OPENAI_MODEL: "gpt-4-turbo-preview",
+  OPENAI_MODEL: "gpt-4o",
   MAX_TOKENS: 2000,
   TEMPERATURE: 0.6,
 } as const;
@@ -142,33 +142,33 @@ export async function POST(request: NextRequest) {
             return;
           }
 
+          let sseBuffer = "";
+
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk
-              .split("\n")
-              .filter((line) => line.trim() !== "");
+            sseBuffer += decoder.decode(value, { stream: true });
+            const lines = sseBuffer.split("\n");
+            sseBuffer = lines.pop() ?? "";
 
             for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6);
-                if (data === "[DONE]") continue;
+              if (!line.startsWith("data: ")) continue;
+              const data = line.slice(6).trim();
+              if (data === "[DONE]") continue;
 
-                try {
-                  const json = JSON.parse(data);
-                  const content = json.choices?.[0]?.delta?.content;
+              try {
+                const json = JSON.parse(data);
+                const content = json.choices?.[0]?.delta?.content;
 
-                  if (content) {
-                    fullResponse += content;
-                    controller.enqueue(
-                      encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
-                    );
-                  }
-                } catch (e) {
-                  
+                if (content) {
+                  fullResponse += content;
+                  controller.enqueue(
+                    encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
+                  );
                 }
+              } catch (e) {
+
               }
             }
           }

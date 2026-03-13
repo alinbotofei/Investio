@@ -18,6 +18,7 @@ import {
 } from "../lib/constants";
 import { smoothScrollToBottom } from "../lib/utils/scroll";
 import { markdownComponents } from "../lib/utils/markdown";
+import { onChatReset } from "../lib/utils/events";
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -83,6 +84,12 @@ function ChatContent() {
       chatTextareaRef.current?.focus();
     }
   }, [messages.length]);
+
+  // Reset to landing page when chat sidebar icon is clicked while already on /chat
+  useEffect(() => {
+    return onChatReset(() => startNewConversation());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadConversation = async (conversationId: string) => {
     try {
@@ -183,38 +190,43 @@ function ChatContent() {
       }
 
       let accumulatedText = "";
+      // Buffer incomplete SSE lines across chunk boundaries
+      let sseBuffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
+        // stream:true preserves multi-byte characters across chunk boundaries
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split("\n");
+        // Keep any trailing incomplete line in the buffer
+        sseBuffer = lines.pop() ?? "";
 
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            try {
-              const json = JSON.parse(data);
-              if (json.content) {
-                accumulatedText += json.content;
-                setMessages((m) =>
-                  m.map((msg) =>
-                    msg.id === assistantId
-                      ? { ...msg, text: accumulatedText }
-                      : msg
-                  )
-                );
-              }
-              if (json.conversationId && !currentConversationId) {
-                setCurrentConversationId(json.conversationId);
-                loadConversations();
-              }
-              if (json.error) {
-                throw new Error(json.error);
-              }
-            } catch (e) {}
-          }
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+          try {
+            const json = JSON.parse(data);
+            if (json.content) {
+              accumulatedText += json.content;
+              setMessages((m) =>
+                m.map((msg) =>
+                  msg.id === assistantId
+                    ? { ...msg, text: accumulatedText }
+                    : msg
+                )
+              );
+            }
+            if (json.conversationId && !currentConversationId) {
+              setCurrentConversationId(json.conversationId);
+              loadConversations();
+            }
+            if (json.error) {
+              throw new Error(json.error);
+            }
+          } catch (e) {}
         }
       }
 
