@@ -13,7 +13,7 @@ export interface MarketOverviewData {
 }
 
 class MarketService {
-  private readonly DELAY_BETWEEN_BATCHES = 200; // 200ms pentru rate limiting
+  private readonly DELAY_BETWEEN_BATCHES = 200; // 200ms delay between batches for rate limiting
 
   async delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
