@@ -4,18 +4,18 @@ export const smoothScrollToBottom = (
 ) => {
   if (!element) return;
 
-  const isNearBottom =
-    element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+  const distanceFromBottom =
+    element.scrollHeight - element.scrollTop - element.clientHeight;
+  const isNearBottom = distanceFromBottom < 100;
 
   if (force || isNearBottom) {
-    // Use setTimeout to ensure DOM has updated
-    setTimeout(() => {
-      requestAnimationFrame(() => {
-        element.scrollTo({
-          top: element.scrollHeight,
-          behavior: "smooth",
-        });
+    requestAnimationFrame(() => {
+      // Use instant scroll during streaming to prevent competing smooth animations
+      // Only use smooth when explicitly near bottom (user-visible transition)
+      element.scrollTo({
+        top: element.scrollHeight,
+        behavior: isNearBottom ? "smooth" : "instant",
       });
-    }, 0);
+    });
   }
 };

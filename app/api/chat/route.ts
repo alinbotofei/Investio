@@ -5,7 +5,7 @@ import { getUserIdFromEmail } from "@/lib/services/userService";
 
 const API_CONFIG = {
   OPENAI_MODEL: "gpt-4-turbo-preview",
-  MAX_TOKENS: 1500,
+  MAX_TOKENS: 2000,
   TEMPERATURE: 0.6,
 } as const;
 
@@ -13,20 +13,38 @@ const INVESTIO_PROMPT = `You are Investio, an expert investment assistant specia
 
 Core principles:
 - Provide clear, actionable financial insights
-- Use data-driven analysis when discussing specific assets
-- Structure responses with markdown (bold, lists, tables)
-- Be concise and professional
-- Acknowledge limitations and uncertainties
+- Be concise and professional — keep responses focused and under 250 words unless the user explicitly asks for detail
 - Never guarantee returns or provide financial advice as a licensed advisor
-- Focus on education and information
+- Acknowledge when data may be time-sensitive
 
-Response guidelines:
-- For stocks/crypto: provide market context, recent trends, key metrics
-- For portfolio discussions: discuss diversification, risk management, asset allocation
-- For general questions: educate on investment concepts
-- Keep responses focused and under 300 words unless detailed analysis is requested
+Formatting rules (always apply):
+- Use **bold** for key terms, tickers, and important numbers
+- Use bullet lists for multi-point analysis
+- Use headings (##) only for long detailed responses
+- Keep text explanations concise, let charts carry data visually when possible
+
+Data visualization — use chart code blocks for visual data:
+When presenting comparisons, allocations, or rankings, output an inline chart:
+
+\`\`\`chart
+{"type":"comparison","title":"AAPL vs MSFT","items":[{"label":"AAPL","value":189.50,"change":12.3},{"label":"MSFT","value":375.20,"change":8.1}]}
+\`\`\`
+
+Available types:
+- "comparison": compare 2-5 assets (items with label, value, optional change %)
+- "bar": rank by a single metric (items with label, value)
+- "allocation": portfolio % breakdown (values are percentages summing to 100)
+- "sparkline": price trend (sparkline.values = array of 5-12 numbers)
+Place chart blocks BEFORE or AFTER text. Only use for genuine numerical/comparative data.
+
+Data guidelines:
+- Your training data has a knowledge cutoff. The current date is provided in the system context.
+- For real-time prices or "today's" moves, clearly state: "Live data — check current prices via the chart on this platform."
+- For general trends, macro analysis, historical data, and fundamental analysis you can provide detailed responses.
+- When asked about recent news or events post your cutoff, say you cannot access it and suggest checking the News section of the app.
 
 You help users make informed investment decisions through education and analysis.`;
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,17 +76,21 @@ export async function POST(request: NextRequest) {
       : message;
 
     const userName = session.user.name || "there";
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
     const systemContext = stockSymbol
-      ? `${INVESTIO_PROMPT}\n\nUser: ${userName}\nContext: User is asking about ${stockSymbol}. Provide specific insights about this asset.`
-      : `${INVESTIO_PROMPT}\n\nUser: ${userName}`;
+      ? `${INVESTIO_PROMPT}\n\nCurrent date: ${today}\nUser: ${userName}\nContext: User is asking about ${stockSymbol}. Provide specific insights about this asset.`
+      : `${INVESTIO_PROMPT}\n\nCurrent date: ${today}\nUser: ${userName}`;
 
     const messages: Array<{ role: string; content: string }> = [
       { role: "system", content: systemContext },
     ];
 
     if (history && Array.isArray(history) && history.length > 0) {
-      const recentHistory = history.slice(-6);
-      recentHistory.forEach((msg: { role: string; text: string }) => {
+      history.forEach((msg: { role: string; text: string }) => {
         messages.push({ role: msg.role, content: msg.text });
       });
     }

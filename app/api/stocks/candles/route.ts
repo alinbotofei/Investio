@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-type Timeframe = "1D" | "1W" | "1M" | "1Y";
+type Timeframe = "1D" | "1W" | "1M" | "1Y" | "5Y";
 
 const TIMEFRAME_PARAMS: Record<
   Timeframe,
   { range: string; interval: string }
 > = {
   "1D": { range: "5d",  interval: "60m" },
-  "1W": { range: "1mo", interval: "1d"  },
-  "1M": { range: "3mo", interval: "1d"  },
-  "1Y": { range: "1y",  interval: "1wk" },
+  "1W": { range: "3mo", interval: "1d"  },
+  "1M": { range: "6mo", interval: "1d"  },
+  "1Y": { range: "2y",  interval: "1wk" },
+  "5Y": { range: "5y",  interval: "1mo" },
 };
 
 function toYahooSymbol(symbol: string, category: string): string {

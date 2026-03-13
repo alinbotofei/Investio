@@ -33,36 +33,36 @@ function DashboardContent() {
 
   return (
     <DashboardLayout>
-      <div className="w-full h-full p-3 sm:p-4 md:p-6 lg:p-8 overflow-y-auto">
-        <div className="mb-6 sm:mb-8">
-          <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/30 rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
+      <div className="w-full h-full p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
+        <div className="mb-4 sm:mb-5">
+          <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/30 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-base shadow-lg flex-shrink-0">
                 {userName?.charAt(0).toUpperCase() || "U"}
               </div>
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white">
+                <h2 className="text-base sm:text-lg font-bold text-white">
                   Welcome back, {userName}!
                 </h2>
-                <p className="text-sm text-slate-300">
+                <p className="text-xs text-slate-300">
                   Ready to explore the markets?
                 </p>
               </div>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-0.5 sm:mb-1">
                 Investment Dashboard
               </h1>
-              <p className="text-sm sm:text-base text-slate-400">
+              <p className="text-xs sm:text-sm text-slate-400">
                 Real-time market insights powered by AI
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-xs text-slate-500">Last Updated</p>
-                <p className="text-xs sm:text-sm text-left text-slate-300 font-medium">
+                <p className="text-xs text-left text-slate-300 font-medium">
                   {new Date().toLocaleTimeString()}
                 </p>
               </div>
@@ -70,8 +70,8 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr,1fr] gap-4 sm:gap-5 lg:gap-6 items-start">
-          <div className="min-w-0 space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr,1fr] gap-3 sm:gap-4 lg:gap-5 items-start">
+          <div className="min-w-0 space-y-3 sm:space-y-4">
             {/* Watchlist */}
             <WatchlistManager />
 
@@ -79,18 +79,18 @@ function DashboardContent() {
           </div>
 
           {/* Right Column - AI & News (Sticky on large screens) */}
-          <div className="min-w-0 lg:sticky lg:top-6 space-y-4 sm:space-y-6">
+          <div className="min-w-0 lg:sticky lg:top-4 space-y-3 sm:space-y-4">
             {/* AI Chat Section */}
-            <div className="bg-gradient-to-br from-blue-600/30 via-cyan-500/30 to-purple-600/30 border-2 border-cyan-400/50 rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-2xl shadow-cyan-500/20 ring-1 ring-cyan-400/20">
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/50">
+            <div className="bg-gradient-to-br from-blue-600/30 via-cyan-500/30 to-purple-600/30 border-2 border-cyan-400/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl shadow-cyan-500/20 ring-1 ring-cyan-400/20">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/50">
                   <Icon
                     name="psychology"
-                    className="text-white text-[20px] sm:text-[24px]"
+                    className="text-white text-[18px] sm:text-[22px]"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-base sm:text-lg font-bold text-white truncate">
+                  <h2 className="text-sm sm:text-base font-bold text-white truncate">
                     AI Assistant
                   </h2>
                   <p className="text-xs text-cyan-200 truncate">

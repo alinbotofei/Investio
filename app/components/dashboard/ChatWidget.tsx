@@ -27,8 +27,18 @@ export default function ChatWidget({
 }: ChatWidgetProps) {
   const tickerSymbol =
     context?.split(",")[0]?.split(":")[1]?.trim() || context || "this asset";
-  const dynamicPlaceholder =
-    placeholder || `What would you like to know about ${tickerSymbol}?`;
+
+  const widgetPlaceholders = placeholder
+    ? [placeholder]
+    : [
+        `What's the outlook for ${tickerSymbol}?`,
+        `Analyze ${tickerSymbol} recent performance`,
+        `Key risks for ${tickerSymbol}?`,
+        `Compare ${tickerSymbol} to industry peers`,
+        `What are analysts saying about ${tickerSymbol}?`,
+      ];
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const dynamicPlaceholder = widgetPlaceholders[0]; // fallback for textarea attr
   const [value, setValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,6 +74,15 @@ export default function ChatWidget({
     ta.style.height = "auto";
     ta.style.height = `${Math.min(120, ta.scrollHeight)}px`;
   }, [value]);
+
+  useEffect(() => {
+    if (widgetPlaceholders.length <= 1) return;
+    const timer = setInterval(() => {
+      setPlaceholderIdx((prev) => (prev + 1) % widgetPlaceholders.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSend() {
     const textToSend = value.trim();
@@ -263,6 +282,17 @@ export default function ChatWidget({
               }
             }}
           />
+          {!value && (
+            <div className="absolute left-3 sm:left-4 top-3 sm:top-3.5 right-14 pointer-events-none text-slate-400/70 text-sm overflow-hidden">
+              <span
+                key={placeholderIdx}
+                style={{ animation: "placeholderFade 3.6s cubic-bezier(0.4, 0, 0.2, 1) forwards" }}
+                className="inline-block"
+              >
+                {widgetPlaceholders[placeholderIdx]}
+              </span>
+            </div>
+          )}
           <button
             onClick={handleSend}
             disabled={loading || !value.trim()}

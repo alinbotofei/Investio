@@ -1,3 +1,5 @@
+import InlineChart from "@/app/components/ui/InlineChart";
+
 export const markdownComponents = {
   h1: ({ node, ...props }: any) => (
     <h1 className="text-2xl font-bold mb-3 mt-4 text-white" {...props} />
@@ -34,6 +36,10 @@ export const markdownComponents = {
   ),
   code: ({ node, className, children, ...props }: any) => {
     const isInline = !className;
+    if (!isInline && className === "language-chart") {
+      const raw = String(children).replace(/\n$/, "");
+      return <InlineChart raw={raw} />;
+    }
     return isInline ? (
       <code
         className="bg-slate-950/70 px-2 py-1 rounded text-cyan-400 text-sm font-mono border border-slate-700/50"
@@ -50,7 +56,15 @@ export const markdownComponents = {
       </code>
     );
   },
-  pre: ({ node, ...props }: any) => <pre className="my-3" {...props} />,
+  pre: ({ node, children, ...props }: any) => {
+    // If the child is an InlineChart (chart code block), skip the pre wrapper
+    const childArr = Array.isArray(children) ? children : [children];
+    const hasChart = childArr.some(
+      (c: any) => c?.type?.name === "InlineChart" || c?.props?.raw !== undefined
+    );
+    if (hasChart) return <>{children}</>;
+    return <pre className="my-3" {...props}>{children}</pre>;
+  },
   table: ({ node, ...props }: any) => (
     <div className="overflow-x-auto my-4">
       <table

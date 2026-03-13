@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=block");
 
 @tailwind base;
 @tailwind components;
@@ -247,7 +247,15 @@ body {
 @keyframes placeholderFade {
   0% {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(6px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
   }
   100% {
     opacity: 1;
@@ -529,4 +537,12 @@ body {
 
 .duration-200 {
   animation-duration: 200ms;
+}
+
+/* Prevent icon text flash before Material Symbols font loads */
+.material-symbols-outlined {
+  font-size: inherit;
+  color: inherit;
+  /* Ensure no text flashes by using transparent color during FOIT */
+  -webkit-font-smoothing: antialiased;
 }

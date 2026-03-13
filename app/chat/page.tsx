@@ -67,7 +67,7 @@ function ChatContent() {
 
   useEffect(() => {
     if (!userScrolledRef.current && messages.length > 0) {
-      smoothScrollToBottom(messagesRef.current, true);
+      smoothScrollToBottom(messagesRef.current);
     }
   }, [messages]);
 
@@ -81,7 +81,7 @@ function ChatContent() {
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % CHAT_PLACEHOLDERS.length);
-    }, 2500);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -419,10 +419,10 @@ function ChatContent() {
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-start sm:items-center justify-start sm:justify-center px-4 sm:px-6 md:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar min-h-0">
               <div className="max-w-3xl w-full text-center pt-8 sm:pt-0 flex-shrink-0">
-                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-2 sm:mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
+                <h1 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl font-semibold text-white mb-2 sm:mb-3 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
                   Your AI Investment Partner
                 </h1>
-                <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-6">
+                <p className="text-slate-300 text-sm sm:text-base md:text-lg mb-3 sm:mb-4 md:mb-5">
                   Ask me anything about markets, stocks, crypto, or investment strategies.
                 </p>
                 
@@ -436,7 +436,7 @@ function ChatContent() {
                   </button>
                 </div>
 
-                <div className="mt-4 sm:mt-6 md:mt-10 flex items-center justify-center">{" "}
+                <div className="mt-3 sm:mt-4 md:mt-6 flex items-center justify-center">{" "}
                 <div className="relative w-full md:mx-auto md:max-w-3xl">
                   <div className="relative">
                     <textarea
@@ -444,7 +444,7 @@ function ChatContent() {
                       value={value}
                       onChange={(e) => setValue(e.target.value)}
                       placeholder=" "
-                      className="w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white placeholder:text-white/60 p-5 md:p-8 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-base md:text-lg shadow-xl backdrop-blur-sm transition-all hover:bg-slate-800/70 min-h-[180px] md:min-h-[240px] max-h-[400px] md:max-h-[520px] input-focus input-hoverable"
+                      className="w-full bg-slate-800/60 border border-slate-600/40 text-white placeholder:text-white/60 p-4 md:p-6 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-base shadow-xl backdrop-blur-sm transition-all hover:bg-slate-800/70 min-h-[120px] md:min-h-[160px] max-h-[280px] md:max-h-[360px] input-focus input-hoverable"
                       rows={5}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
@@ -454,14 +454,14 @@ function ChatContent() {
                       }}
                     />
                     {!value && (
-                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-16 pointer-events-none text-white/60 text-base md:text-lg text-left">
+                      <div className="absolute left-4 md:left-6 top-4 md:top-6 right-16 pointer-events-none text-white/60 text-base text-left">
                         <span>Ask anything about </span>
                         <span
                           key={placeholderIndex}
                           className="inline"
                           style={{
                             animation:
-                              "placeholderFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
+                              "placeholderFade 3.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
                           }}
                         >
                           {CHAT_PLACEHOLDERS[placeholderIndex]}...
@@ -474,7 +474,7 @@ function ChatContent() {
                     onClick={() => handleSend()}
                     disabled={loading}
                     aria-label="Send message"
-                    className="absolute right-3 bottom-3 md:right-4 md:bottom-4 w-11 h-11 md:w-12 md:h-12 flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-60"
+                    className="absolute right-3 bottom-3 md:right-3 md:bottom-3 w-10 h-10 md:w-11 md:h-11 flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-60"
                   >
                     {loading ? (
                       <div className="w-6 h-6">
@@ -508,7 +508,7 @@ function ChatContent() {
                 </div>
               </div>
 
-              <div className="mt-5 md:mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+              <div className="mt-4 md:mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
                 <button
                   className={SUGGESTION_BTN_PRIMARY}
                   onClick={() =>
@@ -601,10 +601,7 @@ function ChatContent() {
             </div>
             <div
               ref={messagesRef}
-              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 custom-scrollbar min-h-0"
-              style={{
-                scrollBehavior: "smooth",
-              }}
+              className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-5 custom-scrollbar min-h-0"
             >
               {messages.map((m, i) => (
                 <div

@@ -20,13 +20,14 @@ interface TradingChartProps {
   onLastClose?: (price: number) => void;
 }
 
-type Timeframe = "1D" | "1W" | "1M" | "1Y";
+type Timeframe = "1D" | "1W" | "1M" | "1Y" | "5Y";
 
 const TIMEFRAMES: { label: Timeframe }[] = [
   { label: "1D" },
   { label: "1W" },
   { label: "1M" },
   { label: "1Y" },
+  { label: "5Y" },
 ];
 
 interface CandleResponse {
@@ -127,11 +128,11 @@ export default function TradingChart({
         borderColor: "rgba(51,65,85,0.5)",
         timeVisible: true,
         secondsVisible: false,
-        fixLeftEdge: true,
-        fixRightEdge: true,
+        fixLeftEdge: false,
+        fixRightEdge: false,
       },
-      handleScroll: { mouseWheel: true, pressedMouseMove: true },
-      handleScale:  { mouseWheel: true, pinch: true },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+      handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
       width:  containerRef.current.clientWidth,
       height,
     });

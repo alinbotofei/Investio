@@ -215,7 +215,8 @@ export default function WatchlistManager() {
                               // eslint-disable-next-line @next/next/no-img-element
                               <img
                                 src={logoInfo.value}
-                                alt={item.symbol}
+                                alt=""
+                                aria-hidden="true"
                                 onError={() =>
                                   setImageErrors((prev) => ({
                                     ...prev,
