@@ -96,8 +96,8 @@ export default function AssetExplorer() {
               disabled={isInWatchlist(item.symbol)}
               className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all border ${
                 isInWatchlist(item.symbol)
-                  ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-400 cursor-not-allowed"
-                  : "bg-slate-700/60 border-slate-600 text-slate-300 hover:bg-cyan-500/20 hover:border-cyan-500/50 hover:text-cyan-400"
+                  ? "bg-gradient-to-r from-amber-500/80 to-yellow-400/80 border-yellow-400/60 text-white shadow-sm shadow-yellow-500/30 cursor-not-allowed"
+                  : "bg-slate-700/60 border-slate-600 text-slate-300 hover:bg-amber-500/10 hover:border-amber-400/50 hover:text-amber-300"
               }`}
             >
               <Icon

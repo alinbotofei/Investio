@@ -10,29 +10,23 @@ interface AnimatedPlaceholderProps {
 
 export default function AnimatedPlaceholder({
   placeholders,
-  interval = 3000,
+  interval = 3600,
   className = "",
 }: AnimatedPlaceholderProps) {
   const [index, setIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setIndex((prev) => (prev + 1) % placeholders.length);
-        setIsAnimating(false);
-      }, 300);
+      setIndex((prev) => (prev + 1) % placeholders.length);
     }, interval);
-
     return () => clearInterval(timer);
   }, [placeholders.length, interval]);
 
   return (
     <span
-      className={`inline-block transition-all duration-300 ${
-        isAnimating ? "opacity-0 -translate-y-1" : "opacity-100 translate-y-0"
-      } ${className}`}
+      key={index}
+      className={`inline-block placeholder-animated ${className}`}
+      style={{ animation: "placeholderFade 3.4s cubic-bezier(0.4, 0, 0.2, 1) forwards" }}
     >
       {placeholders[index]}
     </span>

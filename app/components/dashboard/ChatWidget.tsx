@@ -191,7 +191,7 @@ export default function ChatWidget({
   return (
     <div
       className={`flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden ${
-        compact ? "h-[500px] xl:h-[600px] 2xl:h-[700px]" : "h-full"
+        compact ? "h-[480px] lg:h-full" : "h-full"
       }`}
     >
       <div className="p-3 sm:p-4 xl:p-5 border-b border-slate-700/50 flex-shrink-0">
@@ -287,7 +287,7 @@ export default function ChatWidget({
               <span
                 key={placeholderIdx}
                 style={{ animation: "placeholderFade 3.6s cubic-bezier(0.4, 0, 0.2, 1) forwards" }}
-                className="inline-block"
+                className="inline-block placeholder-animated"
               >
                 {widgetPlaceholders[placeholderIdx]}
               </span>

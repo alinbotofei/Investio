@@ -232,8 +232,8 @@ export default function TickerPage() {
               onClick={toggleWatchlist}
               className={`group/watch relative px-3 py-2 rounded-xl transition-all duration-300 flex-shrink-0 border flex items-center gap-2 ${
                 inWatchlist
-                  ? "bg-gradient-to-br from-blue-600 to-cyan-500 border-cyan-300/70 shadow-[0_0_0_3px_rgba(34,211,238,0.2),0_8px_24px_-4px_rgba(34,211,238,0.45)] hover:shadow-[0_0_0_4px_rgba(34,211,238,0.3),0_10px_28px_-4px_rgba(34,211,238,0.6)] hover:scale-105"
-                  : "bg-slate-700/80 border-slate-500 border-dashed hover:border-cyan-500/70 hover:bg-slate-700 hover:scale-105"
+                  ? "bg-gradient-to-br from-amber-500 to-yellow-400 border-yellow-300/70 shadow-[0_0_0_3px_rgba(251,191,36,0.3),0_8px_20px_-4px_rgba(251,191,36,0.5)] hover:shadow-[0_0_0_4px_rgba(251,191,36,0.4),0_10px_28px_-4px_rgba(251,191,36,0.65)] hover:scale-105"
+                  : "bg-slate-800/90 border-slate-500/70 border-dashed hover:border-amber-400/60 hover:bg-slate-700/80 hover:scale-105"
               }`}
               title={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
             >
@@ -365,7 +365,7 @@ export default function TickerPage() {
           </div>
 
           {/* Right Column - AI Chat (Prominent & Sticky) */}
-          <div className="lg:sticky lg:top-6 lg:self-start lg:h-[calc(100vh-80px)] order-1 lg:order-2">
+          <div className="lg:sticky lg:top-4 lg:self-start lg:h-[calc(100dvh-108px)] order-1 lg:order-2">
             <div className="relative bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-2 border-cyan-500/30 rounded-2xl p-1 backdrop-blur-sm shadow-2xl shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-300 lg:h-full lg:flex lg:flex-col">
               <div className="bg-slate-900/80 rounded-xl overflow-hidden backdrop-blur-xl border border-slate-700/50 lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
                 <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 px-4 xl:px-6 py-3 xl:py-4 border-b border-cyan-500/20 flex-shrink-0">

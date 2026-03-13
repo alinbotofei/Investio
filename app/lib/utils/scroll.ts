@@ -6,16 +6,14 @@ export const smoothScrollToBottom = (
 
   const distanceFromBottom =
     element.scrollHeight - element.scrollTop - element.clientHeight;
-  const isNearBottom = distanceFromBottom < 100;
+  const isNearBottom = distanceFromBottom < 150;
 
+  // Synchronous scroll (no RAF) — prevents race condition where user scrolls
+  // up during streaming and the queued RAF overrides the user's position.
   if (force || isNearBottom) {
-    requestAnimationFrame(() => {
-      // Use instant scroll during streaming to prevent competing smooth animations
-      // Only use smooth when explicitly near bottom (user-visible transition)
-      element.scrollTo({
-        top: element.scrollHeight,
-        behavior: isNearBottom ? "smooth" : "instant",
-      });
+    element.scrollTo({
+      top: element.scrollHeight,
+      behavior: "smooth",
     });
   }
 };

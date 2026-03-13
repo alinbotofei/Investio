@@ -458,7 +458,7 @@ function ChatContent() {
                         <span>Ask anything about </span>
                         <span
                           key={placeholderIndex}
-                          className="inline"
+                          className="inline placeholder-animated"
                           style={{
                             animation:
                               "placeholderFade 3.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
