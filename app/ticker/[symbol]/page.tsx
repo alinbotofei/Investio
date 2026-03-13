@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/app/components/layout/DashboardLayout";
 import Icon from "@/app/components/ui/Icon";
+import TradingChart from "@/app/components/dashboard/TradingChart";
 import {
-  SimpleChart,
   NewsFeed,
   RecommendationsWidget,
   InsiderSentimentBadge,
@@ -32,6 +32,7 @@ export default function TickerPage() {
   const [metrics, setMetrics] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [insiderSentiment, setInsiderSentiment] = useState<any[]>([]);
+  const [chartLastClose, setChartLastClose] = useState<number | null>(null);
   const [watchlistFeedback, setWatchlistFeedback] = useState<string | null>(
     null
   );
@@ -246,7 +247,7 @@ export default function TickerPage() {
 
           <div className="mt-4 sm:mt-6 flex items-baseline gap-3 sm:gap-4 flex-wrap">
             <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
-              ${quote?.price?.toFixed(2) || "N/A"}
+              ${(chartLastClose ?? quote?.price)?.toFixed(2) || "N/A"}
             </div>
             <div
               className={`flex items-center gap-1.5 sm:gap-2 ${
@@ -275,7 +276,12 @@ export default function TickerPage() {
                 <Icon name="show_chart" className="text-cyan-400 text-[20px] xl:text-[24px]" />
                 Price Chart
               </h3>
-              <SimpleChart symbol={symbol} height={400} />
+              <TradingChart
+                symbol={symbol}
+                category={category}
+                height={400}
+                onLastClose={setChartLastClose}
+              />
             </div>
 
             {/* Stock-specific widgets */}

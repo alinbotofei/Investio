@@ -1,5 +1,6 @@
 export { default as NewsFeed } from "./NewsFeed";
 export { default as SimpleChart } from "./SimpleChart";
+export { default as TradingChart } from "./TradingChart";
 export { default as StockCard } from "./StockCard";
 export { default as AssetExplorer } from "./AssetExplorer";
 export { default as WatchlistManager } from "./WatchlistManager";
