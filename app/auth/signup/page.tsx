@@ -102,7 +102,7 @@ function SignUpForm() {
         return;
       }
 
-      router.push('/dashboard');
+      router.push('/chat');
     } catch (err) {
       setErrors({ submit: 'Something went wrong' });
       setLoading(false);

@@ -14,6 +14,9 @@ export default withAuth(
     }
 
     if (req.nextUrl.pathname === '/') {
+      if (req.nextauth.token) {
+        return NextResponse.redirect(new URL('/chat', req.url));
+      }
       return NextResponse.redirect(new URL('/login', req.url));
     }
 

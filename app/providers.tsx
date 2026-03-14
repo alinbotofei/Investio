@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { WatchlistProvider } from './contexts/WatchlistContext';
+import { ConversationsProvider } from './contexts/ConversationsContext';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -9,9 +10,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refetchInterval={0}
       refetchOnWindowFocus={false}
     >
-      <WatchlistProvider>
-        {children}
-      </WatchlistProvider>
+      <ConversationsProvider>
+        <WatchlistProvider>
+          {children}
+        </WatchlistProvider>
+      </ConversationsProvider>
     </SessionProvider>
   );
 }

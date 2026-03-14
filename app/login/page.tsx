@@ -37,6 +37,11 @@ export default function Login() {
         body: JSON.stringify({ email }),
       });
 
+      if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+        setError('Something went wrong. Please try again.');
+        return;
+      }
+
       const data = await res.json();
 
       if (data.exists) {
@@ -76,7 +81,7 @@ export default function Login() {
         return;
       }
 
-      router.push('/dashboard');
+      router.push('/chat');
     } catch (err) {
       setError('Something went wrong. Please try again.');
       setLoading(false);

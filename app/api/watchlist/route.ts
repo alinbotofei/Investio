@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { watchlistService } from "@/lib/services/watchlistService";
 import { getUserIdFromEmail } from "@/lib/services/userService";
 
 export async function GET() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -19,7 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -37,13 +38,25 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const normalizedSymbol = String(symbol).trim().toUpperCase();
+  const normalizedCategory = String(category).trim().toLowerCase();
+
+  const exists = await watchlistService.isInWatchlist(userId, normalizedSymbol);
+  if (exists) {
+    return NextResponse.json({ symbol: normalizedSymbol, category: normalizedCategory, alreadyExists: true });
+  }
+
   const item = await watchlistService.addToWatchlist(
     userId,
-    symbol,
-    category
+    normalizedSymbol,
+    normalizedCategory
   );
 
   if (!item) {
+    const existsAfterCreate = await watchlistService.isInWatchlist(userId, normalizedSymbol);
+    if (existsAfterCreate) {
+      return NextResponse.json({ symbol: normalizedSymbol, category: normalizedCategory, alreadyExists: true });
+    }
     return NextResponse.json(
       { error: "Item already exists or limit reached" },
       { status: 400 }
@@ -54,7 +67,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -71,6 +84,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Missing symbol" }, { status: 400 });
   }
 
-  await watchlistService.removeFromWatchlist(userId, symbol);
+  await watchlistService.removeFromWatchlist(userId, symbol.trim().toUpperCase());
   return NextResponse.json({ success: true });
 }
