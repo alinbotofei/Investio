@@ -461,6 +461,7 @@ export default function TickerPage() {
                     quote?.name || assetHelpers.formatSymbol(symbol)
                   }...`}
                   compact
+                  navigateOnSend={false}
                 />
               </div>
             </div>
