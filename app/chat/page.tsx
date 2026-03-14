@@ -70,7 +70,7 @@ function ChatContent() {
   const hasSubmittedRef = useRef(false);
   const userScrolledRef = useRef(false);
   const prevConvIdRef = useRef<string | null | undefined>(undefined);
-  const activeStreamRef = useRef<string | null>(null); // tracks conversation being actively streamed
+  const activeStreamRef = useRef<string | null>(null);
   const streamingAssistantIdRef = useRef<string | null>(null);
   const pendingContentRef = useRef("");
   const flushRafRef = useRef<number | null>(null);
@@ -81,7 +81,6 @@ function ChatContent() {
     const prev = prevConvIdRef.current;
     prevConvIdRef.current = convIdFromUrl;
     if (convIdFromUrl) {
-      // Skip if this conversation is currently being streamed (don't overwrite in-progress messages)
       if (activeStreamRef.current === convIdFromUrl) return;
       loadConversation(convIdFromUrl);
     } else if (prev !== undefined) {
@@ -189,8 +188,6 @@ function ChatContent() {
     const assistantId = `asst-${Date.now()}`;
     streamingAssistantIdRef.current = assistantId;
     pendingContentRef.current = "";
-    // Add both messages in one state update to prevent any render flash
-    // If ctx-init placeholder exists (from context navigation), replace it instead of appending
     setMessages((m) => {
       const filtered = m.filter((msg) => msg.id !== "ctx-init");
       return [
@@ -290,7 +287,7 @@ function ChatContent() {
             }
           }
           if (json.conversationId && !currentConversationId) {
-            activeStreamRef.current = json.conversationId; // prevent effect from interrupting stream
+            activeStreamRef.current = json.conversationId;
             setCurrentConversationId(json.conversationId);
             router.replace(`/chat?id=${json.conversationId}`);
             shouldRefreshConversations = true;
@@ -340,7 +337,6 @@ function ChatContent() {
       }
       streamingAssistantIdRef.current = null;
       setLoading(false);
-      // Delay clearing the stream lock so the URL-change effect detects it before clearing
       setTimeout(() => { activeStreamRef.current = null; }, 600);
     }
   }
@@ -409,7 +405,6 @@ function ChatContent() {
             </div>
           ) : messages.length === 0 ? (
             <>
-              {/* Mobile top bar */}
               <div className="flex-shrink-0 h-14 px-4 border-b border-slate-700/20 bg-slate-950/40 backdrop-blur-xl flex items-center gap-3 md:hidden">
                 <button
                   onClick={() => setMobileSidebarOpen(true)}
@@ -426,12 +421,10 @@ function ChatContent() {
                 <div className="w-9" />
               </div>
 
-              {/* Hero — full-page clean landing */}
               <div className="flex-1 w-full min-h-0">
                 <div className="h-full w-full overflow-y-auto flex items-start justify-center px-4 sm:px-8 lg:px-12 py-6 sm:py-8 bg-gradient-to-b from-slate-950/35 via-slate-900/20 to-slate-950/35">
                   <div className="w-full max-w-[72rem] h-full p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-start gap-7 pt-3 sm:pt-6 lg:pt-7">
 
-                  {/* Brand + greeting */}
                   <div className="flex flex-col items-center gap-3.5 mb-4 sm:mb-5">
                     <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.035] backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_22px_rgba(2,8,23,0.08)]">
                       <div className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px] rounded-[14px] bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 flex items-center justify-center shadow-[0_8px_18px_rgba(59,130,246,0.2)] flex-shrink-0">
@@ -455,13 +448,11 @@ function ChatContent() {
                     <div className="h-px w-44 sm:w-52 bg-gradient-to-r from-transparent via-blue-300/90 to-transparent" />
                   </div>
 
-                  {/* Headline */}
                   <h1 className="mt-1 text-[32px] sm:text-[40px] lg:text-[46px] font-bold text-center leading-[1.08] tracking-tight max-w-3xl [text-wrap:balance] px-2">
                     <span className="text-slate-100">How can I help you </span>
                     <span className="bg-gradient-to-r from-cyan-200 via-sky-300 to-blue-300 bg-clip-text text-transparent">today?</span>
                   </h1>
 
-                  {/* Feature pills */}
                   <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl">
                     {[
                       { icon: "query_stats",      text: "Market Edge" },
@@ -476,7 +467,6 @@ function ChatContent() {
                     ))}
                   </div>
 
-                  {/* Input */}
                   <div className="relative w-full max-w-[42rem]">
                     <textarea
                       ref={landingTextareaRef}
