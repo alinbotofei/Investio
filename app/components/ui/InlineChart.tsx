@@ -44,24 +44,52 @@ const PALETTE = [
   "#a855f7",
 ];
 
+const SUPPORTED_CHART_TYPES = new Set([
+  "bar",
+  "comparison",
+  "pie",
+  "donut",
+  "sparkline",
+  "allocation",
+]);
+
+function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every((n) => typeof n === "number" && Number.isFinite(n));
+}
+
+function isValidChartData(value: any): value is ChartData {
+  if (!value || typeof value !== "object") return false;
+  if (!SUPPORTED_CHART_TYPES.has(value.type)) return false;
+
+  if (value.type === "sparkline") {
+    return isNumberArray(value?.sparkline?.values);
+  }
+
+  return Array.isArray(value.items);
+}
+
 function BarChart({ data }: { data: Extract<ChartData, { type: "bar" }> }) {
   const max = Math.max(...data.items.map((i) => i.value), 1);
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {data.items.map((item, idx) => {
         const pct = (item.value / max) * 100;
         const color = item.color || PALETTE[idx % PALETTE.length];
         return (
-          <div key={idx} className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 w-20 shrink-0 truncate text-right">
+          <div key={idx} className="flex items-center gap-3">
+            <span className="text-xs font-medium text-slate-300 w-24 shrink-0 truncate text-right">
               {item.label}
             </span>
-            <div className="flex-1 h-5 bg-slate-800 rounded-sm overflow-hidden">
+            <div className="flex-1 h-6 bg-slate-800/60 rounded-lg overflow-hidden border border-slate-700/30">
               <div
-                className="h-full rounded-sm flex items-center justify-end pr-1.5 transition-all duration-700"
-                style={{ width: `${pct}%`, backgroundColor: color }}
+                className="h-full rounded-lg flex items-center justify-end pr-2 transition-all duration-700 shadow-lg"
+                style={{ 
+                  width: `${pct}%`, 
+                  background: `linear-gradient(90deg, ${color}dd, ${color})`,
+                  boxShadow: `0 0 6px ${color}40`
+                }}
               >
-                <span className="text-[10px] font-bold text-white/90">
+                <span className="text-[10px] font-bold text-white drop-shadow">
                   {typeof item.value === "number" && item.value >= 1000
                     ? `${(item.value / 1000).toFixed(1)}k`
                     : item.value}
@@ -82,7 +110,7 @@ function ComparisonChart({
 }) {
   const max = Math.max(...data.items.map((i) => Math.abs(i.value)), 1);
   return (
-    <div className="grid grid-cols-1 gap-2">
+    <div className="grid grid-cols-1 gap-3">
       {data.items.map((item, idx) => {
         const pct = (Math.abs(item.value) / max) * 100;
         const color = item.color || PALETTE[idx % PALETTE.length];
@@ -90,21 +118,21 @@ function ComparisonChart({
         return (
           <div
             key={idx}
-            className="bg-slate-800/50 rounded-lg px-3 py-2 border border-slate-700/50"
+            className="bg-gradient-to-br from-slate-800/70 to-slate-900/60 rounded-xl px-4 py-3 border border-slate-700/40 shadow-md hover:shadow-lg transition-all duration-300"
           >
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold text-slate-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-slate-100">
                 {item.label}
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold" style={{ color }}>
+              <div className="flex items-center gap-2.5">
+                <span className="text-sm font-bold drop-shadow-lg" style={{ color }}>
                   {typeof item.value === "number" && item.value > 100
                     ? `$${item.value.toFixed(2)}`
                     : item.value}
                 </span>
                 {item.change !== undefined && (
                   <span
-                    className={`text-[10px] font-medium ${isPositive ? "text-emerald-400" : "text-rose-400"}`}
+                    className={`text-xs font-bold px-2 py-0.5 rounded-full ${isPositive ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"}`}
                   >
                     {isPositive ? "+" : ""}
                     {item.change.toFixed(2)}%
@@ -112,10 +140,14 @@ function ComparisonChart({
                 )}
               </div>
             </div>
-            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-2 bg-slate-700/50 rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pct}%`, backgroundColor: color }}
+                className="h-full rounded-full transition-all duration-700 shadow-lg"
+                style={{ 
+                  width: `${pct}%`, 
+                  background: `linear-gradient(90deg, ${color}cc, ${color})`,
+                  boxShadow: `0 0 8px ${color}60`
+                }}
               />
             </div>
           </div>
@@ -165,35 +197,48 @@ function PieChart({
   });
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-5">
       <svg
         width={size}
         height={size}
         viewBox={`0 0 ${size} ${size}`}
         className="shrink-0"
+        style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))' }}
       >
+        <defs>
+          {slices.map((slice, idx) => (
+            <linearGradient key={`grad-${idx}`} id={`slice-grad-${idx}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor={slice.color} />
+              <stop offset="100%" stopColor={slice.color} stopOpacity="0.8" />
+            </linearGradient>
+          ))}
+        </defs>
         {slices.map((slice, idx) => (
           <path
             key={idx}
             d={slice.d}
-            fill={slice.color}
-            stroke="#1e293b"
-            strokeWidth="1"
-            opacity="0.92"
+            fill={`url(#slice-grad-${idx})`}
+            stroke="#0f172a"
+            strokeWidth="1.5"
+            opacity="0.95"
+            style={{ filter: `drop-shadow(0 0 4px ${slice.color}50)` }}
           />
         ))}
       </svg>
-      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+      <div className="flex flex-col gap-2 flex-1 min-w-0">
         {slices.map((slice, idx) => (
-          <div key={idx} className="flex items-center gap-2">
+          <div key={idx} className="flex items-center gap-2.5">
             <div
-              className="w-2.5 h-2.5 rounded-sm shrink-0"
-              style={{ backgroundColor: slice.color }}
+              className="w-3 h-3 rounded shrink-0 shadow-md"
+              style={{ 
+                background: `linear-gradient(135deg, ${slice.color}, ${slice.color}cc)`,
+                boxShadow: `0 0 6px ${slice.color}60`
+              }}
             />
-            <span className="text-xs text-slate-300 truncate flex-1">
+            <span className="text-xs font-medium text-slate-200 truncate flex-1">
               {slice.label}
             </span>
-            <span className="text-xs font-semibold text-white shrink-0">
+            <span className="text-xs font-bold text-white shrink-0 bg-slate-800/50 px-2 py-0.5 rounded">
               {slice.pct < 0.1
                 ? `${(slice.pct * 100).toFixed(1)}%`
                 : `${Math.round(slice.pct * 100)}%`}
@@ -210,6 +255,7 @@ function SparklineChart({
 }: {
   data: Extract<ChartData, { type: "sparkline" }>;
 }) {
+  if (!isNumberArray(data?.sparkline?.values)) return null;
   const values = data.sparkline.values;
   if (!values.length) return null;
   const min = Math.min(...values);
@@ -218,8 +264,9 @@ function SparklineChart({
   const width = 200;
   const height = 60;
   const pad = 4;
+  const denom = Math.max(values.length - 1, 1);
   const pts = values.map((v, i) => {
-    const x = pad + (i / (values.length - 1)) * (width - pad * 2);
+    const x = pad + (i / denom) * (width - pad * 2);
     const y = height - pad - ((v - min) / range) * (height - pad * 2);
     return `${x},${y}`;
   });
@@ -235,31 +282,42 @@ function SparklineChart({
       width="100%"
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
-      className="rounded"
+      className="rounded-lg"
+      style={{ filter: `drop-shadow(0 2px 8px ${color}30)` }}
     >
-      <path d={fillPath} fill={`${color}18`} />
+      <defs>
+        <linearGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.05" />
+        </linearGradient>
+      </defs>
+      <path d={fillPath} fill={`url(#gradient-${color})`} />
       <polyline
         points={polyline}
         fill="none"
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="2.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+        style={{ filter: `drop-shadow(0 0 4px ${color}80)` }}
       />
       <circle
         cx={pts[pts.length - 1].split(",")[0]}
         cy={pts[pts.length - 1].split(",")[1]}
-        r="3"
+        r="4"
         fill={color}
+        stroke="#1e293b"
+        strokeWidth="1.5"
+        style={{ filter: `drop-shadow(0 0 6px ${color}cc)` }}
       />
     </svg>
   );
 }
 
 export default function InlineChart({ raw }: { raw: string }) {
-  let data: ChartData;
+  let data: unknown;
   try {
-    data = JSON.parse(raw.trim()) as ChartData;
+    data = JSON.parse(raw.trim());
   } catch {
     return (
       <pre className="text-xs text-red-400 bg-slate-900/50 p-2 rounded">
@@ -268,11 +326,19 @@ export default function InlineChart({ raw }: { raw: string }) {
     );
   }
 
+  if (!isValidChartData(data)) {
+    return (
+      <div className="my-4 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2">
+        Unsupported or invalid chart payload.
+      </div>
+    );
+  }
+
   return (
-    <div className="my-3 bg-slate-900/60 border border-slate-700/60 rounded-xl p-3 shadow-lg">
+    <div className="my-4 bg-gradient-to-br from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-slate-700/40 rounded-2xl p-4 shadow-xl shadow-black/20 backdrop-blur-sm">
       {data.title && (
-        <p className="text-xs font-semibold text-slate-300 mb-2.5 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block" />
+        <p className="text-sm font-bold text-slate-100 mb-3 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 inline-block shadow-lg shadow-cyan-500/50" />
           {data.title}
         </p>
       )}

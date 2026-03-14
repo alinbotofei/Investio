@@ -27,8 +27,8 @@ export default function WatchlistManager() {
 
   const scroll = (direction: "left" | "right") => {
     if (containerRef.current) {
-      const cardWidth = 130;
-      const gap = 10;
+      const cardWidth = 150;
+      const gap = 12;
       const scrollAmount = (cardWidth + gap) * 2;
 
       const currentScroll = containerRef.current.scrollLeft;
@@ -118,9 +118,23 @@ export default function WatchlistManager() {
           )}
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-8">
-              <div className="animate-spin w-8 h-8 border-3 border-cyan-500 border-t-transparent rounded-full mb-2"></div>
-              <p className="text-sm text-slate-400">Loading watchlist...</p>
+            <div className="h-[110px] flex gap-3 overflow-hidden px-1">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-[150px] h-[100px] flex-shrink-0 bg-slate-800/50 border border-slate-700/40 rounded-xl p-3 animate-pulse"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-9 h-9 bg-slate-700/60 rounded-lg" />
+                    <div className="flex-1">
+                      <div className="h-4 bg-slate-700/60 rounded w-16 mb-1" />
+                      <div className="h-3 bg-slate-700/40 rounded w-12" />
+                    </div>
+                  </div>
+                  <div className="h-5 bg-slate-700/60 rounded w-20 mb-1" />
+                  <div className="h-3 bg-slate-700/40 rounded w-16" />
+                </div>
+              ))}
             </div>
           ) : filteredWatchlist.length === 0 ? (
             <div className="text-center py-6">
@@ -185,7 +199,7 @@ export default function WatchlistManager() {
               )}
               <div
                 ref={containerRef}
-                className="h-full flex gap-2.5 overflow-x-auto overflow-y-hidden scrollbar-hide px-1"
+                className="h-full flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide px-1"
                 style={{
                   scrollbarWidth: "none",
                   msOverflowStyle: "none",
@@ -198,7 +212,7 @@ export default function WatchlistManager() {
                       key={item.symbol}
                       href={`/ticker/${item.symbol}`}
                       prefetch={true}
-                      className="group/card relative bg-slate-700/30 hover:bg-slate-700/50 rounded-lg p-2 transition-all cursor-pointer flex-shrink-0 w-[130px] h-[95px] border border-slate-600/30 hover:border-slate-500/50 hover:shadow-lg"
+                      className="group/card relative bg-slate-700/30 hover:bg-slate-700/50 rounded-xl p-3 transition-all cursor-pointer flex-shrink-0 w-[150px] h-[100px] border border-slate-600/30 hover:border-slate-500/50 hover:shadow-xl"
                     >
                       <div className="flex flex-col h-full justify-between">
                         <div className="flex items-center justify-between mb-1.5">

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 import DashboardLayout from "@/app/components/layout/DashboardLayout";
 import { WatchlistManager } from "@/app/components/dashboard";
 import MarketOverview from "./_components/MarketOverview";
@@ -13,9 +12,15 @@ import { SEND_BUTTON } from "@/app/lib/constants";
 
 function DashboardContent() {
   const router = useRouter();
-  const { data: session } = useSession();
   const [chatInput, setChatInput] = useState("");
-  const userName = session?.user?.name?.split(" ")[0] || "User";
+  const [lastUpdated, setLastUpdated] = useState("--:--:--");
+
+  useEffect(() => {
+    const updateClock = () => setLastUpdated(new Date().toLocaleTimeString());
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const placeholders = [
     "What are the top performing stocks today?",
@@ -35,21 +40,6 @@ function DashboardContent() {
     <DashboardLayout>
       <div className="w-full h-full p-3 sm:p-4 md:p-5 lg:p-6 overflow-y-auto">
         <div className="mb-4 sm:mb-5">
-          <div className="bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/30 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center text-white font-bold text-base shadow-lg flex-shrink-0">
-                {userName?.charAt(0).toUpperCase() || "U"}
-              </div>
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-white">
-                  Welcome back, {userName}!
-                </h2>
-                <p className="text-xs text-slate-300">
-                  Ready to explore the markets?
-                </p>
-              </div>
-            </div>
-          </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             <div>
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-0.5 sm:mb-1">
@@ -63,15 +53,15 @@ function DashboardContent() {
               <div className="text-right">
                 <p className="text-xs text-slate-500">Last Updated</p>
                 <p className="text-xs text-left text-slate-300 font-medium">
-                  {new Date().toLocaleTimeString()}
+                  {lastUpdated}
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr,1fr] gap-3 sm:gap-4 lg:gap-5 items-start">
-          <div className="min-w-0 space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr,1fr] gap-4 sm:gap-5 lg:gap-6 items-start">
+          <div className="min-w-0 space-y-4 sm:space-y-5">
             {/* Watchlist */}
             <WatchlistManager />
 
@@ -79,7 +69,7 @@ function DashboardContent() {
           </div>
 
           {/* Right Column - AI & News (Sticky on large screens) */}
-          <div className="min-w-0 lg:sticky lg:top-4 space-y-3 sm:space-y-4">
+          <div className="min-w-0 xl:sticky xl:top-4 space-y-4 sm:space-y-5">
             {/* AI Chat Section */}
             <div className="bg-gradient-to-br from-blue-600/30 via-cyan-500/30 to-purple-600/30 border-2 border-cyan-400/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl shadow-cyan-500/20 ring-1 ring-cyan-400/20">
               <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">

@@ -2,13 +2,21 @@ import { NextResponse } from "next/server";
 
 const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "";
 
-const STOCKS = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"];
+const STOCKS = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "TSLA"];
 const CRYPTO = [
   "BINANCE:BTCUSDT",
   "BINANCE:ETHUSDT",
-  "BINANCE:BNBUSDT",
   "BINANCE:SOLUSDT",
 ];
+
+const STOCK_LOGO_FALLBACKS: Record<string, string> = {
+  AAPL: "https://logo.clearbit.com/apple.com",
+  MSFT: "https://logo.clearbit.com/microsoft.com",
+  NVDA: "https://logo.clearbit.com/nvidia.com",
+  AMZN: "https://logo.clearbit.com/amazon.com",
+  GOOGL: "https://logo.clearbit.com/google.com",
+  TSLA: "https://logo.clearbit.com/tesla.com",
+};
 
 interface QuoteSimple {
   symbol: string;
@@ -28,7 +36,7 @@ async function fetchStockQuote(symbol: string): Promise<QuoteSimple | null> {
       ),
       fetch(
         `https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`,
-        { next: { revalidate: 3600 } }
+        { next: { revalidate: 86400 } }
       ),
     ]);
 
@@ -43,7 +51,7 @@ async function fetchStockQuote(symbol: string): Promise<QuoteSimple | null> {
       change: quoteData.d || 0,
       changePercent: quoteData.dp || 0,
       volume: quoteData.v || 0,
-      logo: profileData?.logo || undefined,
+      logo: profileData?.logo || STOCK_LOGO_FALLBACKS[symbol] || undefined,
     };
   } catch (error) {
     console.error(`Error fetching ${symbol}:`, error);
@@ -89,18 +97,12 @@ async function fetchCryptoQuote(symbol: string): Promise<QuoteSimple | null> {
   }
 }
 
-async function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function GET() {
   try {
     const stockPromises = STOCKS.map((s) => fetchStockQuote(s));
     const stocks = (await Promise.all(stockPromises)).filter(
       Boolean
     ) as QuoteSimple[];
-
-    await delay(200);
 
     const cryptoPromises = CRYPTO.map((s) => fetchCryptoQuote(s));
     const crypto = (await Promise.all(cryptoPromises)).filter(

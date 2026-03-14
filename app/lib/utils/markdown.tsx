@@ -1,5 +1,33 @@
 import InlineChart from "@/app/components/ui/InlineChart";
 
+const SUPPORTED_CHART_TYPES = [
+  "bar",
+  "comparison",
+  "pie",
+  "donut",
+  "sparkline",
+  "allocation",
+] as const;
+
+function extractText(value: any): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map((item) => extractText(item)).join("");
+  if (value?.props?.children) return extractText(value.props.children);
+  return "";
+}
+
+function looksLikeChartJson(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return false;
+  try {
+    const parsed = JSON.parse(trimmed);
+    const type = parsed?.type;
+    return typeof type === "string" && SUPPORTED_CHART_TYPES.includes(type as any);
+  } catch {
+    return false;
+  }
+}
+
 export const markdownComponents = {
   h1: ({ node, ...props }: any) => (
     <h1 className="text-2xl font-bold mb-3 mt-4 text-white" {...props} />
@@ -10,9 +38,17 @@ export const markdownComponents = {
   h3: ({ node, ...props }: any) => (
     <h3 className="text-lg font-semibold mb-2 mt-2 text-slate-200" {...props} />
   ),
-  p: ({ node, ...props }: any) => (
-    <p className="mb-3 leading-relaxed text-slate-100" {...props} />
-  ),
+  p: ({ node, children, ...props }: any) => {
+    const rawText = extractText(children).trim();
+    if (looksLikeChartJson(rawText)) {
+      return <InlineChart raw={rawText} />;
+    }
+    return (
+      <p className="mb-3 leading-relaxed text-slate-100" {...props}>
+        {children}
+      </p>
+    );
+  },
   ul: ({ node, ...props }: any) => (
     <ul
       className="list-disc list-outside mb-3 space-y-2 ml-6 marker:text-slate-400"
@@ -36,34 +72,33 @@ export const markdownComponents = {
   ),
   code: ({ node, className, children, ...props }: any) => {
     const isInline = !className;
-    if (!isInline && className === "language-chart") {
-      const raw = String(children).replace(/\n$/, "");
-      return <InlineChart raw={raw} />;
+    if (!isInline) {
+      const raw = String(children).replace(/\n$/, "").trim();
+      // Render as chart if explicitly marked OR if content looks like chart JSON
+      if (
+        className === "language-chart" ||
+        (raw.startsWith("{") && raw.includes('"type":'))
+      ) {
+        return <InlineChart raw={raw} />;
+      }
+      return null;
     }
-    return isInline ? (
+    return (
       <code
         className="bg-slate-950/70 px-2 py-1 rounded text-cyan-400 text-sm font-mono border border-slate-700/50"
         {...props}
       >
         {children}
       </code>
-    ) : (
-      <code
-        className="block bg-slate-950/90 p-4 rounded-lg text-slate-300 text-sm font-mono my-3 overflow-x-auto border border-slate-700 shadow-inner"
-        {...props}
-      >
-        {children}
-      </code>
     );
   },
-  pre: ({ node, children, ...props }: any) => {
-    // If the child is an InlineChart (chart code block), skip the pre wrapper
+  pre: ({ children }: any) => {
     const childArr = Array.isArray(children) ? children : [children];
     const hasChart = childArr.some(
       (c: any) => c?.type?.name === "InlineChart" || c?.props?.raw !== undefined
     );
     if (hasChart) return <>{children}</>;
-    return <pre className="my-3" {...props}>{children}</pre>;
+    return null;
   },
   table: ({ node, ...props }: any) => (
     <div className="overflow-x-auto my-4">

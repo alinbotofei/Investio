@@ -80,7 +80,17 @@ function MarketOverview() {
   };
 
   const renderTopMovers = () => {
-    if (!data || loading) return null;
+    if (loading) return (
+      <div className="bg-gradient-to-br from-orange-500/10 via-red-500/10 to-pink-500/10 border border-orange-500/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-5">
+        <div className="h-10 w-56 bg-slate-700/60 rounded-lg animate-pulse mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3 animate-pulse h-28" />
+          ))}
+        </div>
+      </div>
+    );
+    if (!data) return null;
 
     const allQuotes = [
       ...(data.stocks || []),
@@ -118,9 +128,9 @@ function MarketOverview() {
           </button>
         </div>
         <div
-          className={`grid gap-2 sm:gap-2.5 md:gap-3 transition-all duration-150 ease-in-out overflow-hidden ${
+          className={`grid gap-3 transition-all duration-150 ease-in-out overflow-hidden ${
             expandedSections.topMovers
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 opacity-100 max-h-[3000px]"
+              ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 opacity-100 max-h-[3000px]"
               : "grid-cols-1 opacity-0 max-h-0"
           }`}
         >
@@ -184,9 +194,9 @@ function MarketOverview() {
         </button>
       </div>
       <div
-        className={`grid gap-2 sm:gap-2.5 md:gap-3 transition-all duration-300 ease-in-out overflow-hidden ${
+        className={`grid gap-3 transition-all duration-300 ease-in-out overflow-hidden ${
           expandedSections[sectionKey]
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 opacity-100 max-h-[5000px]"
+            ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 opacity-100 max-h-[5000px]"
             : "grid-cols-1 opacity-0 max-h-0"
         }`}
       >

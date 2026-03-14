@@ -17,6 +17,7 @@ import { formatNumber, formatPrice } from "@/app/lib/utils/format";
 import { fetchTickerData } from "@/app/lib/utils/dataFetching";
 import { useWatchlist } from "@/app/contexts/WatchlistContext";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
+import Tooltip from "@/app/components/ui/Tooltip";
 
 export default function TickerPage() {
   const params = useParams();
@@ -36,6 +37,7 @@ export default function TickerPage() {
   const [watchlistFeedback, setWatchlistFeedback] = useState<string | null>(
     null
   );
+  const [watchlistPending, setWatchlistPending] = useState(false);
   const [logoError, setLogoError] = useState(false);
 
   const inWatchlist = isInWatchlist(symbol);
@@ -95,38 +97,112 @@ export default function TickerPage() {
   }, [loadData]);
 
   const toggleWatchlist = async () => {
+    if (watchlistPending) return;
+    setWatchlistPending(true);
     let success = false;
-    
-    if (inWatchlist) {
-      success = await removeFromWatchlist(symbol);
-      if (success) {
-        setWatchlistFeedback(`✓ Removed from watchlist`);
-      } else {
-        setWatchlistFeedback(`✗ Failed to remove from watchlist`);
-      }
-    } else {
-      success = await addToWatchlist(symbol, category);
-      if (success) {
-        setWatchlistFeedback(`✓ Added to watchlist`);
-      } else {
-        setWatchlistFeedback(`✗ Failed to add to watchlist`);
-      }
-    }
 
-    setTimeout(() => setWatchlistFeedback(null), 2500);
+    try {
+      if (inWatchlist) {
+        success = await removeFromWatchlist(symbol);
+        if (success) {
+          setWatchlistFeedback(`✓ Removed from watchlist`);
+        } else {
+          setWatchlistFeedback(`✗ Failed to remove from watchlist`);
+        }
+      } else {
+        success = await addToWatchlist(symbol, category);
+        if (success) {
+          setWatchlistFeedback(`✓ Added to watchlist`);
+        } else {
+          setWatchlistFeedback(`✗ Failed to add to watchlist`);
+        }
+      }
+    } finally {
+      setTimeout(() => setWatchlistFeedback(null), 2500);
+      setWatchlistPending(false);
+    }
   };
 
   if (initialLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-          <div className="text-center">
-            <div className="relative w-20 h-20 mx-auto mb-6">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-20 animate-ping"></div>
-              <div className="relative w-20 h-20 border-4 border-transparent border-t-cyan-500 border-r-blue-500 rounded-full animate-spin"></div>
+        <div className="flex flex-col h-full min-h-0">
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
+              {/* Back button skeleton */}
+              <div className="mb-4 sm:mb-6 h-9 w-36 bg-slate-800/60 rounded-lg animate-pulse" />
+
+              {/* Hero card skeleton */}
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 sm:p-5 md:p-6 mb-4 sm:mb-6 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-700/60 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="h-7 bg-slate-700/60 rounded-lg w-1/3 mb-2" />
+                    <div className="h-4 bg-slate-700/40 rounded w-1/4 mb-3" />
+                    <div className="h-5 bg-slate-700/40 rounded-full w-20" />
+                  </div>
+                  <div className="h-9 w-20 bg-slate-700/40 rounded-xl flex-shrink-0" />
+                </div>
+                <div className="mt-5 flex items-baseline gap-4">
+                  <div className="h-10 bg-slate-700/60 rounded-lg w-32" />
+                  <div className="h-6 bg-slate-700/40 rounded-lg w-28" />
+                </div>
+              </div>
+
+              {/* Grid layout skeleton */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr,500px] xl:grid-cols-[1fr,600px] 2xl:grid-cols-[1fr,700px] gap-4 sm:gap-6 lg:gap-8">
+                {/* Left column */}
+                <div className="space-y-4 sm:space-y-6">
+                  {/* Chart card skeleton */}
+                  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 animate-pulse">
+                    <div className="h-5 bg-slate-700/60 rounded w-24 mb-5" />
+                    <div className="h-[432px] bg-slate-700/30 rounded-lg relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-600/10 to-transparent skeleton-shimmer" />
+                    </div>
+                  </div>
+                  {/* Metrics card skeleton */}
+                  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 animate-pulse">
+                    <div className="h-5 bg-slate-700/60 rounded w-28 mb-5" />
+                    <div className="space-y-3">
+                      {Array.from({ length: 7 }).map((_, i) => (
+                        <div key={i} className="flex justify-between items-center py-1 border-b border-slate-700/20 last:border-0">
+                          <div className="h-4 bg-slate-700/40 rounded w-24" />
+                          <div className="h-4 bg-slate-700/60 rounded w-20" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right column */}
+                <div className="space-y-4 sm:space-y-6">
+                  {/* News skeleton */}
+                  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 animate-pulse">
+                    <div className="h-5 bg-slate-700/60 rounded w-20 mb-5" />
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="py-3 border-b border-slate-700/30 last:border-0">
+                        <div className="h-4 bg-slate-700/40 rounded w-full mb-2" />
+                        <div className="h-3 bg-slate-700/30 rounded w-3/4 mb-1.5" />
+                        <div className="h-3 bg-slate-700/20 rounded w-1/3" />
+                      </div>
+                    ))}
+                  </div>
+                  {/* AI Widget skeleton */}
+                  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl h-80 animate-pulse">
+                    <div className="p-4 border-b border-slate-700/50">
+                      <div className="h-5 bg-slate-700/60 rounded w-28" />
+                    </div>
+                    <div className="flex items-center justify-center h-48">
+                      <div className="text-center">
+                        <div className="w-12 h-12 rounded-full bg-slate-700/40 mx-auto mb-3" />
+                        <div className="h-4 bg-slate-700/30 rounded w-32 mx-auto mb-2" />
+                        <div className="h-3 bg-slate-700/20 rounded w-24 mx-auto" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Loading {symbol}</h3>
-            <p className="text-slate-400 text-sm">Fetching market data...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -228,27 +304,29 @@ export default function TickerPage() {
                 </span>
               </div>
             </div>
-            <button
-              onClick={toggleWatchlist}
-              className={`group/watch relative px-3 py-2 rounded-xl transition-all duration-150 flex-shrink-0 border flex items-center gap-2 ${
-                inWatchlist
-                  ? "bg-gradient-to-br from-cyan-500 to-blue-600 border-cyan-400/60 shadow-[0_0_0_2px_rgba(6,182,212,0.25),0_6px_18px_-4px_rgba(37,99,235,0.45)] hover:shadow-[0_0_0_3px_rgba(6,182,212,0.35),0_8px_24px_-4px_rgba(37,99,235,0.6)] hover:scale-105"
-                  : "bg-slate-800/90 border-slate-500/70 border-dashed hover:border-cyan-400/50 hover:bg-slate-700/80 hover:scale-105"
-              }`}
-              title={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
-            >
-              <Icon
-                name={inWatchlist ? "bookmark" : "bookmark_add"}
-                className={`text-[20px] sm:text-[22px] leading-none transition-all duration-150 ${
-                  inWatchlist ? "text-white" : "text-slate-300 group-hover/watch:text-cyan-400"
-                }`}
-              />
-              <span className={`text-xs font-semibold hidden sm:inline transition-colors ${
-                inWatchlist ? "text-white" : "text-slate-300 group-hover/watch:text-violet-400"
-              }`}>
-                {inWatchlist ? "Saved" : "Save"}
-              </span>
-            </button>
+            <Tooltip content={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}>
+              <button
+                onClick={toggleWatchlist}
+                disabled={watchlistPending}
+                className={`group/watch relative px-3 py-2 rounded-xl transition-all duration-150 flex-shrink-0 border flex items-center gap-2 ${
+                  inWatchlist
+                    ? "bg-gradient-to-br from-cyan-500 to-blue-600 border-cyan-400/60 shadow-[0_0_0_2px_rgba(6,182,212,0.25),0_6px_18px_-4px_rgba(37,99,235,0.45)] hover:shadow-[0_0_0_3px_rgba(6,182,212,0.35),0_8px_24px_-4px_rgba(37,99,235,0.6)] hover:scale-105"
+                    : "bg-slate-800/90 border-slate-500/70 hover:border-cyan-400/50 hover:bg-slate-700/80 hover:scale-105"
+                } ${watchlistPending ? "opacity-70 cursor-not-allowed hover:scale-100" : ""}`}
+              >
+                <Icon
+                  name={inWatchlist ? "bookmark" : "bookmark_add"}
+                  className={`text-[20px] sm:text-[22px] leading-none transition-all duration-150 ${
+                    inWatchlist ? "text-white" : "text-slate-300 group-hover/watch:text-cyan-400"
+                  }`}
+                />
+                <span className={`text-xs font-semibold hidden sm:inline transition-colors ${
+                  inWatchlist ? "text-white" : "text-slate-300"
+                }`}>
+                  {inWatchlist ? "Saved" : "Save"}
+                </span>
+              </button>
+            </Tooltip>
           </div>
 
           <div className="mt-4 sm:mt-6 flex items-baseline gap-3 sm:gap-4 flex-wrap">
@@ -365,7 +443,7 @@ export default function TickerPage() {
           </div>
 
           {/* Right Column - AI Chat (Prominent & Sticky) */}
-          <div className="lg:sticky lg:top-4 lg:self-start lg:h-[calc(100dvh-108px)] order-1 lg:order-2">
+          <div className="lg:sticky lg:top-4 lg:self-start lg:h-[calc(100dvh-348px)] order-1 lg:order-2">
             <div className="relative bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-2 border-cyan-500/30 rounded-2xl p-1 backdrop-blur-sm shadow-2xl shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-300 lg:h-full lg:flex lg:flex-col">
               <div className="bg-slate-900/80 rounded-xl overflow-hidden backdrop-blur-xl border border-slate-700/50 lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
                 <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 px-4 xl:px-6 py-3 xl:py-4 border-b border-cyan-500/20 flex-shrink-0">
