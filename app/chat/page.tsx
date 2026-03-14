@@ -38,19 +38,29 @@ function getGreetingLabel() {
   return "Welcome";
 }
 
+const CHAT_DRAFT_STORAGE_KEY = "chat_input_draft";
+
 function ChatContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const contextFromUrl = searchParams.get("context");
   const convIdFromUrl = searchParams.get("id");
   const { data: session, status: sessionStatus } = useSession();
-  const rawFirstName = session?.user?.name?.split(" ")[0] || "";
+  const isSessionReady = sessionStatus !== "loading";
+  const rawFirstName = isSessionReady ? session?.user?.name?.split(" ")[0] || "" : "";
   const userFirstName =
     rawFirstName.toLowerCase() === "you" ? "Investor" : rawFirstName || "Investor";
   const greetingLabel = getGreetingLabel();
-  const { loadConversations, setMobileSidebarOpen } = useConversationsCtx();
+  const { loadConversations } = useConversationsCtx();
 
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return sessionStorage.getItem(CHAT_DRAFT_STORAGE_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
   const [messages, setMessages] = useState<Message[]>(() => {
     if (contextFromUrl) {
       return [{ id: "ctx-init", role: "user" as const, text: contextFromUrl, time: Date.now(), fresh: true }];
@@ -94,10 +104,24 @@ function ChatContent() {
     if (contextFromUrl && !hasSubmittedRef.current) {
       hasSubmittedRef.current = true;
       setValue("");
+      try {
+        sessionStorage.removeItem(CHAT_DRAFT_STORAGE_KEY);
+      } catch {}
       handleSend(contextFromUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextFromUrl]);
+
+  useEffect(() => {
+    try {
+      const trimmed = value.trim();
+      if (trimmed) {
+        sessionStorage.setItem(CHAT_DRAFT_STORAGE_KEY, value);
+      } else {
+        sessionStorage.removeItem(CHAT_DRAFT_STORAGE_KEY);
+      }
+    } catch {}
+  }, [value]);
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -132,8 +156,8 @@ function ChatContent() {
   useEffect(() => {
     const ta = landingTextareaRef.current || chatTextareaRef.current;
     if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = `${Math.min(140, ta.scrollHeight)}px`;
+    ta.style.height = "1px";
+    ta.style.height = `${Math.min(190, Math.max(60, ta.scrollHeight))}px`;
   }, [value]);
 
   useEffect(() => {
@@ -179,6 +203,18 @@ function ChatContent() {
     setTimeout(() => setToast(null), 2500);
   };
 
+  const setDraftValue = (nextValue: string) => {
+    setValue(nextValue);
+    try {
+      const trimmed = nextValue.trim();
+      if (trimmed) {
+        sessionStorage.setItem(CHAT_DRAFT_STORAGE_KEY, nextValue);
+      } else {
+        sessionStorage.removeItem(CHAT_DRAFT_STORAGE_KEY);
+      }
+    } catch {}
+  };
+
   async function handleSend(messageText?: string) {
     const textToSend = messageText || value.trim();
     if (!textToSend) return;
@@ -197,6 +233,9 @@ function ChatContent() {
       ];
     });
     setValue("");
+    try {
+      sessionStorage.removeItem(CHAT_DRAFT_STORAGE_KEY);
+    } catch {}
     setLoading(true);
 
     const flushAssistantText = () => {
@@ -243,9 +282,7 @@ function ChatContent() {
           if (typeof errorPayload?.detail === "string") {
             detail = `${detail} (${errorPayload.detail})`;
           }
-        } catch {
-          // ignore parse errors and use status fallback
-        }
+        } catch {}
         throw new Error(detail);
       }
 
@@ -405,55 +442,40 @@ function ChatContent() {
             </div>
           ) : messages.length === 0 ? (
             <>
-              <div className="flex-shrink-0 h-14 px-4 border-b border-slate-700/20 bg-slate-950/40 backdrop-blur-xl flex items-center gap-3 md:hidden">
-                <button
-                  onClick={() => setMobileSidebarOpen(true)}
-                  className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-xl transition-all"
-                  title="Conversations"
-                >
-                  <Icon name="menu" className="text-[20px]" />
-                </button>
-                <div className="flex-1 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <div className="w-9" />
-              </div>
-
               <div className="flex-1 w-full min-h-0">
                 <div className="h-full w-full overflow-y-auto flex items-start justify-center px-4 sm:px-8 lg:px-12 py-6 sm:py-8 bg-gradient-to-b from-slate-950/35 via-slate-900/20 to-slate-950/35">
-                  <div className="w-full max-w-[72rem] h-full p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-start gap-7 pt-3 sm:pt-6 lg:pt-7">
 
-                  <div className="flex flex-col items-center gap-3.5 mb-4 sm:mb-5">
+                  <div className="w-full max-w-[72rem] h-full p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-start gap-4 sm:gap-7 pt-3 sm:pt-6 lg:pt-7">
+
+                  <div className="flex flex-col items-center gap-2 sm:gap-3.5 mb-1 sm:mb-4">
                     <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.035] backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_22px_rgba(2,8,23,0.08)]">
                       <div className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px] rounded-[14px] bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 flex items-center justify-center shadow-[0_8px_18px_rgba(59,130,246,0.2)] flex-shrink-0">
                         <svg className="w-4 h-4 sm:w-[17px] sm:h-[17px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                       </div>
-                      <span className="text-slate-50 font-semibold text-[21px] sm:text-[23px] tracking-tight leading-none whitespace-nowrap">Investio</span>
+                      <span className="text-slate-50 font-semibold text-[19px] sm:text-[23px] tracking-tight leading-none whitespace-nowrap">Investio</span>
                     </div>
-                    <p className="text-slate-100 text-[23px] sm:text-[26px] font-medium tracking-tight text-center leading-tight">
-                      {sessionStatus === "loading" ? (
-                        <span className="text-slate-400 text-[18px]">...</span>
-                      ) : (
-                        <>
+                    <div className="min-h-[30px] sm:min-h-[38px] flex items-center justify-center">
+                      {isSessionReady ? (
+                        <p className="text-slate-100 text-[20px] sm:text-[26px] font-medium tracking-tight text-center leading-tight">
                           <span className="text-slate-100/95">{greetingLabel}, </span>
                           <span className="text-slate-50">{userFirstName}</span>
                           <span className="text-slate-200/85">!</span>
-                        </>
+                        </p>
+                      ) : (
+                        <div className="h-6 sm:h-7 w-44 sm:w-56 rounded-full bg-slate-700/35 animate-pulse" />
                       )}
-                    </p>
+                    </div>
                     <div className="h-px w-44 sm:w-52 bg-gradient-to-r from-transparent via-blue-300/90 to-transparent" />
                   </div>
 
-                  <h1 className="mt-1 text-[32px] sm:text-[40px] lg:text-[46px] font-bold text-center leading-[1.08] tracking-tight max-w-3xl [text-wrap:balance] px-2">
+                    <h1 className="mt-0 text-[24px] sm:text-[40px] lg:text-[46px] font-bold text-center leading-[1.1] tracking-tight max-w-3xl [text-wrap:balance] px-2">
                     <span className="text-slate-100">How can I help you </span>
                     <span className="bg-gradient-to-r from-cyan-200 via-sky-300 to-blue-300 bg-clip-text text-transparent">today?</span>
                   </h1>
 
-                  <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl">
+                    <div className="hidden sm:flex flex-wrap justify-center gap-2.5 max-w-2xl">
                     {[
                       { icon: "query_stats",      text: "Market Edge" },
                       { icon: "candlestick_chart", text: "Smart Entries" },
@@ -471,17 +493,17 @@ function ChatContent() {
                     <textarea
                       ref={landingTextareaRef}
                       value={value}
-                      onChange={(e) => setValue(e.target.value)}
+                      onChange={(e) => setDraftValue(e.target.value)}
                       onFocus={() => setLandingFocused(true)}
                       onBlur={() => setLandingFocused(false)}
-                      className="relative w-full bg-slate-800/80 border border-slate-600/35 text-white py-4 pl-6 pr-[60px] rounded-[26px] resize-none focus:outline-none hover:bg-slate-800/88 hover:border-slate-500/42 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.22),0_0_32px_rgba(59,130,246,0.12),0_8px_24px_rgba(2,8,23,0.18)] shadow-[0_4px_18px_rgba(2,8,23,0.16)] text-[16px] backdrop-blur-sm transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar"
+                      className="relative w-full bg-slate-800/80 border border-slate-600/35 text-white py-4 pl-6 pr-[60px] rounded-[26px] resize-none focus:outline-none hover:bg-slate-800/88 hover:border-slate-500/42 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.22),0_0_32px_rgba(59,130,246,0.12),0_8px_24px_rgba(2,8,23,0.18)] shadow-[0_4px_18px_rgba(2,8,23,0.16)] text-[15px] sm:text-[16px] backdrop-blur-sm transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[76px] sm:min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar"
                       rows={1}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
                       }}
                     />
                     {!value && !landingFocused && (
-                      <div className="absolute left-6 top-[17px] right-16 pointer-events-none text-slate-300/70 text-[15px] leading-relaxed">
+                      <div className="absolute inset-x-0 inset-y-0 pointer-events-none px-6 pr-16 py-4 text-slate-300/70 text-[14px] sm:text-[15px] leading-relaxed overflow-hidden">
                         <AnimatedPlaceholder
                           placeholders={CHAT_PLACEHOLDERS.map((p) => `Ask anything about ${p}...`)}
                           typingSpeed={50}
@@ -494,36 +516,58 @@ function ChatContent() {
                       onClick={() => handleSend()}
                       disabled={loading || !value.trim()}
                       aria-label="Send message"
-                      className="absolute right-3 inset-y-0 my-auto w-9 h-9 sm:w-9 sm:h-9 xl:w-9 xl:h-9 flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-md transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="absolute right-3 inset-y-0 my-auto w-[34px] h-[34px] sm:w-[34px] sm:h-[34px] xl:w-[34px] xl:h-[34px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_4px_12px_rgba(2,8,23,0.28)] transition-all duration-200 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      <Icon name="send" className="text-[14px] sm:text-[14px] xl:text-[14px]" />
+                      <Icon name="send" className="text-[13px] sm:text-[13px] xl:text-[13px]" />
                     </button>
                   </div>
 
-                  {/* Suggestion cards — compact horizontal layout */}
-                  <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 pt-1">
-                    {([
-                      { icon: "trending_up",    label: "Top tech stocks",  desc: "Performance charts & comparison", prompt: "Show me the top technology stocks right now with a performance comparison chart." },
-                      { icon: "currency_bitcoin", label: "Crypto market",  desc: "BTC, ETH & altcoin analysis",     prompt: "Analyze the current crypto market — show BTC, ETH, and top altcoins with charts." },
-                      { icon: "pie_chart",      label: "Build a portfolio", desc: "Personalized $10k allocation",    prompt: "Create an optimal $10,000 portfolio for moderate risk with an allocation chart." },
-                      { icon: "compare_arrows", label: "AAPL vs MSFT",     desc: "Head-to-head performance",        prompt: "Compare AAPL and MSFT — show performance charts and key financial metrics." },
-                      { icon: "bar_chart",      label: "Sector leaders",   desc: "Best performing sectors YTD",     prompt: "Which market sectors are outperforming this quarter? Show a ranked chart." },
-                      { icon: "savings",        label: "Dividend stocks",  desc: "High-yield plays & payout data",  prompt: "Show me the best dividend stocks right now with yield comparison charts." },
-                    ] as { icon: string; label: string; desc: string; prompt: string }[]).map(({ icon, label, desc, prompt }) => (
-                      <button
-                        key={label}
-                        onClick={() => { setValue(prompt); setTimeout(() => landingTextareaRef.current?.focus(), 0); }}
-                        className="group flex items-center gap-3.5 p-4 rounded-2xl bg-slate-800/58 hover:bg-slate-800/74 border border-slate-700/40 hover:border-cyan-400/20 text-left transition-all duration-200 hover:-translate-y-0.5"
-                      >
-                        <div className="w-9 h-9 rounded-lg bg-slate-700/42 group-hover:bg-cyan-500/10 flex items-center justify-center flex-shrink-0 border border-slate-600/20 group-hover:border-cyan-400/18 transition-colors duration-200">
-                          <Icon name={icon} className="text-[15px] text-slate-400 group-hover:text-cyan-300 transition-colors duration-200" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-white text-sm font-semibold leading-tight group-hover:text-cyan-50 transition-colors duration-200">{label}</p>
-                          <p className="text-slate-500 text-xs leading-snug mt-1 group-hover:text-slate-400 transition-colors duration-200">{desc}</p>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="w-full max-w-4xl">
+                    <div className="sm:hidden grid grid-cols-2 gap-2.5 pt-1">
+                      {([
+                        { icon: "trending_up",     label: "Top tech stocks",   prompt: "Show me the top technology stocks right now with a performance comparison chart." },
+                        { icon: "currency_bitcoin", label: "Crypto market",    prompt: "Analyze the current crypto market — show BTC, ETH, and top altcoins with charts." },
+                        { icon: "pie_chart",       label: "Build a portfolio", prompt: "Create an optimal $10,000 portfolio for moderate risk with an allocation chart." },
+                        { icon: "compare_arrows",  label: "AAPL vs MSFT",      prompt: "Compare AAPL and MSFT — show performance charts and key financial metrics." },
+                        { icon: "bar_chart",       label: "Sector leaders",    prompt: "Which market sectors are outperforming this quarter? Show a ranked chart." },
+                        { icon: "savings",         label: "Dividend stocks",   prompt: "Show me the best dividend stocks right now with yield comparison charts." },
+                      ] as { icon: string; label: string; prompt: string }[]).map(({ icon, label, prompt }) => (
+                        <button
+                          key={label}
+                          onClick={() => { setDraftValue(prompt); setTimeout(() => landingTextareaRef.current?.focus(), 0); }}
+                          className="flex min-h-[64px] items-center gap-2.5 rounded-2xl bg-slate-800/62 border border-slate-700/40 px-3 py-3 text-left active:bg-slate-700/80 active:border-cyan-400/25 transition-all duration-150"
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-700/40 border border-slate-600/25 flex-shrink-0">
+                            <Icon name={icon} className="text-[14px] text-blue-300 flex-shrink-0" />
+                          </div>
+                          <span className="text-slate-100 text-[12.5px] font-medium leading-snug [text-wrap:balance]">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="hidden sm:grid sm:grid-cols-2 xl:grid-cols-3 gap-3.5 pt-1">
+                      {([
+                        { icon: "trending_up",     label: "Top tech stocks",   desc: "Performance charts & comparison", prompt: "Show me the top technology stocks right now with a performance comparison chart." },
+                        { icon: "currency_bitcoin", label: "Crypto market",    desc: "BTC, ETH & altcoin analysis",     prompt: "Analyze the current crypto market — show BTC, ETH, and top altcoins with charts." },
+                        { icon: "pie_chart",       label: "Build a portfolio", desc: "Personalized $10k allocation",    prompt: "Create an optimal $10,000 portfolio for moderate risk with an allocation chart." },
+                        { icon: "compare_arrows",  label: "AAPL vs MSFT",      desc: "Head-to-head performance",        prompt: "Compare AAPL and MSFT — show performance charts and key financial metrics." },
+                        { icon: "bar_chart",       label: "Sector leaders",   desc: "Best performing sectors YTD",     prompt: "Which market sectors are outperforming this quarter? Show a ranked chart." },
+                        { icon: "savings",         label: "Dividend stocks",  desc: "High-yield plays & payout data",  prompt: "Show me the best dividend stocks right now with yield comparison charts." },
+                      ] as { icon: string; label: string; desc: string; prompt: string }[]).map(({ icon, label, desc, prompt }) => (
+                        <button
+                          key={label}
+                          onClick={() => { setDraftValue(prompt); setTimeout(() => landingTextareaRef.current?.focus(), 0); }}
+                          className="group flex items-center gap-3.5 p-4 rounded-2xl bg-slate-800/58 hover:bg-slate-800/74 border border-slate-700/40 hover:border-cyan-400/20 text-left transition-all duration-200 hover:-translate-y-0.5"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-slate-700/42 group-hover:bg-cyan-500/10 flex items-center justify-center flex-shrink-0 border border-slate-600/20 group-hover:border-cyan-400/18 transition-colors duration-200">
+                            <Icon name={icon} className="text-[15px] text-slate-400 group-hover:text-cyan-300 transition-colors duration-200" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-white text-sm font-semibold leading-tight group-hover:text-cyan-50 transition-colors duration-200">{label}</p>
+                            <p className="text-slate-500 text-xs leading-snug mt-1 group-hover:text-slate-400 transition-colors duration-200">{desc}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   </div>
                 </div>
@@ -608,7 +652,7 @@ function ChatContent() {
                     <textarea
                       ref={chatTextareaRef}
                       value={value}
-                      onChange={(e) => setValue(e.target.value)}
+                      onChange={(e) => setDraftValue(e.target.value)}
                       placeholder="Ask anything..."
                       className="w-full bg-slate-800/80 border border-slate-600/35 text-white text-[16px] py-4 pl-5 pr-[58px] rounded-[24px] resize-none focus:outline-none hover:bg-slate-800/90 hover:border-slate-500/40 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.15),0_0_28px_rgba(59,130,246,0.07)] transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
                       rows={1}
@@ -623,12 +667,12 @@ function ChatContent() {
                       onClick={() => handleSend()}
                       disabled={loading || !value.trim()}
                       aria-label="Send"
-                      className="absolute right-3 inset-y-0 my-auto w-9 h-9 flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="absolute right-3 inset-y-0 my-auto w-[34px] h-[34px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_4px_12px_rgba(2,8,23,0.28)] transition-all duration-200 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
-                        <Icon name="send" className="text-[14px]" />
+                        <Icon name="send" className="text-[13px]" />
                       )}
                     </button>
                   </div>

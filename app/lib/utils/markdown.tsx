@@ -74,7 +74,6 @@ export const markdownComponents = {
     const isInline = !className;
     if (!isInline) {
       const raw = String(children).replace(/\n$/, "").trim();
-      // Render as chart if explicitly marked OR if content looks like chart JSON
       if (
         className === "language-chart" ||
         (raw.startsWith("{") && raw.includes('"type":'))

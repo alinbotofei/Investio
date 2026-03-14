@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Icon from "../ui/Icon";
 import AnimatedPlaceholder from "../ui/AnimatedPlaceholder";
 import {
@@ -9,6 +11,7 @@ import {
   SEND_BUTTON,
 } from "@/app/lib/constants";
 import { Message } from "@/app/lib/types";
+import { markdownComponents } from "@/app/lib/utils/markdown";
 
 interface ChatWidgetProps {
   context?: string;
@@ -43,6 +46,8 @@ export default function ChatWidget({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const pendingContentRef = useRef("");
+  const flushRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!messagesRef.current) return;
@@ -55,9 +60,18 @@ export default function ChatWidget({
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = `${Math.min(120, ta.scrollHeight)}px`;
+    ta.style.height = "1px";
+    ta.style.height = `${Math.min(120, Math.max(44, ta.scrollHeight))}px`;
   }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (flushRafRef.current !== null) {
+        cancelAnimationFrame(flushRafRef.current);
+        flushRafRef.current = null;
+      }
+    };
+  }, []);
 
   async function handleSend() {
     const textToSend = value.trim();
@@ -82,8 +96,22 @@ export default function ChatWidget({
     ]);
     setValue("");
     setLoading(true);
+    pendingContentRef.current = "";
 
     let accumulatedText = "";
+
+    const flushAssistantText = () => {
+      if (flushRafRef.current !== null) return;
+      flushRafRef.current = requestAnimationFrame(() => {
+        flushRafRef.current = null;
+        const nextText = pendingContentRef.current;
+        setMessages((current) =>
+          current.map((msg) =>
+            msg.id === assistantMsgId ? { ...msg, text: nextText } : msg
+          )
+        );
+      });
+    };
 
     try {
       const response = await fetch("/api/chat", {
@@ -91,6 +119,7 @@ export default function ChatWidget({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: messageWithContext,
+          displayText: textToSend,
           conversationId,
           history: messages
             .filter((m) => m.text)
@@ -137,11 +166,8 @@ export default function ChatWidget({
 
           if (event.content) {
             accumulatedText += event.content;
-            setMessages((current) =>
-              current.map((msg) =>
-                msg.id === assistantMsgId ? { ...msg, text: accumulatedText } : msg
-              )
-            );
+            pendingContentRef.current = accumulatedText;
+            flushAssistantText();
           }
 
           if (event.conversationId && !conversationId) {
@@ -155,12 +181,23 @@ export default function ChatWidget({
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to send message";
+      pendingContentRef.current = "";
       setMessages((current) =>
         current.map((msg) =>
           msg.id === assistantMsgId ? { ...msg, text: `Error: ${errorMessage}` } : msg
         )
       );
     } finally {
+      if (flushRafRef.current !== null) {
+        cancelAnimationFrame(flushRafRef.current);
+        flushRafRef.current = null;
+      }
+      pendingContentRef.current = accumulatedText;
+      setMessages((current) =>
+        current.map((msg) =>
+          msg.id === assistantMsgId ? { ...msg, text: accumulatedText } : msg
+        )
+      );
       setLoading(false);
     }
   }
@@ -199,15 +236,23 @@ export default function ChatWidget({
           messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               <div
-                className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed break-words ${
+                className={`max-w-[88%] rounded-2xl text-sm leading-relaxed break-words ${
                   msg.role === "user"
-                    ? "bg-gradient-to-br from-blue-600 to-cyan-500 text-white"
-                    : "bg-slate-800/90 border border-slate-700/60 text-slate-100"
+                    ? "px-3.5 py-2.5 bg-gradient-to-br from-blue-600 to-cyan-500 text-white"
+                    : "chat-widget-assistant"
                 }`}
               >
-                {msg.text || (
-                  <div className="flex items-center py-0.5">
+                {msg.role === "user" ? (
+                  <span>{msg.text}</span>
+                ) : !msg.text ? (
+                  <div className="flex items-center px-3.5 py-2.5 bg-slate-800/90 border border-slate-700/60 rounded-2xl">
                     <div className="w-3.5 h-3.5 border-2 border-cyan-400/30 border-t-cyan-300 rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <div className="px-3.5 py-2.5 bg-slate-800/90 border border-slate-700/60 rounded-2xl">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                      {msg.text}
+                    </ReactMarkdown>
                   </div>
                 )}
               </div>
@@ -225,7 +270,7 @@ export default function ChatWidget({
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder=""
-            className={`${TEXTAREA_BASE} w-full pr-[58px] pl-4 min-h-[82px] max-h-[150px] text-[15px] rounded-[22px] resize-none focus:ring-2 focus:ring-cyan-300/18 focus:border-cyan-400/45 transition-all duration-300 ease-out`}
+            className={`${TEXTAREA_BASE} w-full pr-[58px] pl-4 min-h-[44px] max-h-[150px] text-[15px] rounded-[22px] resize-none focus:ring-2 focus:ring-cyan-300/18 focus:border-cyan-400/45 transition-all duration-300 ease-out hide-scrollbar`}
             rows={1}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -243,12 +288,12 @@ export default function ChatWidget({
             onClick={handleSend}
             disabled={!value.trim() || loading}
             aria-label="Send message"
-            className={`${SEND_BUTTON} absolute right-3 inset-y-0 my-auto w-9 h-9 flex items-center justify-center`}
+            className={`${SEND_BUTTON} absolute right-3 inset-y-0 my-auto w-[34px] h-[34px] flex items-center justify-center shadow-[0_4px_12px_rgba(2,8,23,0.28)] transition-all duration-200 active:scale-[0.97]`}
           >
             {loading ? (
               <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <Icon name="send" className="text-[14px]" />
+              <Icon name="send" className="text-[13px]" />
             )}
           </button>
         </div>

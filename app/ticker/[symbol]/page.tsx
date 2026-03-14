@@ -17,7 +17,6 @@ import { formatNumber, formatPrice } from "@/app/lib/utils/format";
 import { fetchTickerData } from "@/app/lib/utils/dataFetching";
 import { useWatchlist } from "@/app/contexts/WatchlistContext";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
-import Tooltip from "@/app/components/ui/Tooltip";
 
 export default function TickerPage() {
   const params = useParams();
@@ -248,8 +247,8 @@ export default function TickerPage() {
         </div>
       )}
 
-      <div className="flex flex-col h-full min-h-0">
-        <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex flex-col h-full min-h-0 overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto min-h-0 overflow-x-hidden">
           <div className="max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
         <button
           onClick={() => router.back()}
@@ -304,8 +303,7 @@ export default function TickerPage() {
                 </span>
               </div>
             </div>
-            <Tooltip content={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}>
-              <button
+            <button
                 onClick={toggleWatchlist}
                 disabled={watchlistPending}
                 className={`group/watch relative px-3 py-2 rounded-xl transition-all duration-150 flex-shrink-0 border flex items-center gap-2 ${
@@ -326,7 +324,6 @@ export default function TickerPage() {
                   {inWatchlist ? "Saved" : "Save"}
                 </span>
               </button>
-            </Tooltip>
           </div>
 
           <div className="mt-4 sm:mt-6 flex items-baseline gap-3 sm:gap-4 flex-wrap">

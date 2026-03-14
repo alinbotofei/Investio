@@ -95,8 +95,8 @@ export default function GlobalSearch() {
   return (
     <div ref={searchRef} className="relative w-full">
       <div className="relative group">
-        <div className="pointer-events-none absolute -inset-1 rounded-[14px] bg-gradient-to-r from-blue-400/0 via-blue-300/0 to-blue-500/0 opacity-0 blur-xl transition-all duration-700 ease-out group-focus-within:from-blue-400/10 group-focus-within:via-blue-300/6 group-focus-within:to-blue-500/10 group-focus-within:opacity-100" />
-        <div className="pointer-events-none absolute inset-0 rounded-xl bg-white/[0.02] opacity-0 group-focus-within:opacity-100 blur-sm transition-all duration-700 ease-out" />
+        <div className="pointer-events-none absolute -inset-1 rounded-[14px] bg-gradient-to-r from-blue-400/0 via-blue-300/0 to-blue-500/0 opacity-0 blur-xl transition-opacity duration-300 ease-out md:group-focus-within:from-blue-400/10 md:group-focus-within:via-blue-300/6 md:group-focus-within:to-blue-500/10 md:group-focus-within:opacity-100" />
+        <div className="pointer-events-none absolute inset-0 rounded-xl bg-white/[0.02] opacity-0 blur-sm transition-opacity duration-300 ease-out md:group-focus-within:opacity-100" />
         <input
           ref={inputRef}
           type="text"
@@ -105,7 +105,7 @@ export default function GlobalSearch() {
           onKeyDown={handleKeyDown}
           onFocus={() => query && setIsOpen(true)}
           placeholder="Search tickers, crypto, ETFs..."
-          className="relative w-full h-10 appearance-none [color-scheme:dark] bg-[rgba(12,18,30,0.74)] border border-slate-700/70 text-slate-100 placeholder:text-slate-400/86 placeholder:font-medium pl-3.5 pr-[46px] rounded-xl focus:outline-none focus:border-blue-300/22 focus:ring-2 focus:ring-blue-300/6 transition-all duration-400 ease-out hover:border-slate-600/80 text-sm font-medium backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_8px_20px_rgba(2,8,23,0.24)] [-webkit-text-fill-color:rgb(241_245_249)] [&:-webkit-autofill]:[-webkit-text-fill-color:rgb(241_245_249)] [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0px_1000px_rgb(12_18_30)_inset]"
+          className="relative w-full h-10 appearance-none [color-scheme:dark] bg-[rgba(12,18,30,0.74)] border border-slate-700/70 text-slate-100 placeholder:text-slate-400/86 placeholder:font-medium pl-3.5 pr-[46px] rounded-xl focus:outline-none focus:border-blue-300/22 focus:ring-1 focus:ring-blue-300/8 transition-[border-color,box-shadow,background-color] duration-250 ease-out hover:border-slate-600/80 text-[16px] md:text-sm font-medium backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_8px_20px_rgba(2,8,23,0.24)] [-webkit-text-fill-color:rgb(241_245_249)] [&:-webkit-autofill]:[-webkit-text-fill-color:rgb(241_245_249)] [&:-webkit-autofill]:[-webkit-box-shadow:0_0_0px_1000px_rgb(12_18_30)_inset]"
         />
         {!query && !loading && (
           <div className="absolute z-10 right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center w-7 h-7 rounded-lg bg-slate-900/78 border border-slate-700/70 shadow-sm">
@@ -146,15 +146,15 @@ export default function GlobalSearch() {
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full mt-2.5 w-full bg-slate-950/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl max-h-96 overflow-hidden z-50 animate-in fade-in duration-150">
-          <div className="overflow-y-auto max-h-96 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+        <div className="absolute left-0 right-0 top-full mt-2.5 w-full bg-slate-950/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl z-50 animate-in fade-in duration-150 p-1.5">
+          <div className="overflow-y-auto max-h-[21.5rem] rounded-[18px] pr-1.5 py-1 space-y-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
             {results.map((result, index) => (
               <button
                 key={`${result.category}-${result.symbol}`}
                 onClick={() => handleSelect(result)}
-                className={`w-full px-4 py-3.5 flex items-center gap-3 transition-all duration-150 text-left border-b border-white/10 last:border-0 group ${
+                className={`w-full rounded-xl px-4 py-3.5 flex items-center gap-3 transition-all duration-150 text-left group ${
                   index === selectedIndex
-                    ? "bg-gradient-to-r from-cyan-500/18 to-blue-500/18"
+                    ? "bg-gradient-to-r from-cyan-500/18 to-blue-500/18 shadow-[inset_0_0_0_1px_rgba(103,232,249,0.08)]"
                     : "hover:bg-white/5"
                 }`}
               >
@@ -190,7 +190,7 @@ export default function GlobalSearch() {
       )}
 
       {isOpen && query && results.length === 0 && !loading && (
-        <div className="absolute top-full mt-2.5 w-full bg-slate-950/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl p-8 z-50 animate-in fade-in duration-150">
+        <div className="absolute left-0 right-0 top-full mt-2.5 w-full bg-slate-950/95 backdrop-blur-2xl border border-white/15 rounded-2xl shadow-2xl p-8 z-50 animate-in fade-in duration-150">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
               <Icon name="search_off" className="text-slate-500 text-[32px]" />

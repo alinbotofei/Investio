@@ -23,13 +23,13 @@ export default function RootLayout({
         <link
           rel="preload"
           as="style"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=block"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=swap"
         />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=block"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,0..200&display=swap"
         />
-        <script dangerouslySetInnerHTML={{ __html: "document.fonts.ready.then(function(){document.body.classList.add('fonts-loaded')})" }} />
+        <script dangerouslySetInnerHTML={{ __html: "(function(){function done(){document.body.classList.add('fonts-loaded')}if(document.fonts&&document.fonts.ready){document.fonts.ready.then(done).catch(done);}else{done();}})();" }} />
       </head>
       <body
         className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen overflow-x-hidden"

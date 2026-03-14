@@ -3,15 +3,42 @@
 import Link from "next/link";
 import Icon from "../ui/Icon";
 import GlobalSearch from "../ui/GlobalSearch";
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useConversationsCtx } from "@/app/contexts/ConversationsContext";
+
+function formatTimeAgo(date: Date): string {
+  const diff = Date.now() - date.getTime();
+  if (diff < 60000) return "just now";
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default function Header() {
+  return (
+    <Suspense fallback={
+      <header className="w-full shadow-sm sticky top-0 z-20 bg-[radial-gradient(130%_170%_at_12%_0%,rgba(59,130,246,0.16)_0%,rgba(59,130,246,0)_46%),linear-gradient(112deg,#0b1220_0%,#11253a_34%,#205983_100%)]" style={{ boxShadow: "0 16px 30px -20px rgba(14,165,233,0.26)" }}>
+        <div className="h-12" />
+      </header>
+    }>
+      <HeaderInner />
+    </Suspense>
+  );
+}
+
+function HeaderInner() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [toDeleteId, setToDeleteId] = useState<string | null>(null);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const activeConvId = searchParams.get("id");
+  const { conversations, loading: convsLoading, deleteConversation } = useConversationsCtx();
 
   useEffect(() => {
     router.prefetch("/chat");
@@ -27,11 +54,20 @@ export default function Header() {
 
   const handleChatClick = () => {
     setSidebarOpen(false);
-    if (pathname === "/chat") {
-      router.push("/chat");
-    } else {
-      router.push("/chat");
-    }
+    router.push("/chat");
+  };
+
+  const handleSelectConversation = (id: string) => {
+    setSidebarOpen(false);
+    router.push(`/chat?id=${id}`);
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!toDeleteId) return;
+    await deleteConversation(toDeleteId);
+    if (activeConvId === toDeleteId) router.push("/chat");
+    setShowDeleteModal(false);
+    setToDeleteId(null);
   };
 
   const handleSignOut = async () => {
@@ -140,7 +176,7 @@ export default function Header() {
                 </div>
               </div>
 
-              <nav className="p-6 space-y-2">
+              <nav className="p-4 space-y-2">
                 <Link
                   href="/dashboard"
                   onClick={closeSidebar}
@@ -165,12 +201,70 @@ export default function Header() {
                   <span className="font-semibold">Chat</span>
                 </button>
 
-                <div className="border-t border-white/10 pt-4 mt-4">
+                <div className="pt-2">
+                  <div className="flex items-center justify-between px-1 mb-2">
+                    <div className="flex items-center gap-2">
+                      <Icon name="chat_bubble_outline" className="text-slate-400 text-[14px]" />
+                      <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Recent Chats</span>
+                    </div>
+                    <button
+                      onClick={handleChatClick}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 text-[11px] font-semibold transition-all"
+                    >
+                      <Icon name="add" className="text-[13px]" />
+                      New
+                    </button>
+                  </div>
+                  <div className="space-y-0.5 max-h-[45vh] overflow-y-auto">
+                    {convsLoading ? (
+                      <div className="flex flex-col gap-2 px-1 pt-1">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />
+                        ))}
+                      </div>
+                    ) : conversations.length === 0 ? (
+                      <p className="text-xs text-slate-500 px-2 py-3">No conversations yet</p>
+                    ) : (
+                      conversations.map((conv) => {
+                        const isActive = conv.id === activeConvId;
+                        const timeAgo = conv.updatedAt ? formatTimeAgo(new Date(conv.updatedAt)) : "";
+                        return (
+                          <div key={conv.id} className="group flex items-center gap-1">
+                            <button
+                              onClick={() => handleSelectConversation(conv.id)}
+                              className={`flex-1 min-w-0 text-left px-3 py-2.5 rounded-lg transition-colors ${
+                                isActive ? "bg-cyan-500/15 border border-cyan-500/25" : "hover:bg-white/8"
+                              }`}
+                            >
+                              <p className={`text-[12px] font-medium truncate ${
+                                isActive ? "text-white" : "text-slate-300"
+                              }`}>
+                                {conv.title || "New Chat"}
+                              </p>
+                              {timeAgo && (
+                                <span className="text-[10px] text-slate-500 block mt-0.5">{timeAgo}</span>
+                              )}
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setToDeleteId(conv.id);
+                                setShowDeleteModal(true);
+                              }}
+                              className="flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <Icon name="delete_outline" className="text-[14px]" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 pt-4 mt-2">
                   <button
-                    onClick={() => {
-                      closeSidebar();
-                      handleSignOut();
-                    }}
+                    onClick={() => { closeSidebar(); handleSignOut(); }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-all shadow-[0_10px_24px_rgba(2,8,23,0.34)]"
                   >
                     <Icon name="logout" />
@@ -182,6 +276,37 @@ export default function Header() {
           </aside>
         </div>
       )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700/60 rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center flex-shrink-0">
+                <Icon name="delete_forever" className="text-red-400 text-[20px]" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white mb-1">Delete Conversation</h3>
+                <p className="text-sm text-slate-400">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => { setShowDeleteModal(false); setToDeleteId(null); }}
+                className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-medium border border-slate-700/50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConversation}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-semibold transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+

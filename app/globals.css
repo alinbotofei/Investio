@@ -189,6 +189,23 @@ textarea:focus-visible {
   display: none;
 }
 
+/* Keep icon layout stable and prevent ligature text flash before font is ready */
+.material-symbols-outlined {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+  overflow: hidden;
+  vertical-align: middle;
+  speak: none;
+}
+
+body:not(.fonts-loaded) .material-symbols-outlined {
+  color: transparent !important;
+}
+
 /* Typing dots animation */
 .typing-dots {
   display: flex;

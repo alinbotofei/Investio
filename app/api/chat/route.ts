@@ -10,6 +10,71 @@ const openai = new OpenAI({
 });
 
 const FALLBACK_MODEL = "gpt-4o-mini";
+const MAX_LIVE_SYMBOLS = 3;
+const MAX_LIVE_CRYPTOS = 5;
+const MAX_MODEL_HISTORY_MESSAGES = 80;
+const MAX_CONTEXT_FALLBACK_MESSAGES = 4;
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY || "";
+const SYMBOL_STOPWORDS = new Set([
+  "THE", "AND", "FOR", "WITH", "THIS", "THAT", "WILL", "FROM", "YOUR", "WHAT", "WHEN", "WHERE",
+  "SHOW", "BEST", "BUY", "SELL", "RISK", "PLAN", "PORT", "YTD", "ETF", "USD", "AI", "ROI",
+]);
+const COMPANY_ALIASES: Record<string, string> = {
+  google: "GOOGL",
+  alphabet: "GOOGL",
+  microsoft: "MSFT",
+  apple: "AAPL",
+  amazon: "AMZN",
+  nvidia: "NVDA",
+  tesla: "TSLA",
+  meta: "META",
+  facebook: "META",
+  netflix: "NFLX",
+};
+const CRYPTO_ALIASES: Record<string, string> = {
+  btc: "BINANCE:BTCUSDT",
+  bitcoin: "BINANCE:BTCUSDT",
+  eth: "BINANCE:ETHUSDT",
+  ethereum: "BINANCE:ETHUSDT",
+  bnb: "BINANCE:BNBUSDT",
+  "binance coin": "BINANCE:BNBUSDT",
+  ada: "BINANCE:ADAUSDT",
+  cardano: "BINANCE:ADAUSDT",
+  sol: "BINANCE:SOLUSDT",
+  solana: "BINANCE:SOLUSDT",
+  xrp: "BINANCE:XRPUSDT",
+  ripple: "BINANCE:XRPUSDT",
+  doge: "BINANCE:DOGEUSDT",
+  dogecoin: "BINANCE:DOGEUSDT",
+};
+const CRYPTO_TICKERS = new Set(["BTC", "ETH", "BNB", "ADA", "SOL", "XRP", "DOGE"]);
+const DEFAULT_CRYPTO_PRICE_PAIRS = [
+  "BINANCE:BTCUSDT",
+  "BINANCE:ETHUSDT",
+  "BINANCE:SOLUSDT",
+  "BINANCE:BNBUSDT",
+  "BINANCE:ADAUSDT",
+];
+const DEFAULT_CRYPTO_SYMBOLS = ["BTC", "ETH", "SOL", "BNB", "ADA"];
+const PRICE_KEYWORDS_REGEX = /(price|prices|quote|quotes|pret|preturi|pre(?:ț|t)uri|cotatii|cota(?:ț|t)ii)/i;
+const LIVE_TIME_HINTS_REGEX = /(current|live|spot|acum|azi|in prezent|actual)/i;
+const DIRECT_PRICE_QUESTION_REGEX = /(cat|c[aă]t|ce valoare|ce pret|ce pre(?:ț|t)|cat e|cat este|how much|what is)/i;
+const DATE_QUESTION_REGEX = /(in ce data|ce data|what date|today'?s date|data de azi|ziua de azi)/i;
+
+type LiveSnapshotEntry = {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  ts: number;
+  assetType: "stock" | "crypto";
+};
+
+type LiveSnapshot = {
+  entries: LiveSnapshotEntry[];
+  failedSymbols: string[];
+  contextText: string;
+};
 
 function buildConversationTitle(message: string) {
   const normalized = message.replace(/\s+/g, " ").trim();
@@ -39,87 +104,348 @@ function sanitizeHistory(history: unknown): OpenAI.ChatCompletionMessageParam[] 
   });
 }
 
-const INVESTIO_PROMPT = `You are Investio, a sophisticated AI financial advisor integrated into a modern investment platform. Your mission is to provide clear, actionable insights about stocks, cryptocurrencies, portfolio management, and financial markets.
+function extractCandidateSymbols(text: string): string[] {
+  const explicit: string[] = [];
+  const upperOnly = text.match(/\b[A-Z]{2,5}\b/g) || [];
+  const dollar = [...text.matchAll(/\$([A-Za-z]{1,5})\b/g)].map((m) => m[1].toUpperCase());
+  const paren = [...text.matchAll(/\(([A-Za-z]{1,5})\)/g)].map((m) => m[1].toUpperCase());
+  const lowered = text.toLowerCase();
 
-**LANGUAGE & TONE:**
-- Reply in the same language as the user. If the user writes in Romanian, answer in Romanian.
-- Keep a natural, concise, professional tone. Avoid robotic templates and repeated phrasing.
-- Write in a smooth, conversational flow with short connected paragraphs.
-- Avoid rigid, repetitive section labels when not needed.
+  Object.entries(COMPANY_ALIASES).forEach(([name, symbol]) => {
+    if (new RegExp(`\\b${name}\\b`, "i").test(lowered)) {
+      explicit.push(symbol);
+    }
+  });
 
-**CORE PRINCIPLES:**
-- Be direct, practical, and insightful — prioritize what the user can do next
-- Answer the user's exact question first, then add supporting context
-- Keep responses concise (120-240 words) unless the user explicitly asks for depth
-- **ALWAYS provide rich visual data representations** — charts are your primary communication tool
-- Never guarantee returns or act as a licensed financial advisor
-- Acknowledge data limitations transparently
+  const matches = [...explicit, ...upperOnly, ...dollar, ...paren].map((s) => s.toUpperCase());
+  const unique: string[] = [];
 
-**ANSWER QUALITY (CRITICAL):**
-- If the user asks for "best", "what should I buy", or "compare", provide a ranked recommendation with clear criteria
-- Include concrete rationale (valuation, momentum, risk, catalyst) in plain language
-- If information is uncertain, state assumptions explicitly and provide a safe baseline alternative
-- Avoid generic filler and repeated disclaimers; be helpful and specific
-- Do not reuse the same wording pattern across consecutive replies
-- Do not repeat the exact same numbers unless the user explicitly asks to keep the same dataset
-- Never copy example chart values from this prompt verbatim unless user asks those exact tickers and period
+  for (const symbol of matches) {
+    if (SYMBOL_STOPWORDS.has(symbol)) continue;
+    if (!unique.includes(symbol)) unique.push(symbol);
+    if (unique.length >= MAX_LIVE_SYMBOLS) break;
+  }
 
-**DATA VISUALIZATION (CRITICAL - USE EXTENSIVELY):**
-You MUST create detailed, beautiful charts for EVERY response that involves numbers, comparisons, or financial data. Charts should be comprehensive and informative, not minimal. Always include:
-- Multiple data points (5-10+ items for comparisons/rankings)
-- Realistic values and percentages
-- Meaningful insights through visual data
+  return unique;
+}
 
-**Chart Types & Usage:**
+function isLivePriceIntent(text: string): boolean {
+  const q = text.toLowerCase();
+  if (DATE_QUESTION_REGEX.test(q)) return false;
 
-1. **comparison** — Compare 2-5 assets with performance metrics (ALWAYS include change %):
+  const hasPriceKeywords = PRICE_KEYWORDS_REGEX.test(q);
+  if (hasPriceKeywords) return true;
+
+  const requestedAssets = extractRequestedAssets(text);
+  const hasAssetMention = requestedAssets.stocks.length > 0 || requestedAssets.cryptoPairs.length > 0;
+
+  return LIVE_TIME_HINTS_REGEX.test(q) && hasAssetMention && DIRECT_PRICE_QUESTION_REGEX.test(q);
+}
+
+function isSimpleLivePriceRequest(text: string): boolean {
+  if (!isLivePriceIntent(text)) return false;
+  const q = text.toLowerCase();
+  if (DATE_QUESTION_REGEX.test(q)) return false;
+  if (q.length > 220) return false;
+  if (/(de ce|why|compare|compar|analiz|analysis|buy|sell|cumpar|vand|forecast|predict|target|strategy|strateg|allocation|portofol)/i.test(q)) {
+    return false;
+  }
+  return true;
+}
+
+function isRomanianText(text: string): boolean {
+  return /(\bcare\b|\bvrea[au]\b|\bpret\b|\bpreturi\b|\bpreturile\b|\bpre(?:ț|t)uri\b|\bacum\b|\bazi\b|\bsi\b|\bpentru\b|\bcotatii\b|\bactual\b|[ăâîșț])/i.test(text);
+}
+
+function isTopCryptoRequest(text: string): boolean {
+  const q = text.toLowerCase();
+  return /(top\s*(crypto|cript[o]?|coins?|monede)|cele mai mari crypto|blue[-\s]?chip crypto)/i.test(q);
+}
+
+function extractRequestedAssets(text: string): { stocks: string[]; cryptoPairs: string[] } {
+  const stocks = extractCandidateSymbols(text);
+  const cryptoPairs: string[] = [];
+  const lowered = text.toLowerCase();
+
+  Object.entries(CRYPTO_ALIASES).forEach(([alias, pair]) => {
+    if (new RegExp(`\\b${alias}\\b`, "i").test(lowered) && !cryptoPairs.includes(pair)) {
+      cryptoPairs.push(pair);
+    }
+  });
+
+  const explicitPairs = [...text.matchAll(/\b([A-Z]+:[A-Z]{3,20})\b/g)].map((m) => m[1].toUpperCase());
+  explicitPairs.forEach((pair) => {
+    if (!cryptoPairs.includes(pair)) cryptoPairs.push(pair);
+  });
+
+  return { stocks, cryptoPairs };
+}
+
+function formatDeterministicLiveReply(message: string, snapshot: LiveSnapshot | null): string {
+  const ro = isRomanianText(message);
+  if (!snapshot || snapshot.entries.length === 0) {
+    if (isTopCryptoRequest(message)) {
+      return ro
+        ? [
+            "Nu am cotații live disponibile exact acum.",
+            `Top crypto urmărite în mod standard: ${DEFAULT_CRYPTO_SYMBOLS.join(", ")}.`,
+            "Dă-mi refresh în 10-20 secunde și îți trimit prețurile curente pentru ele.",
+          ].join("\n")
+        : [
+            "I do not have live quotes available at this exact moment.",
+            `Default top crypto watchlist: ${DEFAULT_CRYPTO_SYMBOLS.join(", ")}.`,
+            "Ask for a refresh in 10-20 seconds and I will return current prices for them.",
+          ].join("\n");
+    }
+
+    return ro
+      ? "Nu am putut obține cotații live acum. Trimite tickerele (ex: BTC, ETH, BNB sau AAPL, MSFT) și reiau imediat verificarea."
+      : "I could not fetch live quotes right now. Send the tickers (e.g., BTC, ETH, BNB or AAPL, MSFT) and I will retry immediately.";
+  }
+
+  const latestTs = Math.max(...snapshot.entries.map((entry) => entry.ts));
+  const header = ro
+    ? `Prețuri curente (snapshot live, ${new Date(latestTs * 1000).toISOString()}):`
+    : `Current prices (live snapshot, ${new Date(latestTs * 1000).toISOString()}):`;
+
+  const lines = snapshot.entries.map((entry) => {
+    const decimals = entry.assetType === "crypto" ? 4 : 2;
+    const signedChange = `${entry.change >= 0 ? "+" : ""}${entry.change.toFixed(decimals)}`;
+    const signedPct = `${entry.changePercent >= 0 ? "+" : ""}${entry.changePercent.toFixed(2)}%`;
+    return `- ${entry.symbol}: ${entry.price.toFixed(decimals)} (${signedChange}, ${signedPct})`;
+  });
+
+  const footer = ro
+    ? "Spune-mi ce active vrei în continuare și îți dau comparație + niveluri de risc."
+    : "Tell me which assets you want next and I will give you a comparison and risk levels.";
+
+  const failedLine = snapshot.failedSymbols.length > 0
+    ? ro
+      ? `Nu am putut actualiza acum pentru: ${snapshot.failedSymbols.join(", ")}.`
+      : `Could not refresh right now for: ${snapshot.failedSymbols.join(", ")}.`
+    : "";
+
+  return [header, ...lines, failedLine, "", footer].filter(Boolean).join("\n");
+}
+
+async function buildLiveSnapshotContext(message: string, recentContextText: string): Promise<LiveSnapshot | null> {
+  const fromMessage = extractRequestedAssets(message);
+  let symbols = [...fromMessage.stocks];
+  let cryptoPairs = [...fromMessage.cryptoPairs];
+
+  if (isLivePriceIntent(message) && symbols.length === 0 && cryptoPairs.length === 0 && recentContextText.trim()) {
+    const fromContext = extractRequestedAssets(recentContextText);
+    symbols = [...fromContext.stocks];
+    cryptoPairs = [...fromContext.cryptoPairs];
+  }
+
+  if (isLivePriceIntent(message) && symbols.length === 0 && cryptoPairs.length === 0) {
+    DEFAULT_CRYPTO_PRICE_PAIRS.forEach((pair) => cryptoPairs.push(pair));
+  }
+  const cappedCryptoPairs = cryptoPairs.slice(0, MAX_LIVE_CRYPTOS);
+  const cryptoTickersFromPairs = new Set(
+    cappedCryptoPairs
+      .map((pair) => pair.match(/:([A-Z]+)USDT$/)?.[1])
+      .filter((ticker): ticker is string => Boolean(ticker))
+  );
+  const filteredStockSymbols = symbols.filter(
+    (symbol) => !CRYPTO_TICKERS.has(symbol) && !cryptoTickersFromPairs.has(symbol)
+  );
+
+  const requestedStocks = [...filteredStockSymbols];
+  const requestedPairs = [...cappedCryptoPairs];
+
+  if (filteredStockSymbols.length === 0 && cappedCryptoPairs.length === 0) return null;
+
+  const stockResults = await Promise.all(
+    filteredStockSymbols.map(async (symbol) => {
+      try {
+        if (!FINNHUB_API_KEY) return null;
+        const url = new URL("https://finnhub.io/api/v1/quote");
+        url.searchParams.set("symbol", symbol);
+        url.searchParams.set("token", FINNHUB_API_KEY);
+        const response = await fetch(url.toString(), { cache: "no-store" });
+        if (!response.ok) return null;
+        const quote = (await response.json()) as { c?: number; d?: number; dp?: number; t?: number };
+        if (!quote || !quote.c) return null;
+        return {
+          symbol,
+          price: quote.c,
+          change: quote.d ?? 0,
+          changePercent: quote.dp ?? 0,
+          ts: quote.t ?? Math.floor(Date.now() / 1000),
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const validStocks = stockResults.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+  const cryptoResults = await Promise.all(
+    cappedCryptoPairs.map(async (pair) => {
+      try {
+        if (!FINNHUB_API_KEY) return null;
+        const to = Math.floor(Date.now() / 1000);
+        const from = to - 300;
+        const url = new URL("https://finnhub.io/api/v1/crypto/candle");
+        url.searchParams.set("symbol", pair);
+        url.searchParams.set("resolution", "1");
+        url.searchParams.set("from", String(from));
+        url.searchParams.set("to", String(to));
+        url.searchParams.set("token", FINNHUB_API_KEY);
+
+        const response = await fetch(url.toString(), { cache: "no-store" });
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (data?.s !== "ok" || !Array.isArray(data?.c) || data.c.length === 0) return null;
+
+        const currentPrice = data.c[data.c.length - 1];
+        const openPrice = Array.isArray(data.o) && data.o.length > 0 ? data.o[0] : currentPrice;
+        const change = currentPrice - openPrice;
+        const changePercent = openPrice ? (change / openPrice) * 100 : 0;
+
+        return {
+          symbol: pair,
+          price: Number(currentPrice),
+          change: Number(change),
+          changePercent: Number(changePercent),
+          ts: to,
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+  const validCrypto = cryptoResults.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+
+  if (validStocks.length === 0 && validCrypto.length === 0) return null;
+
+  const validStockSet = new Set(validStocks.map((entry) => entry.symbol));
+  const validCryptoSet = new Set(validCrypto.map((entry) => entry.symbol));
+  const failedSymbols = [
+    ...requestedStocks.filter((symbol) => !validStockSet.has(symbol)),
+    ...requestedPairs.filter((pair) => !validCryptoSet.has(pair)),
+  ];
+
+  const stockLines = validStocks.map(
+    (entry) =>
+      `${entry.symbol}: ${entry.price.toFixed(2)} (${entry.change >= 0 ? "+" : ""}${entry.change.toFixed(2)}, ${entry.changePercent >= 0 ? "+" : ""}${entry.changePercent.toFixed(2)}%), ts=${new Date(entry.ts * 1000).toISOString()}`
+  );
+  const cryptoLines = validCrypto.map(
+    (entry) =>
+      `${entry.symbol}: ${entry.price.toFixed(4)} (${entry.change >= 0 ? "+" : ""}${entry.change.toFixed(4)}, ${entry.changePercent >= 0 ? "+" : ""}${entry.changePercent.toFixed(2)}%), ts=${new Date(entry.ts * 1000).toISOString()}`
+  );
+  const lines = [...stockLines, ...cryptoLines];
+
+  return {
+    entries: [
+      ...validStocks.map((entry) => ({ ...entry, assetType: "stock" as const })),
+      ...validCrypto.map((entry) => ({ ...entry, assetType: "crypto" as const })),
+    ],
+    failedSymbols,
+    contextText: [
+      "Live market snapshot (latest available):",
+      ...lines,
+      failedSymbols.length > 0 ? `Failed to fetch now: ${failedSymbols.join(", ")}` : "",
+    ].filter(Boolean).join("\n"),
+  };
+}
+
+function streamSingleAssistantResponse(conversationId: string, content: string): NextResponse {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify({ conversationId })}\n\n`)
+      );
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
+      );
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      controller.close();
+    },
+  });
+
+  return new NextResponse(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
+
+function buildModelHistoryFromConversation(
+  conversation: { messages: Array<{ role: string; text: string }> },
+  displayText: string,
+  enrichedMessage: string
+): OpenAI.ChatCompletionMessageParam[] {
+  const normalized = conversation.messages
+    .filter((msg) => (msg.role === "user" || msg.role === "assistant") && typeof msg.text === "string")
+    .map((msg) => ({
+      role: msg.role as "user" | "assistant",
+      content: msg.text.trim(),
+    }))
+    .filter((msg) => msg.content.length > 0);
+
+  if (normalized.length > 0) {
+    const last = normalized[normalized.length - 1];
+    if (last.role === "user" && last.content === displayText) {
+      last.content = enrichedMessage;
+    }
+  }
+
+  const start = Math.max(0, normalized.length - MAX_MODEL_HISTORY_MESSAGES);
+  return normalized.slice(start).map((msg) => ({
+    role: msg.role,
+    content: msg.content,
+  }));
+}
+
+const INVESTIO_PROMPT = `You are Investio, an AI investment coach focused on practical portfolio decisions across asset classes.
+
+Language and style:
+- Reply in the same language as the user.
+- Be clear, practical, and concise.
+- Start with the direct recommendation, then explain why.
+- Avoid generic assistant phrases and repetitive templates.
+- If the user greets or asks vaguely, reply with a practical kickoff tailored to investing (ask 1 clear question and offer 3 concrete example prompts).
+- If a live snapshot is provided in the user message, prioritize it over stale assumptions.
+- If a live snapshot is provided, never ask the user to "wait" for prices and never output placeholders like [check live].
+- Never provide estimated spot prices from memory when live prices are requested.
+- For generic "current prices" requests, present the available benchmark snapshot first, then ask if the user wants specific assets added.
+
+Usefulness rules:
+- If the user asks "what to buy", "best", or "compare", give a ranked shortlist and include explicit criteria.
+- Provide concrete reasoning (trend, valuation, risk, catalyst, diversification role).
+- State assumptions when data may be stale or uncertain.
+- Never guarantee returns and do not present financial advice as certain.
+- If the user asks "which one should I buy", recommend only from assets already discussed in the conversation context; if none exist, ask for 2-4 candidate tickers and do not invent placeholders.
+- If the user asks for a company's current price, resolve common company names to tickers when possible.
+- If current price data cannot be fetched, explicitly say which symbols failed and ask to retry instead of inventing values.
+- Always end recommendations with a concrete action plan: entry approach, risk limit, and review trigger.
+
+Charts and rendering:
+- Use chart blocks when the question is numerical, comparative, or allocation-focused.
+- For simple conceptual questions, do not force charts.
+- Keep chart payload valid JSON inside a fenced block with language chart.
+- Never output raw JSON outside chart code blocks.
+- Prefer readable markdown sections with short bullets over long paragraphs.
+- When giving a recommendation, include: thesis, key risk, and what to monitor next.
+
+Chart examples:
 \`\`\`chart
-{"type":"comparison","title":"Tech Giants Performance Comparison","items":[{"label":"AAPL","value":189.50,"change":12.3},{"label":"MSFT","value":415.20,"change":8.1},{"label":"GOOGL","value":142.80,"change":15.7},{"label":"AMZN","value":178.25,"change":9.4},{"label":"META","value":498.35,"change":22.6}]}
+{"type":"comparison","title":"AAPL vs MSFT (Illustrative)","items":[{"label":"AAPL","value":189.5,"change":2.1},{"label":"MSFT","value":415.2,"change":1.4}]}
 \`\`\`
 
-2. **bar** — Rank 5-10 items by metric (volume, returns, market cap):
 \`\`\`chart
-{"type":"bar","title":"Top 10 S&P 500 Sectors YTD Return (%)","items":[{"label":"Technology","value":28.5},{"label":"Communication","value":24.3},{"label":"Consumer Disc.","value":19.8},{"label":"Healthcare","value":18.2},{"label":"Financials","value":15.7},{"label":"Industrials","value":12.8},{"label":"Materials","value":10.3},{"label":"Energy","value":9.3},{"label":"Utilities","value":7.2},{"label":"Real Estate","value":5.8}]}
+{"type":"allocation","title":"Balanced Allocation Example","items":[{"label":"US Equity","value":45},{"label":"Intl Equity","value":20},{"label":"Bonds","value":25},{"label":"Cash","value":10}]}
 \`\`\`
 
-3. **allocation** — Portfolio weightings (must sum to 100):
-\`\`\`chart
-{"type":"allocation","title":"Balanced Growth Portfolio Allocation","items":[{"label":"US Large Cap Stocks","value":35},{"label":"International Stocks","value":20},{"label":"US Small Cap","value":10},{"label":"Emerging Markets","value":8},{"label":"Corporate Bonds","value":15},{"label":"REITs","value":7},{"label":"Commodities","value":3},{"label":"Cash","value":2}]}
-\`\`\`
-
-4. **sparkline** — Price trends (provide 10-15 data points):
-\`\`\`chart
-{"type":"sparkline","title":"TSLA 30-Day Price Trend","sparkline":{"values":[245,248,252,247,251,258,262,267,265,270,275,280,278,285,290,287,292]}}
-\`\`\`
-
-**WHEN TO USE CHARTS (Use liberally!):**
-- Stock/crypto price questions → comparison chart + sparkline
-- "Best" or "top" questions → bar chart with 8-10 items
-- Portfolio questions → allocation chart + comparison of asset classes
-- Sector analysis → bar chart of all sectors
-- Multiple stock comparison → comparison chart with all mentioned stocks
-- Performance questions → comparison charts with change percentages
-- If user asks for "date vizuale", "statistici vizuale", or "frumos prezentat", include at least 2 different chart types in the same answer
-
-**Response Format:**
-1. Start with a direct answer in one sentence
-2. **Lead with charts** — include 1-2 chart blocks immediately after the answer for numerical questions
-3. Follow with concise analysis (2-4 short bullets) with non-repetitive insights
-4. End with a clear takeaway or next step for the user
-5. Use **bold** for tickers and key metrics
-6. Output chart JSON only inside fenced code blocks with language \`chart\`
-7. Never output raw JSON/object structures as plain text in the message body
-8. Avoid repetitive closings like always using the same "Pasul următor" sentence template
-9. If the question is not primarily numerical, prefer a compact paragraph answer and avoid forcing chart blocks
-
-**Data Guidelines:**
-- Current date: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-- Provide estimated/historical data with clear visual charts
-- For live prices: Show estimates in charts, add "→ Check live chart for current prices"
-- For recent events: Acknowledge knowledge cutoff, suggest News section
-- **Never refuse visualization** — create comprehensive charts for all financial data
-
-**Remember:** Be generous with charts. Create rich, detailed visualizations that provide real insight. Avoid single-item or minimal charts — always include comprehensive data sets.`;
+Current date: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+If live data is uncertain, label values as estimates and suggest checking live quotes.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -142,6 +468,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const message = typeof body?.message === "string" ? body.message.trim() : "";
+    const displayText = typeof body?.displayText === "string" ? body.displayText.trim() : message;
     const conversationId = typeof body?.conversationId === "string" ? body.conversationId : null;
     const history = sanitizeHistory(body?.history);
 
@@ -169,7 +496,7 @@ export async function POST(request: NextRequest) {
     } else {
       const newConversation = await conversationService.createConversation(
         userId,
-        buildConversationTitle(message)
+        buildConversationTitle(displayText)
       );
       currentConversationId = newConversation.id;
     }
@@ -177,21 +504,45 @@ export async function POST(request: NextRequest) {
     await conversationService.addMessage(
       currentConversationId,
       "user",
-      message
+      displayText
     );
 
     if (history.length === 0) {
       await conversationService.updateConversationTitle(
         currentConversationId,
         userId,
-        buildConversationTitle(message)
+        buildConversationTitle(displayText)
       );
     }
 
+    const dbConversation = await conversationService.getConversationById(
+      currentConversationId,
+      userId
+    );
+
+    const recentContextText = dbConversation
+      ? dbConversation.messages.slice(-MAX_CONTEXT_FALLBACK_MESSAGES).map((msg) => msg.text).join("\n")
+      : "";
+    const liveSnapshot = await buildLiveSnapshotContext(message, recentContextText);
+    const enrichedMessage = liveSnapshot ? `${message}\n\n${liveSnapshot.contextText}` : message;
+
+    if (isSimpleLivePriceRequest(displayText)) {
+      const deterministicReply = formatDeterministicLiveReply(displayText, liveSnapshot);
+      await conversationService.addMessage(
+        currentConversationId,
+        "assistant",
+        deterministicReply
+      );
+      return streamSingleAssistantResponse(currentConversationId, deterministicReply);
+    }
+
+    const modelHistory = dbConversation
+      ? buildModelHistoryFromConversation(dbConversation, displayText, enrichedMessage)
+      : [...history, { role: "user", content: enrichedMessage } satisfies OpenAI.ChatCompletionMessageParam];
+
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: "system", content: INVESTIO_PROMPT },
-      ...history,
-      { role: "user", content: message },
+      ...modelHistory,
     ];
 
     const preferredModel = process.env.OPENAI_MODEL || FALLBACK_MODEL;
@@ -201,7 +552,7 @@ export async function POST(request: NextRequest) {
       stream = await openai.chat.completions.create({
         model: preferredModel,
         messages,
-        temperature: 0.45,
+        temperature: 0.25,
         presence_penalty: 0.35,
         frequency_penalty: 0.25,
         max_tokens: 1000,
@@ -215,7 +566,7 @@ export async function POST(request: NextRequest) {
       stream = await openai.chat.completions.create({
         model: FALLBACK_MODEL,
         messages,
-        temperature: 0.45,
+        temperature: 0.25,
         presence_penalty: 0.35,
         frequency_penalty: 0.25,
         max_tokens: 1000,
