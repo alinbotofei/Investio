@@ -27,7 +27,7 @@ export default function MarketNews() {
       const response = await fetch("/api/news/general");
       if (response.ok) {
         const data = await response.json();
-        setNews(data.slice(0, 6));
+        setNews(data.slice(0, 4));
       }
     } catch (error) {
       console.error("Failed to load news:", error);

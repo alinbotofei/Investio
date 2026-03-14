@@ -4,7 +4,7 @@ export const SUGGESTION_BTN_SECONDARY = `${SUGGESTION_BTN_BASE} bg-slate-800 tex
 export const SUGGESTION_BTN_PRIMARY = `${SUGGESTION_BTN_BASE} bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow focus:ring-2 focus:ring-cyan-400`;
 
 export const API_CONFIG = {
-  OPENAI_MODEL: "gpt-5-nano",
+  OPENAI_MODEL: "gpt-4o-mini",
   MAX_OUTPUT_TOKENS: [1024, 2048, 4096, 8192, 16384],
   MAX_MESSAGE_LENGTH: 4000,
 } as const;
@@ -50,13 +50,13 @@ export const DASHBOARD_QUICK_ACTIONS = [
 ];
 
 export const CHAT_BUBBLE_USER =
-  "rounded-2xl px-4 py-3 xl:px-5 xl:py-4 max-w-[70%] bg-gradient-to-br from-blue-600/90 to-cyan-500/90 text-white text-base xl:text-lg leading-relaxed shadow-lg animate-fade-in border border-blue-400/30 break-words backdrop-blur-sm";
+  "rounded-2xl px-4 py-2.5 max-w-[72%] bg-gradient-to-br from-blue-600 to-cyan-500 text-white text-sm leading-relaxed shadow-md animate-fade-in border border-blue-400/20 break-words";
 
 export const CHAT_BUBBLE_ASSISTANT =
-  "rounded-2xl px-5 py-4 xl:px-6 xl:py-5 max-w-[75%] bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-slate-100 xl:text-lg shadow-xl animate-fade-in break-words border border-slate-700/50 backdrop-blur-sm";
+  "rounded-2xl px-4 py-3 max-w-[78%] bg-slate-800/80 text-slate-100 text-sm animate-fade-in break-words border border-slate-700/40 shadow-sm";
 
 export const TEXTAREA_BASE =
-  "w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white px-4 py-3.5 sm:px-5 sm:py-4 xl:px-6 xl:py-5 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition hover:bg-slate-800/70 shadow-inner input-focus input-hoverable";
+  "w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white px-4 py-3.5 sm:px-5 sm:py-4 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-colors duration-300 hover:bg-slate-800/80 shadow-inner input-focus input-hoverable";
 
 export const SEND_BUTTON =
   "flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-md hover:scale-105 transition-transform disabled:opacity-60";

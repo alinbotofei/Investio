@@ -20,13 +20,14 @@ interface TradingChartProps {
   onLastClose?: (price: number) => void;
 }
 
-type Timeframe = "1D" | "1W" | "1M" | "1Y";
+type Timeframe = "1D" | "1W" | "1M" | "1Y" | "5Y";
 
 const TIMEFRAMES: { label: Timeframe }[] = [
   { label: "1D" },
   { label: "1W" },
   { label: "1M" },
   { label: "1Y" },
+  { label: "5Y" },
 ];
 
 interface CandleResponse {
@@ -69,6 +70,10 @@ function formatTs(ts: number, timeframe: Timeframe): string {
   return d.toLocaleDateString("en-US", {
     year: "numeric", month: "short", day: "numeric",
   });
+}
+
+function chartUsesIntradayScale(timeframe: Timeframe): boolean {
+  return timeframe === "1D" || timeframe === "1W";
 }
 
 export default function TradingChart({
@@ -125,20 +130,26 @@ export default function TradingChart({
       },
       timeScale: {
         borderColor: "rgba(51,65,85,0.5)",
-        timeVisible: true,
+        visible: true,
+        timeVisible: chartUsesIntradayScale(timeframe),
         secondsVisible: false,
-        fixLeftEdge: true,
-        fixRightEdge: true,
+        borderVisible: true,
+        fixLeftEdge: false,
+        fixRightEdge: false,
+        rightOffset: 6,
+        minBarSpacing: 2,
+        minimumHeight: 38,
+        ticksVisible: true,
       },
-      handleScroll: { mouseWheel: true, pressedMouseMove: true },
-      handleScale:  { mouseWheel: true, pinch: true },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
+      handleScale:  { mouseWheel: true, pinch: true, axisPressedMouseMove: true },
       width:  containerRef.current.clientWidth,
-      height,
+      height: containerRef.current.clientHeight,
     });
 
     chartRef.current = chart;
     return chart;
-  }, [height, destroyChart]);
+  }, [destroyChart, timeframe]);
 
   const fetchAndRender = useCallback(async () => {
     setLoading(true);
@@ -201,6 +212,9 @@ export default function TradingChart({
       onLastClose?.(lastClose);
 
       chart.timeScale().fitContent();
+      chart.timeScale().applyOptions({
+        timeVisible: chartUsesIntradayScale(timeframe),
+      });
 
       chart.subscribeCrosshairMove((param) => {
         if (!param.time || !param.seriesData.size) {
@@ -231,7 +245,7 @@ export default function TradingChart({
     } finally {
       setLoading(false);
     }
-  }, [symbol, timeframe, category, buildChart, destroyChart, onLastClose]);
+  }, [symbol, timeframe, category, buildChart, onLastClose]);
 
   useEffect(() => {
     fetchAndRender();
@@ -253,7 +267,7 @@ export default function TradingChart({
   const accentColor = isPositive ? "text-cyan-400" : "text-rose-400";
 
   return (
-    <div className="w-full select-none">
+    <div className="w-full select-none relative pb-5">
       <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
         <div className="min-h-[44px]">
           {crosshair ? (
@@ -299,7 +313,7 @@ export default function TradingChart({
         </div>
       </div>
 
-      <div className="relative rounded-lg overflow-hidden" style={{ height }}>
+      <div className="relative rounded-lg" style={{ height: height + 22 }}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="flex flex-col items-center gap-3">
@@ -325,15 +339,17 @@ export default function TradingChart({
 
         <div
           ref={containerRef}
-          className={`w-full h-full transition-opacity duration-200 ${
+          className={`w-full h-[calc(100%-2px)] transition-opacity duration-200 ${
             loading || error ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         />
       </div>
 
-      <p className="text-[10px] text-slate-700 mt-1.5 text-right">
-        Powered by TradingView Lightweight Charts &middot; Data via Yahoo Finance
-      </p>
+      <div className="absolute right-1.5 bottom-0 sm:right-2 pointer-events-none">
+        <p className="text-[9px] leading-none text-slate-600/70 text-right tracking-[0.01em]">
+          Powered by TradingView Lightweight Charts &middot; Data via Yahoo Finance
+        </p>
+      </div>
     </div>
   );
 }

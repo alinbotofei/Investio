@@ -1,51 +1,100 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import Icon from "../components/ui/Icon";
+import AnimatedPlaceholder from "../components/ui/AnimatedPlaceholder";
 import { Message } from "../lib/types";
-import { useConversations } from "../hooks/useConversations";
+import { useConversationsCtx } from "../contexts/ConversationsContext";
 import {
-  SUGGESTION_BTN_PRIMARY,
-  SUGGESTION_BTN_SECONDARY,
   CHAT_PLACEHOLDERS,
   CHAT_BUBBLE_USER,
   CHAT_BUBBLE_ASSISTANT,
-  TEXTAREA_BASE,
-  SEND_BUTTON,
 } from "../lib/constants";
 import { smoothScrollToBottom } from "../lib/utils/scroll";
 import { markdownComponents } from "../lib/utils/markdown";
+import { onChatReset } from "../lib/utils/events";
+
+function hasCompleteChartFence(text: string) {
+  return /```chart[\s\S]*?```/i.test(text);
+}
+
+function getStreamingSafePreview(text: string) {
+  const start = text.lastIndexOf("```chart");
+  if (start === -1) return text;
+
+  const closing = text.indexOf("```", start + 8);
+  if (closing !== -1) return text;
+
+  const before = text.slice(0, start).trimEnd();
+  return before;
+}
+
+function getGreetingLabel() {
+  return "Welcome";
+}
 
 function ChatContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const contextFromUrl = searchParams.get("context");
+  const convIdFromUrl = searchParams.get("id");
+  const { data: session, status: sessionStatus } = useSession();
+  const rawFirstName = session?.user?.name?.split(" ")[0] || "";
+  const userFirstName =
+    rawFirstName.toLowerCase() === "you" ? "Investor" : rawFirstName || "Investor";
+  const greetingLabel = getGreetingLabel();
+  const { loadConversations, setMobileSidebarOpen } = useConversationsCtx();
+
   const [value, setValue] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (contextFromUrl) {
+      return [{ id: "ctx-init", role: "user" as const, text: contextFromUrl, time: Date.now(), fresh: true }];
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => !!contextFromUrl);
+  const [loadingConversation, setLoadingConversation] = useState(() => !!convIdFromUrl);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [showConversations, setShowConversations] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  const { conversations, loading: conversationsLoading, error: conversationsError, loadConversations, deleteConversation } = useConversations();
+  const [landingFocused, setLandingFocused] = useState(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const landingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const chatTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const hasSubmittedRef = useRef(false);
   const userScrolledRef = useRef(false);
+  const prevConvIdRef = useRef<string | null | undefined>(undefined);
+  const activeStreamRef = useRef<string | null>(null);
+  const streamingAssistantIdRef = useRef<string | null>(null);
+  const pendingContentRef = useRef("");
+  const flushRafRef = useRef<number | null>(null);
+  const flushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (prevConvIdRef.current === convIdFromUrl) return;
+    const prev = prevConvIdRef.current;
+    prevConvIdRef.current = convIdFromUrl;
+    if (convIdFromUrl) {
+      if (activeStreamRef.current === convIdFromUrl) return;
+      loadConversation(convIdFromUrl);
+    } else if (prev !== undefined) {
+      setMessages([]);
+      setCurrentConversationId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convIdFromUrl]);
 
   useEffect(() => {
     if (contextFromUrl && !hasSubmittedRef.current) {
       hasSubmittedRef.current = true;
-      setValue(contextFromUrl);
-      setTimeout(() => {
-        handleSend(contextFromUrl);
-      }, 100);
+      setValue("");
+      handleSend(contextFromUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextFromUrl]);
@@ -53,23 +102,32 @@ function ChatContent() {
   useEffect(() => {
     const container = messagesRef.current;
     if (!container) return;
-
     const handleScroll = () => {
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight <
-        150;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
       userScrolledRef.current = !isNearBottom;
+      setShowScrollBtn(!isNearBottom);
     };
-
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (flushRafRef.current !== null) {
+        cancelAnimationFrame(flushRafRef.current);
+      }
+      if (flushTimeoutRef.current !== null) {
+        clearTimeout(flushTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!userScrolledRef.current && messages.length > 0) {
-      smoothScrollToBottom(messagesRef.current, true);
+      smoothScrollToBottom(messagesRef.current, true, !loading);
+      setShowScrollBtn(false);
     }
-  }, [messages]);
+  }, [messages, loading]);
 
   useEffect(() => {
     const ta = landingTextareaRef.current || chatTextareaRef.current;
@@ -79,21 +137,20 @@ function ChatContent() {
   }, [value]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % CHAT_PLACEHOLDERS.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !loading) {
       landingTextareaRef.current?.focus();
-    } else {
+    } else if (messages.length > 0) {
       chatTextareaRef.current?.focus();
     }
-  }, [messages.length]);
+  }, [messages.length, loading]);
+
+  useEffect(() => {
+    return onChatReset(() => router.push("/chat"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadConversation = async (conversationId: string) => {
+    setLoadingConversation(true);
     try {
       const response = await fetch(`/api/conversations/${conversationId}`);
       if (response.ok) {
@@ -106,22 +163,15 @@ function ChatContent() {
         }));
         setMessages(loadedMessages);
         setCurrentConversationId(conversationId);
-        setShowConversations(false);
-        showToast('✓ Conversation loaded');
       } else {
-        showToast('✗ Failed to load conversation');
+        router.push("/chat");
+        showToast("\u2717 Failed to load conversation");
       }
-    } catch (error) {
-      console.error("Failed to load conversation:", error);
-      showToast('✗ Error loading conversation');
+    } catch {
+      router.push("/chat");
+    } finally {
+      setLoadingConversation(false);
     }
-  };
-
-  const startNewConversation = () => {
-    setMessages([]);
-    setCurrentConversationId(null);
-    setShowConversations(false);
-    showToast('✓ Started new conversation');
   };
 
   const showToast = (message: string) => {
@@ -129,323 +179,439 @@ function ChatContent() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const confirmDelete = async () => {
-    if (conversationToDelete) {
-      const success = await deleteConversation(conversationToDelete);
-      if (success) {
-        showToast('✓ Conversation deleted successfully');
-        if (conversationToDelete === currentConversationId) {
-          setMessages([]);
-          setCurrentConversationId(null);
-        }
-      } else {
-        showToast('✗ Failed to delete conversation');
-      }
-      setShowDeleteModal(false);
-      setConversationToDelete(null);
-    }
-  };
-
   async function handleSend(messageText?: string) {
     const textToSend = messageText || value.trim();
     if (!textToSend) return;
-
     userScrolledRef.current = false;
 
-    const id = String(Date.now());
-    const userMsg: Message = {
-      id,
-      role: "user",
-      text: textToSend,
-      time: Date.now(),
-      fresh: true,
-    };
-    setMessages((m) => [...m, userMsg]);
+    const userMsgId = String(Date.now());
+    const assistantId = `asst-${Date.now()}`;
+    streamingAssistantIdRef.current = assistantId;
+    pendingContentRef.current = "";
+    setMessages((m) => {
+      const filtered = m.filter((msg) => msg.id !== "ctx-init");
+      return [
+        ...filtered,
+        { id: userMsgId, role: "user", text: textToSend, time: Date.now(), fresh: true },
+        { id: assistantId, role: "assistant", text: "", time: Date.now() },
+      ];
+    });
     setValue("");
     setLoading(true);
 
-    const assistantId = String(Date.now() + 1);
-    setMessages((m) => [
-      ...m,
-      { id: assistantId, role: "assistant", text: "", time: Date.now() },
-    ]);
+    const flushAssistantText = () => {
+      if (flushRafRef.current !== null) return;
+      flushRafRef.current = requestAnimationFrame(() => {
+        flushRafRef.current = null;
+        const nextText = pendingContentRef.current;
+        setMessages((m) => {
+          let changed = false;
+          const next = m.map((msg) => {
+            if (msg.id === assistantId && msg.text !== nextText) {
+              changed = true;
+              return { ...msg, text: nextText };
+            }
+            return msg;
+          });
+          return changed ? next : m;
+        });
+      });
+    };
+
+    let accumulatedText = "";
+    let shouldRefreshConversations = false;
+    let streamedFirstChunk = false;
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: textToSend,
           conversationId: currentConversationId,
-          history: messages.filter(m => m.text).map(m => ({ role: m.role, text: m.text }))
+          history: messages.filter((m) => m.text && m.id !== "ctx-init").map((m) => ({ role: m.role, text: m.text })),
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        let detail = `API error: ${response.status}`;
+        try {
+          const errorPayload = await response.json();
+          if (typeof errorPayload?.error === "string") {
+            detail = errorPayload.error;
+          }
+          if (typeof errorPayload?.detail === "string") {
+            detail = `${detail} (${errorPayload.detail})`;
+          }
+        } catch {
+          // ignore parse errors and use status fallback
+        }
+        throw new Error(detail);
       }
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
+      if (!reader) throw new Error("No response stream");
 
-      if (!reader) {
-        throw new Error("No response stream");
-      }
-
-      let accumulatedText = "";
+      let sseBuffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim() !== "");
-
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split("\n");
+        sseBuffer = lines.pop() ?? "";
         for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const data = line.slice(6);
-            try {
-              const json = JSON.parse(data);
-              if (json.content) {
-                accumulatedText += json.content;
-                setMessages((m) =>
-                  m.map((msg) =>
-                    msg.id === assistantId
-                      ? { ...msg, text: accumulatedText }
-                      : msg
-                  )
-                );
-              }
-              if (json.conversationId && !currentConversationId) {
-                setCurrentConversationId(json.conversationId);
-                loadConversations();
-              }
-              if (json.error) {
-                throw new Error(json.error);
-              }
-            } catch (e) {}
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+          let json: any;
+          try {
+            json = JSON.parse(data);
+          } catch {
+            continue;
+          }
+
+          if (json.content) {
+            accumulatedText += json.content;
+            pendingContentRef.current = accumulatedText;
+            if (!streamedFirstChunk) {
+              streamedFirstChunk = true;
+              setMessages((m) =>
+                m.map((msg) =>
+                  msg.id === assistantId ? { ...msg, text: pendingContentRef.current } : msg
+                )
+              );
+            } else {
+              flushAssistantText();
+            }
+          }
+          if (json.conversationId && !currentConversationId) {
+            activeStreamRef.current = json.conversationId;
+            setCurrentConversationId(json.conversationId);
+            router.replace(`/chat?id=${json.conversationId}`);
+            shouldRefreshConversations = true;
+          }
+          if (json.error) {
+            throw new Error(json.error);
           }
         }
       }
 
       setTimeout(() => {
         setMessages((current) =>
-          current.map((x) => (x.id === id ? { ...x, fresh: false } : x))
+          current.map((x) => (x.id === userMsgId ? { ...x, fresh: false } : x))
         );
       }, 300);
+
+      if (shouldRefreshConversations) {
+        await loadConversations();
+      }
     } catch (error: any) {
       console.error("Chat error:", error);
-      showToast('✗ Failed to send message');
+      showToast("\u2717 Failed to send message");
+      if (flushRafRef.current !== null) {
+        cancelAnimationFrame(flushRafRef.current);
+        flushRafRef.current = null;
+      }
+      if (flushTimeoutRef.current !== null) {
+        clearTimeout(flushTimeoutRef.current);
+        flushTimeoutRef.current = null;
+      }
       setMessages((m) =>
-        m.map((msg) =>
-          msg.id === assistantId
-            ? { ...msg, text: `Error: ${error.message}` }
-            : msg
-        )
+        m.map((msg) => (msg.id === assistantId ? { ...msg, text: `Error: ${error.message}` } : msg))
       );
     } finally {
+      if (flushRafRef.current !== null) {
+        cancelAnimationFrame(flushRafRef.current);
+        flushRafRef.current = null;
+      }
+      if (flushTimeoutRef.current !== null) {
+        clearTimeout(flushTimeoutRef.current);
+        flushTimeoutRef.current = null;
+      }
+      if (pendingContentRef.current !== accumulatedText) {
+        setMessages((m) =>
+          m.map((msg) => (msg.id === assistantId ? { ...msg, text: accumulatedText } : msg))
+        );
+      }
+      streamingAssistantIdRef.current = null;
       setLoading(false);
+      setTimeout(() => { activeStreamRef.current = null; }, 600);
     }
   }
 
+  const AiAvatar = () => (
+    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 shadow-md shadow-cyan-900/30 self-start mt-1 border border-cyan-300/20 flex items-center justify-center">
+      <span className="text-white text-[13px] font-bold">I</span>
+    </div>
+  );
+
+  const UserAvatar = () => (
+    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-700/90 border border-slate-500/40 flex items-center justify-center self-start mt-1 text-[13px] font-semibold text-white shadow-sm">
+      {userFirstName[0]?.toUpperCase()}
+    </div>
+  );
+
+  const AssistantLoader = () => (
+    <div className="flex items-center text-cyan-200/90 py-0.5">
+      <div className="relative w-[16px] h-[16px]">
+        <div className="absolute inset-0 rounded-full border-[1.5px] border-cyan-400/20" />
+        <div className="absolute inset-0 rounded-full border-[1.5px] border-transparent border-t-cyan-300 animate-spin" />
+      </div>
+    </div>
+  );
+
   return (
     <DashboardLayout>
-      {/* Toast Notification */}
       {toast && (
-        <div className={`fixed top-24 right-6 px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2 ${
-          toast.startsWith('✓')
-            ? 'bg-gradient-to-r from-green-500 to-emerald-500'
-            : 'bg-gradient-to-r from-red-500 to-pink-500'
-        } text-white`}>
-          <Icon 
-            name={toast.startsWith('✓') ? "check_circle" : "error"} 
-            className="text-[20px]" 
-          />
-          <span className="font-medium">{toast.substring(2)}</span>
+        <div
+          className={`fixed top-6 right-6 px-5 py-3 rounded-xl shadow-2xl z-[100] flex items-center gap-2 ${
+            toast.startsWith("\u2713")
+              ? "bg-gradient-to-r from-green-600 to-emerald-500"
+              : "bg-gradient-to-r from-red-600 to-pink-500"
+          } text-white text-sm font-medium`}
+        >
+          <Icon name={toast.startsWith("\u2713") ? "check_circle" : "error"} className="text-[18px]" />
+          <span>{toast.substring(2)}</span>
         </div>
       )}
 
-      <div className="w-full h-full flex bg-transparent overflow-hidden relative">
-        {showConversations && (
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
-            onClick={() => setShowConversations(false)}
-          />
-        )}
-
-        {showDeleteModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[60] flex items-center justify-center p-4">
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700/50 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                  <Icon name="error_outline" className="text-red-400 text-[24px]" />
+      <div className="flex h-full overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {loadingConversation ? (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-shrink-0 h-14 px-4 border-b border-slate-700/20 bg-slate-950/40 backdrop-blur-xl flex items-center gap-3">
+                <div className="flex-1 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-2">Delete Conversation</h3>
-                  {conversationToDelete && (
-                    <p className="text-sm text-cyan-400/90 mb-3 italic">
-                      &quot;{conversations.find(c => c.id === conversationToDelete)?.title || 'Untitled Conversation'}&quot;
+              </div>
+              <div className="flex-1 overflow-y-auto py-8 custom-scrollbar">
+                <div className="max-w-4xl mx-auto px-10 space-y-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className={`flex items-start gap-3 ${i % 2 === 1 ? "justify-end" : "justify-start"}`}>
+                      {i % 2 === 0 && (
+                        <div className="w-16 h-7 rounded-full bg-slate-800 animate-pulse flex-shrink-0" />
+                      )}
+                      <div
+                        className={`h-10 rounded-2xl animate-pulse ${i % 2 === 1 ? "bg-blue-900/40 w-48" : "bg-slate-800/60 w-72"}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
+            <>
+              <div className="flex-shrink-0 h-14 px-4 border-b border-slate-700/20 bg-slate-950/40 backdrop-blur-xl flex items-center gap-3 md:hidden">
+                <button
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 rounded-xl transition-all"
+                  title="Conversations"
+                >
+                  <Icon name="menu" className="text-[20px]" />
+                </button>
+                <div className="flex-1 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div className="w-9" />
+              </div>
+
+              <div className="flex-1 w-full min-h-0">
+                <div className="h-full w-full overflow-y-auto flex items-start justify-center px-4 sm:px-8 lg:px-12 py-6 sm:py-8 bg-gradient-to-b from-slate-950/35 via-slate-900/20 to-slate-950/35">
+                  <div className="w-full max-w-[72rem] h-full p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-start gap-7 pt-3 sm:pt-6 lg:pt-7">
+
+                  <div className="flex flex-col items-center gap-3.5 mb-4 sm:mb-5">
+                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.035] backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_22px_rgba(2,8,23,0.08)]">
+                      <div className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px] rounded-[14px] bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 flex items-center justify-center shadow-[0_8px_18px_rgba(59,130,246,0.2)] flex-shrink-0">
+                        <svg className="w-4 h-4 sm:w-[17px] sm:h-[17px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <span className="text-slate-50 font-semibold text-[21px] sm:text-[23px] tracking-tight leading-none whitespace-nowrap">Investio</span>
+                    </div>
+                    <p className="text-slate-100 text-[23px] sm:text-[26px] font-medium tracking-tight text-center leading-tight">
+                      {sessionStatus === "loading" ? (
+                        <span className="text-slate-400 text-[18px]">...</span>
+                      ) : (
+                        <>
+                          <span className="text-slate-100/95">{greetingLabel}, </span>
+                          <span className="text-slate-50">{userFirstName}</span>
+                          <span className="text-slate-200/85">!</span>
+                        </>
+                      )}
                     </p>
-                  )}
-                  <p className="text-sm text-slate-300 leading-relaxed">
-                    Are you sure you want to delete this conversation? This action cannot be undone.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setConversationToDelete(null);
-                  }}
-                  className="flex-1 px-4 py-3 bg-slate-700/50 hover:bg-slate-700 text-white rounded-xl transition-all font-medium border border-slate-600/50 hover:border-slate-500"
-                >
-                  No, Cancel
-                </button>
-                <button
-                  onClick={confirmDelete}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-xl transition-all font-medium shadow-lg hover:shadow-red-500/30"
-                >
-                  Yes, Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <aside
-          className={`fixed md:relative top-0 left-0 h-full md:h-full w-80 bg-gradient-to-b from-slate-900 to-slate-950 border-r border-slate-700/50 z-50 transform transition-transform duration-300 flex flex-col shadow-2xl flex-shrink-0 ${
-            showConversations ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-          }`}
-        >
-          <div className="p-5 border-b border-slate-700/30 flex items-center justify-between bg-gradient-to-r from-blue-600/10 to-cyan-500/10 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <Icon name="chat_bubble" className="text-cyan-400 text-[22px]" />
-              <h2 className="text-lg font-bold text-white">Chat History</h2>
-            </div>
-            <button
-              onClick={() => setShowConversations(false)}
-              className="md:hidden text-slate-400 hover:text-white transition"
-            >
-              <Icon name="close" className="text-[20px]" />
-            </button>
-          </div>
-          
-          <button
-            onClick={startNewConversation}
-            className="m-4 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl hover:scale-[1.02] transition-all shadow-lg hover:shadow-cyan-500/30 flex items-center justify-center gap-2 font-semibold flex-shrink-0"
-          >
-            <Icon name="add_circle" className="text-[22px]" />
-            New Conversation
-          </button>
-
-          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 custom-scrollbar min-h-0">
-            {conversationsLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4">
-                <div className="animate-spin w-10 h-10 border-3 border-cyan-500 border-t-transparent rounded-full mb-3"></div>
-                <p className="text-sm text-slate-400">Loading conversations...</p>
-              </div>
-            ) : conversationsError ? (
-              <div className="text-center py-8 px-4">
-                <Icon name="error_outline" className="text-red-400 text-[40px] mx-auto mb-3" />
-                <p className="text-sm text-red-400 mb-2">{conversationsError}</p>
-                <button
-                  onClick={loadConversations}
-                  className="text-xs text-cyan-400 hover:text-cyan-300 underline"
-                >
-                  Try again
-                </button>
-              </div>
-            ) : conversations.length === 0 ? (
-              <div className="text-center py-8 px-4">
-                <Icon name="chat_bubble_outline" className="text-slate-600 text-[40px] mx-auto mb-3" />
-                <p className="text-sm text-slate-500">No conversations yet</p>
-                <p className="text-xs text-slate-600 mt-1">Start chatting to create your first conversation</p>
-              </div>
-            ) : (
-              conversations.map((conv) => {
-                const lastMessage = conv.messages?.[0];
-                const preview = lastMessage?.text.slice(0, 60) || "New conversation";
-                const isActive = conv.id === currentConversationId;
-                
-                return (
-                  <div key={conv.id} className="relative group">
-                    <button
-                      onClick={() => loadConversation(conv.id)}
-                      className={`w-full text-left p-3.5 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-blue-600/20 to-cyan-500/20 border border-blue-500/50 shadow-lg shadow-blue-500/10"
-                          : "bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/30 hover:border-slate-600/50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2 mb-2">
-                        <Icon name="chat" className={`text-[16px] mt-0.5 ${
-                          isActive ? "text-cyan-400" : "text-slate-500"
-                        }`} />
-                        <h3 className="text-sm font-semibold text-white truncate flex-1">
-                          {conv.title || "Untitled Conversation"}
-                        </h3>
-                      </div>
-                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed mb-2">{preview}...</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-slate-500">
-                          {new Date(conv.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
-                        {isActive && (
-                          <span className="text-xs text-cyan-400 font-medium">Active</span>
-                        )}
-                      </div>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConversationToDelete(conv.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-red-500/50 rounded-lg"
-                      title="Delete conversation"
-                    >
-                      <Icon name="delete" className="text-red-400 hover:text-red-300 text-[16px]" />
-                    </button>
+                    <div className="h-px w-44 sm:w-52 bg-gradient-to-r from-transparent via-blue-300/90 to-transparent" />
                   </div>
-                );
-              })
-            )}
-          </div>
-        </aside>
 
-        <div className="flex-1 flex flex-col overflow-hidden h-full min-w-0">
-          {messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-start sm:items-center justify-start sm:justify-center px-4 sm:px-6 md:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar min-h-0">
-              <div className="max-w-3xl w-full text-center pt-8 sm:pt-0 flex-shrink-0">
-                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-semibold text-white mb-2 sm:mb-3 md:mb-4 leading-tight bg-gradient-to-r from-white via-cyan-100 to-blue-100 bg-clip-text text-transparent">
-                  Your AI Investment Partner
-                </h1>
-                <p className="text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-6">
-                  Ask me anything about markets, stocks, crypto, or investment strategies.
-                </p>
-                
-                <div className="mb-4 sm:mb-6 md:hidden">
-                  <button
-                    onClick={() => setShowConversations(true)}
-                    className="mx-auto px-5 py-3 bg-slate-800/95 hover:bg-slate-700/95 text-white rounded-xl transition-all flex items-center gap-2.5 shadow-lg border border-slate-600/60 font-medium backdrop-blur-md"
-                  >
-                    <Icon name="history" className="text-[20px]" />
-                    View History
-                  </button>
-                </div>
+                  <h1 className="mt-1 text-[32px] sm:text-[40px] lg:text-[46px] font-bold text-center leading-[1.08] tracking-tight max-w-3xl [text-wrap:balance] px-2">
+                    <span className="text-slate-100">How can I help you </span>
+                    <span className="bg-gradient-to-r from-cyan-200 via-sky-300 to-blue-300 bg-clip-text text-transparent">today?</span>
+                  </h1>
 
-                <div className="mt-4 sm:mt-6 md:mt-10 flex items-center justify-center">{" "}
-                <div className="relative w-full md:mx-auto md:max-w-3xl">
-                  <div className="relative">
+                  <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl">
+                    {[
+                      { icon: "query_stats",      text: "Market Edge" },
+                      { icon: "candlestick_chart", text: "Smart Entries" },
+                      { icon: "analytics",         text: "Clear Signals" },
+                      { icon: "monitoring",        text: "Macro Pulse" },
+                    ].map(({ icon, text }) => (
+                      <div key={text} className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/68 border border-slate-600/45 text-[13px] text-slate-100 backdrop-blur-sm">
+                        <Icon name={icon} className="text-blue-300 text-[13px]" />
+                        {text}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="relative w-full max-w-[42rem]">
                     <textarea
                       ref={landingTextareaRef}
                       value={value}
                       onChange={(e) => setValue(e.target.value)}
-                      placeholder=" "
-                      className="w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white placeholder:text-white/60 p-5 md:p-8 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-base md:text-lg shadow-xl backdrop-blur-sm transition-all hover:bg-slate-800/70 min-h-[180px] md:min-h-[240px] max-h-[400px] md:max-h-[520px] input-focus input-hoverable"
-                      rows={5}
+                      onFocus={() => setLandingFocused(true)}
+                      onBlur={() => setLandingFocused(false)}
+                      className="relative w-full bg-slate-800/80 border border-slate-600/35 text-white py-4 pl-6 pr-[60px] rounded-[26px] resize-none focus:outline-none hover:bg-slate-800/88 hover:border-slate-500/42 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.22),0_0_32px_rgba(59,130,246,0.12),0_8px_24px_rgba(2,8,23,0.18)] shadow-[0_4px_18px_rgba(2,8,23,0.16)] text-[16px] backdrop-blur-sm transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar"
+                      rows={1}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                      }}
+                    />
+                    {!value && !landingFocused && (
+                      <div className="absolute left-6 top-[17px] right-16 pointer-events-none text-slate-300/70 text-[15px] leading-relaxed">
+                        <AnimatedPlaceholder
+                          placeholders={CHAT_PLACEHOLDERS.map((p) => `Ask anything about ${p}...`)}
+                          typingSpeed={50}
+                          deletingSpeed={25}
+                          pauseAfterTyping={2200}
+                        />
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleSend()}
+                      disabled={loading || !value.trim()}
+                      aria-label="Send message"
+                      className="absolute right-3 inset-y-0 my-auto w-9 h-9 sm:w-9 sm:h-9 xl:w-9 xl:h-9 flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-md transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Icon name="send" className="text-[14px] sm:text-[14px] xl:text-[14px]" />
+                    </button>
+                  </div>
+
+                  {/* Suggestion cards — compact horizontal layout */}
+                  <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5 pt-1">
+                    {([
+                      { icon: "trending_up",    label: "Top tech stocks",  desc: "Performance charts & comparison", prompt: "Show me the top technology stocks right now with a performance comparison chart." },
+                      { icon: "currency_bitcoin", label: "Crypto market",  desc: "BTC, ETH & altcoin analysis",     prompt: "Analyze the current crypto market — show BTC, ETH, and top altcoins with charts." },
+                      { icon: "pie_chart",      label: "Build a portfolio", desc: "Personalized $10k allocation",    prompt: "Create an optimal $10,000 portfolio for moderate risk with an allocation chart." },
+                      { icon: "compare_arrows", label: "AAPL vs MSFT",     desc: "Head-to-head performance",        prompt: "Compare AAPL and MSFT — show performance charts and key financial metrics." },
+                      { icon: "bar_chart",      label: "Sector leaders",   desc: "Best performing sectors YTD",     prompt: "Which market sectors are outperforming this quarter? Show a ranked chart." },
+                      { icon: "savings",        label: "Dividend stocks",  desc: "High-yield plays & payout data",  prompt: "Show me the best dividend stocks right now with yield comparison charts." },
+                    ] as { icon: string; label: string; desc: string; prompt: string }[]).map(({ icon, label, desc, prompt }) => (
+                      <button
+                        key={label}
+                        onClick={() => { setValue(prompt); setTimeout(() => landingTextareaRef.current?.focus(), 0); }}
+                        className="group flex items-center gap-3.5 p-4 rounded-2xl bg-slate-800/58 hover:bg-slate-800/74 border border-slate-700/40 hover:border-cyan-400/20 text-left transition-all duration-200 hover:-translate-y-0.5"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-slate-700/42 group-hover:bg-cyan-500/10 flex items-center justify-center flex-shrink-0 border border-slate-600/20 group-hover:border-cyan-400/18 transition-colors duration-200">
+                          <Icon name={icon} className="text-[15px] text-slate-400 group-hover:text-cyan-300 transition-colors duration-200" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-white text-sm font-semibold leading-tight group-hover:text-cyan-50 transition-colors duration-200">{label}</p>
+                          <p className="text-slate-500 text-xs leading-snug mt-1 group-hover:text-slate-400 transition-colors duration-200">{desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex-1 overflow-hidden min-h-0 relative">
+                <div ref={messagesRef} className="h-full overflow-y-auto py-8 custom-scrollbar">
+                  <div className="max-w-4xl xl:max-w-5xl 2xl:max-w-6xl mx-auto px-6 md:px-10 xl:px-16 space-y-6">
+                    {messages.map((m, i) => {
+                      const isTyping = m.role === "assistant" && !m.text;
+                      const isStreaming = m.role === "assistant" && streamingAssistantIdRef.current === m.id;
+                      const streamingHasRenderableChart =
+                        isStreaming && hasCompleteChartFence(m.text);
+                      const streamingPreview =
+                        isStreaming && !streamingHasRenderableChart
+                          ? getStreamingSafePreview(m.text)
+                          : m.text;
+                      return (
+                        <div
+                          key={m.id ?? i}
+                          className={`flex items-start gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                          {m.role !== "user" && <AiAvatar />}
+                          <div
+                            className={
+                              m.role === "user"
+                                ? CHAT_BUBBLE_USER
+                                : isTyping
+                                ? "rounded-2xl px-4 py-3 bg-slate-800/80 border border-slate-700/40 shadow-sm"
+                                : CHAT_BUBBLE_ASSISTANT
+                            }
+                          >
+                            {m.role === "user" ? (
+                              m.text
+                            ) : isTyping ? (
+                              <AssistantLoader />
+                            ) : isStreaming && !streamingHasRenderableChart ? (
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                {streamingPreview}
+                              </ReactMarkdown>
+                            ) : (
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                {m.text}
+                              </ReactMarkdown>
+                            )}
+                          </div>
+                          {m.role === "user" && <UserAvatar />}
+                        </div>
+                      );
+                    })}
+                    {loading && messages[messages.length - 1]?.role !== "assistant" && (
+                      <div className="flex items-start gap-3 justify-start">
+                        <AiAvatar />
+                        <div className="rounded-2xl px-4 py-3 bg-slate-800/80 border border-slate-700/40 animate-fade-in">
+                          <AssistantLoader />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {showScrollBtn && (
+                  <button
+                    onClick={() => {
+                      userScrolledRef.current = false;
+                      smoothScrollToBottom(messagesRef.current, false);
+                      setShowScrollBtn(false);
+                    }}
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-slate-800/95 border border-slate-600/50 hover:border-cyan-500/40 text-slate-300 hover:text-white rounded-full shadow-2xl text-xs font-medium transition-all hover:bg-slate-700/90 backdrop-blur-sm"
+                  >
+                    <Icon name="keyboard_arrow_down" className="text-[16px]" />
+                    <span>Latest message</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex-shrink-0 py-3 border-t border-slate-700/20">
+                <div className="w-full max-w-4xl mx-auto px-3 sm:px-6">
+                  <div className="relative w-full">
+                    <textarea
+                      ref={chatTextareaRef}
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      placeholder="Ask anything..."
+                      className="w-full bg-slate-800/80 border border-slate-600/35 text-white text-[16px] py-4 pl-5 pr-[58px] rounded-[24px] resize-none focus:outline-none hover:bg-slate-800/90 hover:border-slate-500/40 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.15),0_0_28px_rgba(59,130,246,0.07)] transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
+                      rows={1}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
@@ -453,301 +619,29 @@ function ChatContent() {
                         }
                       }}
                     />
-                    {!value && (
-                      <div className="absolute left-5 md:left-8 top-5 md:top-8 right-16 pointer-events-none text-white/60 text-base md:text-lg text-left">
-                        <span>Ask anything about </span>
-                        <span
-                          key={placeholderIndex}
-                          className="inline"
-                          style={{
-                            animation:
-                              "placeholderFade 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards",
-                          }}
-                        >
-                          {CHAT_PLACEHOLDERS[placeholderIndex]}...
-                        </span>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => handleSend()}
+                      disabled={loading || !value.trim()}
+                      aria-label="Send"
+                      className="absolute right-3 inset-y-0 my-auto w-9 h-9 flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Icon name="send" className="text-[14px]" />
+                      )}
+                    </button>
                   </div>
-
-                  <button
-                    onClick={() => handleSend()}
-                    disabled={loading}
-                    aria-label="Send message"
-                    className="absolute right-3 bottom-3 md:right-4 md:bottom-4 w-11 h-11 md:w-12 md:h-12 flex items-center justify-center bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-transform disabled:opacity-60"
-                  >
-                    {loading ? (
-                      <div className="w-6 h-6">
-                        <svg
-                          className="animate-spin text-white"
-                          width="22"
-                          height="22"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <circle
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="rgba(255,255,255,0.18)"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            d="M22 12a10 10 0 0 0-10-10"
-                            stroke="white"
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                          ></path>
-                        </svg>
-                      </div>
-                    ) : (
-                      <Icon name="send" className="text-[20px]" />
-                    )}
-                  </button>
                 </div>
               </div>
-
-              <div className="mt-5 md:mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                <button
-                  className={SUGGESTION_BTN_PRIMARY}
-                  onClick={() =>
-                    setValue("What are the top technology stocks to watch?")
-                  }
-                >
-                  <Icon name="trending_up" className="text-[18px]" />
-                  <span className="text-sm">Top tech stocks</span>
-                </button>
-
-                <button
-                  className={SUGGESTION_BTN_SECONDARY}
-                  onClick={() =>
-                    setValue("Summarize the latest Bitcoin market drivers.")
-                  }
-                >
-                  <Icon name="currency_bitcoin" className="text-[18px]" />
-                  <span className="text-sm">Crypto market summary</span>
-                </button>
-
-                <button
-                  className={SUGGESTION_BTN_SECONDARY}
-                  onClick={() =>
-                    setValue(
-                      "How should I allocate a $10,000 portfolio for moderate risk?"
-                    )
-                  }
-                >
-                  <Icon name="pie_chart" className="text-[18px]" />
-                  <span className="text-sm">Portfolio allocation</span>
-                </button>
-
-                <button
-                  className={SUGGESTION_BTN_SECONDARY}
-                  onClick={() =>
-                    setValue(
-                      "Compare AAPL and MSFT performance over the last year."
-                    )
-                  }
-                >
-                  <Icon name="compare_arrows" className="text-[18px]" />
-                  <span className="text-sm">Compare tickers</span>
-                </button>
-
-                <button
-                  className={SUGGESTION_BTN_SECONDARY}
-                  onClick={() =>
-                    setValue(
-                      "Generate a watchlist for fintech stocks with strong earnings momentum."
-                    )
-                  }
-                >
-                  <Icon name="list" className="text-[18px]" />
-                  <span className="text-sm">Build watchlist</span>
-                </button>
-
-                <button
-                  className={SUGGESTION_BTN_SECONDARY}
-                  onClick={() =>
-                    setValue(
-                      "Explain how recent CPI data could affect equity markets."
-                    )
-                  }
-                >
-                  <Icon name="insights" className="text-[18px]" />
-                  <span className="text-sm">Explain macro impact</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="p-3 md:p-4 border-b border-slate-700/30 flex items-center gap-3 bg-gradient-to-r from-slate-900/50 to-slate-800/30 backdrop-blur-sm flex-shrink-0">
-              <button
-                onClick={() => setShowConversations(true)}
-                className="md:hidden p-2 hover:bg-slate-800 rounded-lg transition-all"
-                title="View conversations"
-              >
-                <Icon name="menu" className="text-white text-[20px]" />
-              </button>
-              <div className="flex-1" />
-              <button
-                onClick={startNewConversation}
-                className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-800/60 rounded-lg transition-all text-cyan-400 hover:text-cyan-300"
-                title="New conversation"
-              >
-                <Icon name="add_circle" className="text-[20px]" />
-                <span className="text-sm font-medium hidden sm:inline">New Chat</span>
-              </button>
-            </div>
-            <div
-              ref={messagesRef}
-              className="flex-1 overflow-y-auto px-6 py-8 space-y-6 custom-scrollbar min-h-0"
-              style={{
-                scrollBehavior: "smooth",
-              }}
-            >
-              {messages.map((m, i) => (
-                <div
-                  key={m.id ?? i}
-                  className={`flex ${
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  } items-start gap-3`}
-                >
-                  {m.role === "user" && (
-                    <>
-                      <div className={CHAT_BUBBLE_USER}>{m.text}</div>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shadow-lg flex-shrink-0">
-                        U
-                      </div>
-                    </>
-                  )}
-                  {m.role !== "user" && (
-                    <>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                          />
-                        </svg>
-                      </div>
-                      <div className={CHAT_BUBBLE_ASSISTANT}>
-                        {m.text ? (
-                          <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={markdownComponents}
-                          >
-                            {m.text}
-                          </ReactMarkdown>
-                        ) : (
-                          <div className="typing-dots">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-              {loading &&
-                messages[messages.length - 1]?.role !== "assistant" && (
-                  <div className="flex items-start justify-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg flex-shrink-0">
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="rounded-2xl px-5 py-4 bg-gradient-to-br from-slate-800/95 to-slate-900/95 text-white shadow-xl animate-fade-in border border-slate-700/50">
-                      <div className="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-            </div>
-
-            <div className="px-6 py-6 border-t border-slate-700 bg-gradient-to-t from-transparent to-black/5 flex-shrink-0">
-              <div className="relative flex items-end gap-3">
-                <textarea
-                  ref={chatTextareaRef}
-                  value={value}
-                  onChange={(e) => setValue(e.target.value)}
-                  placeholder="Ask another question..."
-                  className={`${TEXTAREA_BASE} min-h-[88px] max-h-[300px] text-base`}
-                  rows={1}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                />
-
-                <button
-                  onClick={() => handleSend()}
-                  disabled={loading}
-                  aria-label="Send message"
-                  className={`${SEND_BUTTON} w-10 h-10 self-end mb-4`}
-                >
-                  {loading ? (
-                    <div className="w-5 h-5">
-                      <svg
-                        className="animate-spin text-white"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="rgba(255,255,255,0.2)"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          d="M22 12a10 10 0 0 0-10-10"
-                          stroke="white"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                        ></path>
-                      </svg>
-                    </div>
-                  ) : (
-                    <Icon name="send" className="text-[20px]" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
         </div>
       </div>
     </DashboardLayout>
   );
 }
+
 
 export default function ChatPage() {
   return (
@@ -755,28 +649,9 @@ export default function ChatPage() {
       fallback={
         <DashboardLayout>
           <div className="flex items-center justify-center h-screen">
-            <div className="w-8 h-8">
-              <svg
-                className="animate-spin text-cyan-500"
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="rgba(34,211,238,0.2)"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  d="M22 12a10 10 0 0 0-10-10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  strokeLinecap="round"
-                ></path>
-              </svg>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-2 border-cyan-500/40 border-t-cyan-400 rounded-full animate-spin" />
+              <span className="text-xs text-slate-600">Loading chat...</span>
             </div>
           </div>
         </DashboardLayout>

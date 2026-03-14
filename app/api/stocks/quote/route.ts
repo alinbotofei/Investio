@@ -20,6 +20,13 @@ export async function GET(request: NextRequest) {
       finnhubClient.getCompanyProfile(symbol).catch(() => null),
     ]);
 
+    if (!quote || quote.c === 0) {
+      return NextResponse.json(
+        { error: "No data available for symbol" },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({
       symbol: symbol.toUpperCase(),
       name: profile?.name || symbol,

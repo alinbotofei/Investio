@@ -1,11 +1,17 @@
 import { prisma } from "@/lib/prisma";
 
+function normalizeConversationTitle(input?: string | null) {
+  const trimmed = input?.replace(/\s+/g, " ").trim();
+  if (!trimmed) return "New Chat";
+  return trimmed.length > 72 ? `${trimmed.slice(0, 69).trimEnd()}...` : trimmed;
+}
+
 export const conversationService = {
   async createConversation(userId: string, title?: string) {
     return await prisma.conversation.create({
       data: {
         userId,
-        title: title || "New conversation",
+        title: normalizeConversationTitle(title),
       },
     });
   },
@@ -41,7 +47,7 @@ export const conversationService = {
   ) {
     return await prisma.conversation.updateMany({
       where: { id: conversationId, userId },
-      data: { title },
+      data: { title: normalizeConversationTitle(title) },
     });
   },
 

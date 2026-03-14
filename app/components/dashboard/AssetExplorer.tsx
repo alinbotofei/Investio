@@ -94,18 +94,19 @@ export default function AssetExplorer() {
             <button
               onClick={() => handleAdd(item)}
               disabled={isInWatchlist(item.symbol)}
-              className={`p-1.5 rounded transition ${
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all border ${
                 isInWatchlist(item.symbol)
-                  ? "text-cyan-400 cursor-not-allowed"
-                  : "text-slate-400 hover:text-cyan-400 hover:bg-slate-700"
+                  ? "bg-gradient-to-r from-cyan-500/85 to-blue-600/85 border-cyan-400/60 text-white shadow-sm shadow-cyan-500/25 cursor-not-allowed"
+                  : "bg-slate-700/60 border-slate-600 text-slate-300 hover:bg-cyan-500/10 hover:border-cyan-400/50 hover:text-cyan-300"
               }`}
             >
               <Icon
                 name={
-                  isInWatchlist(item.symbol) ? "bookmark" : "bookmark_border"
+                  isInWatchlist(item.symbol) ? "bookmark" : "bookmark_add"
                 }
-                className="text-[18px]"
+                className="text-[16px]"
               />
+              <span>{isInWatchlist(item.symbol) ? "Saved" : "Save"}</span>
             </button>
           </div>
         ))}

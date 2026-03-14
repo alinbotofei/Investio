@@ -74,7 +74,8 @@ export default function StockCard({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={stock.logo}
-              alt={stock.name}
+              alt=""
+              aria-hidden="true"
               onError={() => setLogoError(true)}
               className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg object-contain flex-shrink-0"
             />

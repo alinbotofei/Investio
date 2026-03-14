@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { WatchlistItem, AssetCategory } from "@/lib/types/assets";
 
 interface WatchlistContextType {
@@ -15,10 +16,12 @@ interface WatchlistContextType {
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
 
 export function WatchlistProvider({ children }: { children: React.ReactNode }) {
+  const { status } = useSession();
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadWatchlist = useCallback(async () => {
+    if (status !== "authenticated") return;
     try {
       const response = await fetch("/api/watchlist");
       if (response.ok) {
@@ -35,52 +38,83 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [status]);
 
   const addToWatchlist = useCallback(async (symbol: string, category: string) => {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    const normalizedCategory = category.trim().toLowerCase();
+
+    if (watchlist.some((item) => item.symbol === normalizedSymbol)) {
+      return true;
+    }
+
+    const optimisticItem: WatchlistItem = {
+      symbol: normalizedSymbol,
+      category: normalizedCategory as AssetCategory,
+      addedAt: Date.now(),
+    };
+    setWatchlist((prev) => [...prev, optimisticItem]);
+
     try {
       const response = await fetch("/api/watchlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol, category }),
+        body: JSON.stringify({ symbol: normalizedSymbol, category: normalizedCategory }),
       });
 
       if (response.ok) {
-        // Reload to get complete data from DB
-        await loadWatchlist();
+        setWatchlist((prev) => {
+          const deduped = prev.filter(
+            (item, index, arr) =>
+              arr.findIndex((x) => x.symbol === item.symbol) === index
+          );
+          return deduped;
+        });
         return true;
       } else {
+        setWatchlist((prev) => prev.filter((i) => i.symbol !== normalizedSymbol));
         return false;
       }
     } catch (error) {
       console.error("Failed to add to watchlist:", error);
+      setWatchlist((prev) => prev.filter((i) => i.symbol !== normalizedSymbol));
       return false;
     }
-  }, [loadWatchlist]);
+  }, [watchlist]);
 
   const removeFromWatchlist = useCallback(async (symbol: string) => {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    const previous = watchlist;
+    setWatchlist((prev) => prev.filter((item) => item.symbol !== normalizedSymbol));
+
     try {
-      const response = await fetch(`/api/watchlist?symbol=${symbol}`, {
+      const response = await fetch(`/api/watchlist?symbol=${encodeURIComponent(normalizedSymbol)}`, {
         method: "DELETE",
       });
       if (response.ok) {
-        setWatchlist((prev) => prev.filter((item) => item.symbol !== symbol));
         return true;
       }
+      setWatchlist(previous);
       return false;
     } catch (error) {
       console.error("Failed to remove from watchlist:", error);
+      setWatchlist(previous);
       return false;
     }
-  }, []);
+  }, [watchlist]);
 
   const isInWatchlist = useCallback((symbol: string) => {
-    return watchlist.some((item) => item.symbol === symbol);
+    return watchlist.some((item) => item.symbol === symbol.trim().toUpperCase());
   }, [watchlist]);
 
   useEffect(() => {
-    loadWatchlist();
-  }, [loadWatchlist]);
+    if (status === "authenticated") {
+      loadWatchlist();
+    } else if (status === "unauthenticated") {
+      setWatchlist([]);
+      setLoading(false);
+    }
+  }, [status, loadWatchlist]);
 
   return (
     <WatchlistContext.Provider
