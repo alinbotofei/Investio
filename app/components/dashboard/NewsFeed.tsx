@@ -2,40 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { NewsItem } from "@/lib/types/stocks";
+import { formatDate } from "@/app/lib/utils/format";
 
 interface NewsCardProps {
   article: NewsItem;
 }
 
 function NewsCard({ article }: NewsCardProps) {
-  const formattedDate = new Date(article.datetime * 1000).toLocaleDateString(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  );
-
   return (
     <a
       href={article.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block p-3 border border-slate-700/50 rounded-lg hover:bg-slate-700/30 transition-colors"
+      className="block p-3 border border-slate-700/50 rounded-lg hover:bg-slate-700/30 transition-colors group"
     >
-      <div className="flex-1">
-        <h3 className="font-semibold text-sm text-white line-clamp-2 mb-1">
-          {article.headline}
-        </h3>
-        <p className="text-xs text-slate-400 line-clamp-2 mb-2">
-          {article.summary}
-        </p>
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>{formattedDate}</span>
-        </div>
-      </div>
+      <h3 className="font-semibold text-sm text-white line-clamp-2 mb-1 group-hover:text-cyan-300 transition-colors">
+        {article.headline}
+      </h3>
+      <p className="text-xs text-slate-400 line-clamp-2 mb-2">
+        {article.summary}
+      </p>
+      <span className="text-xs text-slate-500">{formatDate(article.datetime)}</span>
     </a>
   );
 }
@@ -79,17 +66,15 @@ export default function NewsFeed({
 
     fetchNews();
     // Refresh every 5 minutes
-    const interval = setInterval(fetchNews, 5 * 60 * 1000);
+    const interval = setInterval(fetchNews, 5 * 60_000);
     return () => clearInterval(interval);
   }, [symbol, category]);
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="animate-pulse">
-            <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-          </div>
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="animate-pulse h-24 rounded-lg bg-slate-800/60 border border-slate-700/40" />
         ))}
       </div>
     );
@@ -97,7 +82,7 @@ export default function NewsFeed({
 
   if (error) {
     return (
-      <div className="text-center py-8 text-red-500">
+      <div className="text-center py-8 text-red-400 text-sm">
         <p>{error}</p>
       </div>
     );
@@ -105,7 +90,7 @@ export default function NewsFeed({
 
   if (news.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-slate-500 text-sm">
         <p>No news available</p>
       </div>
     );

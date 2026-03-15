@@ -7,18 +7,10 @@ import Icon from "../ui/Icon";
 import { NavItem } from "../../lib/types";
 import { emitChatReset } from "../../lib/utils/events";
 import { useConversationsCtx } from "@/app/contexts/ConversationsContext";
+import { formatTimeAgo } from "@/app/lib/utils/format";
 
 interface SidebarProps {
   items: NavItem[];
-}
-
-function formatTimeAgo(date: Date): string {
-  const diff = Date.now() - date.getTime();
-  if (diff < 60000) return "just now";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function iconFor(label: string) {
