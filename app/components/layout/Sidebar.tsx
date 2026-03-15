@@ -149,18 +149,18 @@ function SidebarInner({ items }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="px-2 space-y-0.5 flex-shrink-0">
+        <nav className="px-2 space-y-1 flex-shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); router.push("/chat"); }}
-            className={`w-full flex items-center rounded-xl text-white font-semibold text-[13px] transition-all duration-150 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_8px_rgba(59,130,246,0.2)] active:scale-[0.98] ${
-              isOpen ? "gap-2.5 px-2.5 py-2" : "justify-center p-2"
+            className={`w-full flex items-center rounded-xl text-white font-semibold text-[13px] transition-all duration-200 ease-in-out bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_8px_rgba(59,130,246,0.2)] hover:shadow-[0_2px_14px_rgba(59,130,246,0.32)] active:scale-[0.97] ${
+              isOpen ? "gap-2.5 px-2.5 py-2.5" : "justify-center p-2.5"
             }`}
           >
             <Icon name="add" className="text-[17px] flex-shrink-0" />
             <span style={labelStyle}>New Chat</span>
           </button>
 
-          <div className="h-1" />
+          <div className="h-2" />
 
           {items.map((item) => (
             <Link
@@ -174,11 +174,11 @@ function SidebarInner({ items }: SidebarProps) {
                   emitChatReset();
                 }
               }}
-              className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-150 ${
+              className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-200 ease-in-out ${
                 item.active
                   ? "bg-white/[0.09] text-white"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-              } ${isOpen ? "gap-2.5 px-2.5 py-2" : "justify-center p-2"}`}
+              } ${isOpen ? "gap-2.5 px-2.5 py-2.5" : "justify-center p-2.5"}`}
             >
               <Icon
                 name={iconFor(item.label)}
@@ -190,7 +190,7 @@ function SidebarInner({ items }: SidebarProps) {
         </nav>
 
         <div
-          className="mx-3 my-3 border-t border-white/[0.055] flex-shrink-0"
+          className="mx-3 my-4 border-t border-white/[0.04] flex-shrink-0"
           style={fadeStyle}
         />
 
@@ -202,7 +202,7 @@ function SidebarInner({ items }: SidebarProps) {
             transition: isOpen ? "opacity 130ms ease 110ms" : "opacity 70ms ease 0ms",
           }}
         >
-          <div className="px-4 mb-1.5 flex items-center justify-between flex-shrink-0">
+          <div className="px-4 mb-2 flex items-center justify-between flex-shrink-0">
             <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-widest">
               Recents
             </span>
@@ -242,14 +242,14 @@ function SidebarInner({ items }: SidebarProps) {
                 </p>
               </div>
             ) : (
-              <div className="space-y-px">
+              <div className="space-y-0.5">
                 {conversations.map((conv) => {
                   const isActive = conv.id === activeConvId;
                   const timeAgo = conv.updatedAt ? formatTimeAgo(new Date(conv.updatedAt)) : "";
                   return (
                     <div
                       key={conv.id}
-                      className={`group relative flex items-center rounded-xl transition-all duration-150 ${
+                      className={`group relative flex items-center rounded-xl transition-all duration-200 ease-in-out ${
                         isActive ? "bg-white/[0.08]" : "hover:bg-white/[0.05]"
                       }`}
                     >
