@@ -37,11 +37,9 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error("Earnings calendar error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch earnings calendar" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch earnings calendar";
+    console.error("Earnings calendar error:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

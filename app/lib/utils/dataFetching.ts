@@ -67,11 +67,11 @@ export async function fetchStockData(symbol: string) {
       recommendations.status === "fulfilled" ? recommendations.value : [],
     insiderSentiment:
       insiderSentiment.status === "fulfilled"
-        ? (insiderSentiment.value as any)?.data || []
+        ? (insiderSentiment.value as { data?: unknown[] })?.data ?? []
         : [],
     metrics:
       metrics.status === "fulfilled"
-        ? (metrics.value as any)?.metric || {}
+        ? (metrics.value as { metric?: Record<string, number> })?.metric ?? {}
         : {},
   };
 }

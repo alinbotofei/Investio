@@ -37,9 +37,12 @@ export async function GET(request: NextRequest) {
 
     const results = [];
 
+    interface FinnhubStockResult { symbol: string; description: string; type: string; }
+    interface FinnhubCryptoItem { symbol: string; description: string; }
+
     if (stocks.result) {
       results.push(
-        ...stocks.result.slice(0, 5).map((item: any) => ({
+        ...(stocks.result as FinnhubStockResult[]).slice(0, 5).map((item) => ({
           symbol: item.symbol,
           name: item.description,
           category: "stock" as const,
@@ -48,15 +51,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cryptoFiltered = cryptoAll
+    const cryptoFiltered = (cryptoAll as FinnhubCryptoItem[])
       .filter(
-        (item: any) =>
+        (item) =>
           item.symbol.toLowerCase().includes(query.toLowerCase()) &&
           item.symbol.includes("USDT")
       )
       .slice(0, 5);
     results.push(
-      ...cryptoFiltered.map((item: any) => ({
+      ...cryptoFiltered.map((item) => ({
         symbol: item.symbol,
         name: item.description,
         category: "crypto" as const,
@@ -64,11 +67,9 @@ export async function GET(request: NextRequest) {
     );
 
     return NextResponse.json({ results });
-  } catch (error: any) {
-    console.error("Search error:", error);
-    return NextResponse.json(
-      { error: error.message || "Search failed" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Search failed";
+    console.error("Search error:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

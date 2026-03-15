@@ -64,7 +64,6 @@ export default function SimpleChart({
           const noise = Math.sin((i + seed) * 0.5) * (priceRange * 0.15);
           const y = basePrice + trend + wave + noise;
 
-          // Validate each point
           if (!isNaN(y) && isFinite(y)) {
             points.push({ x: i, y });
           }

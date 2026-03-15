@@ -128,10 +128,8 @@ export default function TickerPage() {
         <div className="flex flex-col h-full min-h-0">
           <div className="flex-1 overflow-y-auto min-h-0">
             <div className="max-w-[1400px] xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
-              {/* Back button skeleton */}
               <div className="mb-4 sm:mb-6 h-9 w-36 bg-slate-800/60 rounded-lg animate-pulse" />
 
-              {/* Hero card skeleton */}
               <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 sm:p-5 md:p-6 mb-4 sm:mb-6 animate-pulse">
                 <div className="flex items-start gap-4">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-700/60 flex-shrink-0" />
@@ -148,18 +146,14 @@ export default function TickerPage() {
                 </div>
               </div>
 
-              {/* Grid layout skeleton */}
               <div className="grid grid-cols-1 lg:grid-cols-[1fr,500px] xl:grid-cols-[1fr,600px] 2xl:grid-cols-[1fr,700px] gap-4 sm:gap-6 lg:gap-8">
-                {/* Left column */}
                 <div className="space-y-4 sm:space-y-6">
-                  {/* Chart card skeleton */}
                   <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 animate-pulse">
                     <div className="h-5 bg-slate-700/60 rounded w-24 mb-5" />
                     <div className="h-[432px] bg-slate-700/30 rounded-lg relative overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-600/10 to-transparent skeleton-shimmer" />
                     </div>
                   </div>
-                  {/* Metrics card skeleton */}
                   <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 animate-pulse">
                     <div className="h-5 bg-slate-700/60 rounded w-28 mb-5" />
                     <div className="space-y-3">
@@ -173,9 +167,7 @@ export default function TickerPage() {
                   </div>
                 </div>
 
-                {/* Right column */}
                 <div className="space-y-4 sm:space-y-6">
-                  {/* News skeleton */}
                   <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 animate-pulse">
                     <div className="h-5 bg-slate-700/60 rounded w-20 mb-5" />
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -186,7 +178,6 @@ export default function TickerPage() {
                       </div>
                     ))}
                   </div>
-                  {/* AI Widget skeleton */}
                   <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl h-80 animate-pulse">
                     <div className="p-4 border-b border-slate-700/50">
                       <div className="h-5 bg-slate-700/60 rounded w-28" />
@@ -232,7 +223,6 @@ export default function TickerPage() {
 
   return (
     <DashboardLayout>
-      {/* Watchlist Feedback Toast */}
       {watchlistFeedback && (
         <div className={`fixed top-24 right-6 px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2 ${
           watchlistFeedback.startsWith('✓')
@@ -349,9 +339,7 @@ export default function TickerPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr,500px] xl:grid-cols-[1fr,600px] 2xl:grid-cols-[1fr,700px] gap-4 sm:gap-6 lg:gap-8">
-          {/* Left Column - All Information */}
           <div className="space-y-4 sm:space-y-6 min-w-0 order-2 lg:order-1">
-            {/* Chart */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-6 xl:p-8 backdrop-blur-sm">
               <h3 className="text-base sm:text-lg xl:text-xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                 <Icon name="show_chart" className="text-cyan-400 text-[20px] xl:text-[24px]" />
@@ -365,7 +353,6 @@ export default function TickerPage() {
               />
             </div>
 
-            {/* Stock-specific widgets */}
             {category === "stock" && (
               <>
                 <RecommendationsWidget
@@ -379,7 +366,6 @@ export default function TickerPage() {
               </>
             )}
 
-            {/* Key Metrics */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5 xl:p-6 backdrop-blur-sm">
               <h3 className="text-base sm:text-lg xl:text-xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                 <Icon
@@ -433,14 +419,12 @@ export default function TickerPage() {
               </div>
             </div>
 
-            {/* News Feed */}
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 sm:p-5 xl:p-6 backdrop-blur-sm">
               <NewsFeed symbol={symbol} limit={8} />
             </div>
           </div>
 
-          {/* Right Column - AI Chat (Prominent & Sticky) */}
-          <div className="lg:sticky lg:top-4 lg:self-start lg:h-[calc(100dvh-348px)] order-1 lg:order-2">
+          <div className="lg:sticky lg:top-4 lg:self-start lg:h-[calc(100dvh-200px)] order-1 lg:order-2">
             <div className="relative bg-gradient-to-br from-cyan-500/10 via-blue-500/10 to-purple-500/10 border-2 border-cyan-500/30 rounded-2xl p-1 backdrop-blur-sm shadow-2xl shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-all duration-300 lg:h-full lg:flex lg:flex-col">
               <div className="bg-slate-900/80 rounded-xl overflow-hidden backdrop-blur-xl border border-slate-700/50 lg:flex-1 lg:flex lg:flex-col lg:min-h-0">
                 <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 px-4 xl:px-6 py-3 xl:py-4 border-b border-cyan-500/20 flex-shrink-0">
@@ -450,16 +434,18 @@ export default function TickerPage() {
                   </h3>
                   <p className="text-xs xl:text-sm text-slate-300 mt-1">Get instant AI-powered insights and analysis</p>
                 </div>
-                <ChatWidget
-                  context={`Ticker: ${symbol}, Current Price: $${quote?.price?.toFixed(
-                    2
-                  )}, Category: ${category}`}
-                  placeholder={`Ask me anything about ${
-                    quote?.name || assetHelpers.formatSymbol(symbol)
-                  }...`}
-                  compact
-                  navigateOnSend={false}
-                />
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <ChatWidget
+                    context={`Ticker: ${symbol}, Current Price: $${quote?.price?.toFixed(
+                      2
+                    )}, Category: ${category}`}
+                    placeholder={`Ask me anything about ${
+                      quote?.name || assetHelpers.formatSymbol(symbol)
+                    }...`}
+                    compact
+                    navigateOnSend={false}
+                  />
+                </div>
               </div>
             </div>
           </div>

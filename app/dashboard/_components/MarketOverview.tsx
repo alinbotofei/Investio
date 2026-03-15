@@ -224,7 +224,6 @@ function MarketOverview() {
 
   return (
     <div className="space-y-6">
-      {/* Watchlist Feedback Toast */}
       {watchlistFeedback && (
         <div className="fixed top-24 right-6 bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-6 py-3 rounded-lg shadow-2xl z-50 animate-[slideInRight_0.3s_ease-out] flex items-center gap-2">
           <Icon name="check_circle" className="text-[20px]" />

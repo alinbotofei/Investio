@@ -48,82 +48,66 @@ const STOCK_FALLBACK_ICONS: Record<string, string> = {
 };
 
 const CRYPTO_LOGOS: Record<string, string> = {
-  // Bitcoin
   "BINANCE:BTCUSDT": "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
   BTC: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
   BTCUSDT: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
   
-  // Ethereum
   "BINANCE:ETHUSDT": "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
   ETH: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
   ETHUSDT: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
   
-  // BNB
   "BINANCE:BNBUSDT": "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
   BNB: "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
   BNBUSDT: "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
   
-  // Solana
   "BINANCE:SOLUSDT": "https://assets.coingecko.com/coins/images/4128/small/solana.png",
   SOL: "https://assets.coingecko.com/coins/images/4128/small/solana.png",
   SOLUSDT: "https://assets.coingecko.com/coins/images/4128/small/solana.png",
   
-  // XRP
   "BINANCE:XRPUSDT": "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png",
   XRP: "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png",
   XRPUSDT: "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png",
   
-  // Cardano
   "BINANCE:ADAUSDT": "https://assets.coingecko.com/coins/images/975/small/cardano.png",
   ADA: "https://assets.coingecko.com/coins/images/975/small/cardano.png",
   ADAUSDT: "https://assets.coingecko.com/coins/images/975/small/cardano.png",
   
-  // Dogecoin
   "BINANCE:DOGEUSDT": "https://assets.coingecko.com/coins/images/5/small/dogecoin.png",
   DOGE: "https://assets.coingecko.com/coins/images/5/small/dogecoin.png",
   DOGEUSDT: "https://assets.coingecko.com/coins/images/5/small/dogecoin.png",
   
-  // Avalanche
   "BINANCE:AVAXUSDT": "https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png",
   AVAX: "https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png",
   AVAXUSDT: "https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite_Trans.png",
   
-  // Polkadot
   "BINANCE:DOTUSDT": "https://assets.coingecko.com/coins/images/12171/small/polkadot.png",
   DOT: "https://assets.coingecko.com/coins/images/12171/small/polkadot.png",
   DOTUSDT: "https://assets.coingecko.com/coins/images/12171/small/polkadot.png",
   
-  // Polygon
   "BINANCE:MATICUSDT": "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png",
   MATIC: "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png",
   MATICUSDT: "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png",
   
-  // Chainlink
   "BINANCE:LINKUSDT": "https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png",
   LINK: "https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png",
   LINKUSDT: "https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png",
   
-  // Litecoin
   "BINANCE:LTCUSDT": "https://assets.coingecko.com/coins/images/2/small/litecoin.png",
   LTC: "https://assets.coingecko.com/coins/images/2/small/litecoin.png",
   LTCUSDT: "https://assets.coingecko.com/coins/images/2/small/litecoin.png",
   
-  // Uniswap
   "BINANCE:UNIUSDT": "https://assets.coingecko.com/coins/images/12504/small/uni.jpg",
   UNI: "https://assets.coingecko.com/coins/images/12504/small/uni.jpg",
   UNIUSDT: "https://assets.coingecko.com/coins/images/12504/small/uni.jpg",
   
-  // Shiba Inu
   "BINANCE:SHIBUSDT": "https://assets.coingecko.com/coins/images/11939/small/shiba.png",
   SHIB: "https://assets.coingecko.com/coins/images/11939/small/shiba.png",
   SHIBUSDT: "https://assets.coingecko.com/coins/images/11939/small/shiba.png",
   
-  // Toncoin
   "BINANCE:TONUSDT": "https://assets.coingecko.com/coins/images/17980/small/ton_symbol.png",
   TON: "https://assets.coingecko.com/coins/images/17980/small/ton_symbol.png",
   TONUSDT: "https://assets.coingecko.com/coins/images/17980/small/ton_symbol.png",
   
-  // Tron
   "BINANCE:TRXUSDT": "https://assets.coingecko.com/coins/images/1094/small/tron-logo.png",
   TRX: "https://assets.coingecko.com/coins/images/1094/small/tron-logo.png",
   TRXUSDT: "https://assets.coingecko.com/coins/images/1094/small/tron-logo.png",
@@ -147,30 +131,25 @@ export function getAssetLogoUrl(
   logoUrl?: string
 ): AssetLogoResult {
   if (symbol.includes("BINANCE:") || category === "crypto") {
-    // Try exact match first
     if (CRYPTO_LOGOS[symbol]) {
       return { type: "url", value: CRYPTO_LOGOS[symbol] };
     }
     
-    // Try without BINANCE: prefix
     const withoutExchange = symbol.replace("BINANCE:", "");
     if (CRYPTO_LOGOS[withoutExchange]) {
       return { type: "url", value: CRYPTO_LOGOS[withoutExchange] };
     }
     
-    // Try base crypto symbol (remove USDT, BUSD, USD, etc.)
     const baseSymbol = withoutExchange.replace(/USDT|BUSD|USD|EUR|BTC|ETH$/i, "");
     if (CRYPTO_LOGOS[baseSymbol]) {
       return { type: "url", value: CRYPTO_LOGOS[baseSymbol] };
     }
     
-    // Fallback to specific crypto icon if we have gradient info
     const cryptoGradient = CRYPTO_GRADIENTS[baseSymbol];
     if (cryptoGradient) {
       return { type: "icon", value: cryptoGradient.icon };
     }
     
-    // Final fallback to generic crypto icon
     return { type: "icon", value: "currency_bitcoin" };
   }
 
@@ -193,14 +172,12 @@ export function getAssetLogoUrl(
     if (forexIcon) return { type: "icon", value: forexIcon };
   }
 
-  // Default fallback based on category
   if (category === "crypto") return { type: "icon", value: "currency_bitcoin" };
   if (category === "forex") return { type: "icon", value: "currency_exchange" };
   if (category === "stock") return { type: "icon", value: "show_chart" };
   return { type: "icon", value: "show_chart" };
 }
 
-// Backward compatibility
 export function getAssetLogo(symbol: string, category?: string): string {
   const result = getAssetLogoUrl(symbol, category);
   return result.type === "icon" ? result.value : "show_chart";
@@ -227,7 +204,6 @@ export function getStockGradient(symbol: string) {
 }
 
 export function getCryptoGradient(symbol: string) {
-  // Remove prefixes and suffixes to get base symbol
   const baseSymbol = symbol
     .replace("BINANCE:", "")
     .replace(/USDT|BUSD|USD|EUR|BTC|ETH$/i, "");

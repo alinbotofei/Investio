@@ -36,19 +36,15 @@ export async function GET() {
 
     const data = await response.json();
 
-    const filtered = data.filter((item: any) => {
+    const filtered = (data as { symbol: string; description: string }[]).filter((item) => {
       const base = item.symbol.replace("BINANCE:", "").split("USDT")[0];
-      return (
-        POPULAR_CRYPTO_SYMBOLS.includes(base) && item.symbol.includes("USDT")
-      );
+      return POPULAR_CRYPTO_SYMBOLS.includes(base) && item.symbol.includes("USDT");
     });
 
     return NextResponse.json(filtered);
-  } catch (error: any) {
-    console.error("Error fetching crypto symbols:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch crypto symbols" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch crypto symbols";
+    console.error("Error fetching crypto symbols:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

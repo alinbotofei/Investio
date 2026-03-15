@@ -1,5 +1,3 @@
-// Type definitions for stock market data
-
 export interface Stock {
   symbol: string;
   name: string;

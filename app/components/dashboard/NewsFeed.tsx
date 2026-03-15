@@ -65,7 +65,6 @@ export default function NewsFeed({
     }
 
     fetchNews();
-    // Refresh every 5 minutes
     const interval = setInterval(fetchNews, 5 * 60_000);
     return () => clearInterval(interval);
   }, [symbol, category]);
