@@ -12,7 +12,7 @@ import { formatTimeAgo } from "@/app/lib/utils/format";
 export default function Header() {
   return (
     <Suspense fallback={
-      <header className="w-full shadow-sm fixed top-0 left-0 right-0 z-20 bg-[radial-gradient(130%_170%_at_12%_0%,rgba(59,130,246,0.16)_0%,rgba(59,130,246,0)_46%),linear-gradient(112deg,#0b1220_0%,#11253a_34%,#205983_100%)]" style={{ boxShadow: "0 16px 30px -20px rgba(14,165,233,0.26)" }}>
+      <header className="w-full shadow-sm sticky top-0 z-20 bg-[radial-gradient(130%_170%_at_12%_0%,rgba(59,130,246,0.16)_0%,rgba(59,130,246,0)_46%),linear-gradient(112deg,#0b1220_0%,#11253a_34%,#205983_100%)]" style={{ boxShadow: "0 16px 30px -20px rgba(14,165,233,0.26)" }}>
         <div className="h-12" />
       </header>
     }>
@@ -78,7 +78,7 @@ function HeaderInner() {
   return (
     <>
       <header
-        className="w-full shadow-sm fixed top-0 left-0 right-0 z-20 bg-[radial-gradient(130%_170%_at_12%_0%,rgba(59,130,246,0.16)_0%,rgba(59,130,246,0)_46%),radial-gradient(100%_130%_at_100%_0%,rgba(56,189,248,0.09)_0%,rgba(56,189,248,0)_42%),linear-gradient(112deg,#0b1220_0%,#11253a_34%,#173954_66%,#205983_100%)]"
+        className="w-full shadow-sm sticky top-0 z-20 bg-[radial-gradient(130%_170%_at_12%_0%,rgba(59,130,246,0.16)_0%,rgba(59,130,246,0)_46%),radial-gradient(100%_130%_at_100%_0%,rgba(56,189,248,0.09)_0%,rgba(56,189,248,0)_42%),linear-gradient(112deg,#0b1220_0%,#11253a_34%,#173954_66%,#205983_100%)]"
         style={{
           boxShadow: "0 16px 30px -20px rgba(14,165,233,0.26)",
         }}

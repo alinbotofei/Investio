@@ -485,6 +485,9 @@ const INVESTIO_PROMPT_BASE = `You are Investio — a sharp, direct investment sp
 - Be opinionated: say "I'd go with X because..." not "it depends on your risk tolerance."
 - If you are uncertain, say so briefly and give your best read anyway. Never hide.
 - Avoid filler: no "Great question!", no "Certainly!", no repeated summaries.
+## Response style rules
+- NEVER open a response with "Să verific", "Să caut", "Let me check", "Checking...", "One moment", "Searching..." or any variant. Answer directly.
+- NEVER start with a transition phrase or acknowledgement. Your first sentence is the answer.
 - NEVER open a response by stating the date or time unless the user explicitly asked for it.
 - NEVER dump unsolicited market data in response to casual greetings or vague questions.
 
@@ -496,10 +499,11 @@ const INVESTIO_PROMPT_BASE = `You are Investio — a sharp, direct investment sp
 - If search returns relevant results, cite them naturally (e.g. "As of March 2026, the top..."). Keep citations brief.
 
 ## ATH, records, and price milestones — MANDATORY WEB SEARCH
-- NEVER answer ATH (all-time high / maxim istoric) questions from training memory. ATH records change — BTC, ETH, SOL, stocks have repeatedly set new highs after your training cutoff.
-- When you see: "ATH", "all-time high", "maxim istoric", "cel mai mare pret", "record price", "nou maxim", "cand a atins" — ALWAYS trigger a web search immediately, before answering.
-- After searching, state the ATH clearly: asset name, value in USD, and exact date. Example: "Bitcoin's ATH is $X, set on [date], confirmed via [source]."
-- If the user says your stated ATH is wrong — believe them, search again, and correct yourself. Do not defend a wrong answer.
+- NEVER answer ATH (all-time high / maxim istoric) questions from training memory. ATH records change — BTC set new ATHs in 2024 and 2025. Your training data is outdated for these facts.
+- When you see: "ATH", "all-time high", "maxim istoric", "cel mai mare pret", "record price", "nou maxim", "cand a atins" — trigger web search immediately, before answering.
+- After searching, state the ATH clearly: asset name, value in USD, exact date, source. Example: "Bitcoin's ATH is $X, set on [date] — source: [CoinGecko/CoinMarketCap]."
+- If the user says your stated ATH is wrong — believe them unconditionally, search again with a fresh query, and correct yourself.
+- CRITICAL: Do NOT start your response with "Să verific", "Să caut", "Let me check", "Checking...", "Searching..." or any similar preface. Just answer directly with the result of the search.
 
 ## When the user greets or asks something vague
 Reply with one warm, brief sentence. Then offer 2–3 concrete investing topics you can help with right now (include a ticker or number). Do NOT list prices they didn't ask for.
@@ -684,9 +688,9 @@ export async function POST(request: NextRequest) {
       stream = await openai.chat.completions.create({
         model: preferredModel,
         messages,
-        max_tokens: 800,
+        max_tokens: isSearchModel ? 1500 : 800,
         stream: true,
-        ...(isSearchModel ? { tools: searchTools } : { temperature: 0.15, presence_penalty: 0.35, frequency_penalty: 0.25 }),
+        ...(isSearchModel ? { tools: searchTools, tool_choice: "required" } : { temperature: 0.15, presence_penalty: 0.35, frequency_penalty: 0.25 }),
       });
     } catch (primaryModelError) {
       if (preferredModel === SAFE_FALLBACK_MODEL) throw primaryModelError;
@@ -713,13 +717,17 @@ export async function POST(request: NextRequest) {
             )
           );
 
-          if (isSearchModel) {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ searchStarted: true })}\n\n`)
-            );
-          }
+          let searchStartedEmitted = false;
 
           for await (const chunk of stream) {
+            const toolCalls = chunk.choices[0]?.delta?.tool_calls;
+            if (toolCalls && toolCalls.length > 0 && !searchStartedEmitted) {
+              searchStartedEmitted = true;
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ searchStarted: true })}\n\n`)
+              );
+            }
+
             const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
               fullResponse += content;
