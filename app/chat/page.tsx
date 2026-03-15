@@ -86,6 +86,7 @@ function ReferencesPanel({ refs }: { refs: Array<{ title: string; url: string }>
                 className="flex items-center gap-2 py-1 text-[12px] text-slate-400 hover:text-sky-400 transition-colors duration-150 group"
               >
                 <span className="text-[10px] w-4 text-center text-slate-600 font-mono tabular-nums flex-shrink-0">{i + 1}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
                   alt=""

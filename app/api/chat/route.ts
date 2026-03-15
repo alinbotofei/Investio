@@ -694,7 +694,6 @@ export async function POST(request: NextRequest) {
 
     const preferredModel = process.env.OPENAI_MODEL || FALLBACK_MODEL;
     const isSearchModel = preferredModel.includes("search-preview");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const searchTools: any[] = [{ type: "web_search_preview" }];
     let stream;
 
