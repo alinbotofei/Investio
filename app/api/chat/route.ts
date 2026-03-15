@@ -214,7 +214,6 @@ function isSimpleLivePriceRequest(text: string): boolean {
   if (!isLivePriceIntent(text)) return false;
   const q = text.toLowerCase();
   if (DATE_QUESTION_REGEX.test(q)) return false;
-  // Hard limit: anything over 80 chars is likely a complex question
   if (q.length > 80) return false;
   if (/(de ce|why|compare|compar|analiz|analysis|buy|sell|cumpar|vand|forecast|predict|target|strategy|strateg|allocation|portofol|recomand|ajuta|cele mai|top\s*\d|top\s*(crypto|coin|stock|actiu)|consideri|investesc|invest|bune|best|sfat|advice|portofoliu|portfolio|price action|outlook|urmatoarea|urmator|sezonalit|parere|cum vezi|cum crezi|ce zici|ce crezi|situati|perspectiv|perioada|viitor|viitoare|bazat|stiri|news|season)/i.test(q)) {
     return false;
@@ -691,7 +690,6 @@ export async function POST(request: NextRequest) {
       });
     } catch (primaryModelError) {
       if (preferredModel === SAFE_FALLBACK_MODEL) throw primaryModelError;
-      // fallback to stable model without search
       stream = await openai.chat.completions.create({
         model: SAFE_FALLBACK_MODEL,
         messages,

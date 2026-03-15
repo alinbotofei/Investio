@@ -19,7 +19,7 @@ const ConversationsContext = createContext<ConversationsContextType | undefined>
 export function ConversationsProvider({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -60,6 +60,7 @@ export function ConversationsProvider({ children }: { children: React.ReactNode 
       loadConversations();
     } else if (status === "unauthenticated") {
       setConversations([]);
+      setLoading(false);
     }
   }, [status, loadConversations]);
 

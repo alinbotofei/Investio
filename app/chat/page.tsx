@@ -224,7 +224,6 @@ function ChatContent() {
       return;
     }
 
-    // Only auto-scroll if already near bottom — respects manual scroll-up during streaming
     const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
     if (distanceFromBottom <= 200) {
       container.scrollTop = container.scrollHeight;
@@ -355,7 +354,6 @@ function ChatContent() {
     let shouldRefreshConversations = false;
     let streamedFirstChunk = false;
 
-    // Show "Searching..." indicator if first token doesn't arrive within 1.5s
     if (searchIndicatorTimerRef.current) clearTimeout(searchIndicatorTimerRef.current);
     searchIndicatorTimerRef.current = setTimeout(() => {
       if (!streamedFirstChunk) {
@@ -442,7 +440,6 @@ function ChatContent() {
                 searchIndicatorTimerRef.current = null;
               }
               if (isSearchingRef.current) {
-                // Hold text flush while searching indicator fades out (420ms crossfade)
                 holdFlushRef.current = true;
                 setSearchFading(true);
                 searchFadeTimerRef.current = setTimeout(() => {
