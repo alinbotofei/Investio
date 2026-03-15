@@ -87,9 +87,19 @@ function SidebarInner({ items }: SidebarProps) {
     setToDeleteId(null);
   };
 
-  const fadeStyle = {
+  const fadeStyle: React.CSSProperties = {
     opacity: isOpen ? 1 : 0,
     transition: isOpen ? "opacity 130ms ease 110ms" : "opacity 70ms ease 0ms",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    opacity: isOpen ? 1 : 0,
+    maxWidth: isOpen ? "200px" : "0px",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    transition: isOpen
+      ? "opacity 130ms ease 110ms, max-width 260ms cubic-bezier(0.4,0,0.2,1)"
+      : "opacity 70ms ease 0ms, max-width 220ms cubic-bezier(0.4,0,0.2,1)",
   };
 
   return (
@@ -102,29 +112,28 @@ function SidebarInner({ items }: SidebarProps) {
         }`}
         style={{ transition: "width 260ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
-        <div className="flex items-center gap-2.5 px-3 pt-4 pb-3 flex-shrink-0">
+        <div className="flex items-center h-12 px-3 flex-shrink-0">
           <button
             onClick={handleLogoClick}
-            className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold flex-shrink-0 text-[13px] shadow-[0_4px_14px_rgba(59,130,246,0.32)] hover:shadow-[0_4px_20px_rgba(59,130,246,0.48)] transition-shadow"
+            className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold flex-shrink-0 text-[13px] shadow-[0_4px_12px_rgba(59,130,246,0.28)] hover:shadow-[0_4px_18px_rgba(59,130,246,0.44)] transition-shadow"
             aria-label="Investio"
           >
             I
           </button>
 
           <span
-            className="flex-1 text-white font-semibold text-[14px] whitespace-nowrap overflow-hidden"
-            style={fadeStyle}
+            className="flex-1 mx-2.5 text-white font-semibold text-[14px]"
+            style={labelStyle}
           >
             Investio
           </span>
 
           <button
             onClick={handlePin}
-            title={isPinned ? "Collapse sidebar" : "Keep sidebar open"}
-            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+            className={`w-7 h-7 flex items-center justify-center rounded-lg flex-shrink-0 transition-colors duration-200 ${
               isPinned
-                ? "text-slate-500 hover:text-slate-200 hover:bg-white/[0.07]"
-                : "text-blue-400/90 bg-blue-500/10 hover:bg-blue-500/20 hover:text-blue-300"
+                ? "text-slate-600 hover:text-slate-300 hover:bg-white/[0.06]"
+                : "text-blue-400/60 hover:text-blue-300"
             }`}
             style={{
               opacity: isOpen ? 1 : 0,
@@ -135,7 +144,7 @@ function SidebarInner({ items }: SidebarProps) {
             {isPinned ? (
               <Icon name="chevron_left" className="text-[20px]" />
             ) : (
-              <Icon name="push_pin" className="text-[15px]" />
+              <Icon name="push_pin" className="text-[14px]" />
             )}
           </button>
         </div>
@@ -143,15 +152,12 @@ function SidebarInner({ items }: SidebarProps) {
         <nav className="px-2 space-y-0.5 flex-shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); router.push("/chat"); }}
-            title={!isOpen ? "New Chat" : undefined}
-            className={`w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-white font-semibold text-[13px] transition-all duration-200 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_10px_rgba(59,130,246,0.22)] hover:shadow-[0_2px_14px_rgba(59,130,246,0.34)] active:scale-[0.98] ${
-              isOpen ? "" : "justify-center"
+            className={`w-full flex items-center rounded-xl text-white font-semibold text-[13px] transition-all duration-150 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_8px_rgba(59,130,246,0.2)] active:scale-[0.98] ${
+              isOpen ? "gap-2.5 px-2.5 py-2" : "justify-center p-2"
             }`}
           >
-            <Icon name="add" className="text-[18px] flex-shrink-0" />
-            <span className="whitespace-nowrap overflow-hidden" style={fadeStyle}>
-              New Chat
-            </span>
+            <Icon name="add" className="text-[17px] flex-shrink-0" />
+            <span style={labelStyle}>New Chat</span>
           </button>
 
           <div className="h-1" />
@@ -168,20 +174,17 @@ function SidebarInner({ items }: SidebarProps) {
                   emitChatReset();
                 }
               }}
-              title={!isOpen ? item.label : undefined}
-              className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150 ${
+              className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-150 ${
                 item.active
                   ? "bg-white/[0.09] text-white"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-              } ${!isOpen ? "justify-center" : ""}`}
+              } ${isOpen ? "gap-2.5 px-2.5 py-2" : "justify-center p-2"}`}
             >
               <Icon
                 name={iconFor(item.label)}
-                className={`text-[19px] flex-shrink-0 ${item.active ? "text-cyan-400" : ""}`}
+                className={`text-[18px] flex-shrink-0 ${item.active ? "text-cyan-400" : ""}`}
               />
-              <span className="whitespace-nowrap overflow-hidden" style={fadeStyle}>
-                {item.label}
-              </span>
+              <span style={labelStyle}>{item.label}</span>
             </Link>
           ))}
         </nav>
