@@ -60,6 +60,13 @@ const PRICE_KEYWORDS_REGEX = /(price|prices|quote|quotes|pret|preturi|pre(?:ț|t
 const LIVE_TIME_HINTS_REGEX = /(current|live|spot|acum|azi|in prezent|actual)/i;
 const DIRECT_PRICE_QUESTION_REGEX = /(cat|c[aă]t|ce valoare|ce pret|ce pre(?:ț|t)|cat e|cat este|how much|what is)/i;
 const DATE_QUESTION_REGEX = /(in ce data|ce data|what date|today'?s date|data de azi|ziua de azi)/i;
+const MACRO_KEYWORDS_REGEX = /(fed|federal reserve|inflation|cpi|ppi|gdp|recession|interest rate|tariff|earnings season|market outlook|economic|macro|sector rotation|yield curve|central bank|jobs report|nonfarm)/i;
+
+type NewsItem = {
+  headline: string;
+  source: string;
+  datetime: number;
+};
 
 type LiveSnapshotEntry = {
   symbol: string;
@@ -75,6 +82,65 @@ type LiveSnapshot = {
   failedSymbols: string[];
   contextText: string;
 };
+
+function isMacroQuestion(text: string): boolean {
+  return MACRO_KEYWORDS_REGEX.test(text);
+}
+
+async function buildNewsContext(stockSymbols: string[], macro: boolean): Promise<string> {
+  if (!FINNHUB_API_KEY) return "";
+
+  const newsLines: string[] = [];
+  const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const toDate = new Date().toISOString().split("T")[0];
+
+  if (stockSymbols.length > 0) {
+    await Promise.all(
+      stockSymbols.slice(0, 2).map(async (symbol) => {
+        try {
+          const url = new URL("https://finnhub.io/api/v1/company-news");
+          url.searchParams.set("symbol", symbol);
+          url.searchParams.set("from", fromDate);
+          url.searchParams.set("to", toDate);
+          url.searchParams.set("token", FINNHUB_API_KEY);
+          const res = await fetch(url.toString(), { cache: "no-store" });
+          if (!res.ok) return;
+          const news = (await res.json()) as NewsItem[];
+          if (!Array.isArray(news)) return;
+          news.slice(0, 3).forEach((item) => {
+            if (item.headline) {
+              const date = new Date(item.datetime * 1000).toLocaleDateString("en-US");
+              newsLines.push(`[${symbol}] ${date}: ${item.headline}`);
+            }
+          });
+        } catch {
+          // ignore
+        }
+      })
+    );
+  } else if (macro) {
+    try {
+      const url = new URL("https://finnhub.io/api/v1/news");
+      url.searchParams.set("category", "general");
+      url.searchParams.set("token", FINNHUB_API_KEY);
+      const res = await fetch(url.toString(), { cache: "no-store" });
+      if (!res.ok) return "";
+      const news = (await res.json()) as NewsItem[];
+      if (!Array.isArray(news)) return "";
+      news.slice(0, 4).forEach((item) => {
+        if (item.headline) {
+          const date = new Date(item.datetime * 1000).toLocaleDateString("en-US");
+          newsLines.push(`[Market] ${date}: ${item.headline}`);
+        }
+      });
+    } catch {
+      return "";
+    }
+  }
+
+  if (newsLines.length === 0) return "";
+  return "Recent news context:\n" + newsLines.join("\n");
+}
 
 function buildConversationTitle(message: string) {
   const normalized = message.replace(/\s+/g, " ").trim();
@@ -404,48 +470,61 @@ function buildModelHistoryFromConversation(
   }));
 }
 
-const INVESTIO_PROMPT = `You are Investio, an AI investment coach focused on practical portfolio decisions across asset classes.
+const INVESTIO_PROMPT = `You are Investio — a sharp, direct investment specialist. You have a real point of view and you share it clearly. You are not a generic assistant and you never sound like one.
 
-Language and style:
-- Reply in the same language as the user.
-- Be clear, practical, and concise.
-- Start with the direct recommendation, then explain why.
-- Avoid generic assistant phrases and repetitive templates.
-- If the user greets or asks vaguely, reply with a practical kickoff tailored to investing (ask 1 clear question and offer 3 concrete example prompts).
-- If a live snapshot is provided in the user message, prioritize it over stale assumptions.
-- If a live snapshot is provided, never ask the user to "wait" for prices and never output placeholders like [check live].
-- Never provide estimated spot prices from memory when live prices are requested.
-- For generic "current prices" requests, present the available benchmark snapshot first, then ask if the user wants specific assets added.
+## Core behavior
+- Reply in the same language as the user (Romanian or English, detect it).
+- Be concise. Most answers fit in 3–5 bullets. Never ramble.
+- Lead with your conclusion, then back it up. Never bury the answer.
+- Be opinionated: say "I'd go with X because..." not "it depends on your risk tolerance."
+- If you are uncertain, say so briefly and give your best read anyway. Never hide.
+- Avoid filler: no "Great question!", no "Certainly!", no repeated summaries.
 
-Usefulness rules:
-- If the user asks "what to buy", "best", or "compare", give a ranked shortlist and include explicit criteria.
-- Provide concrete reasoning (trend, valuation, risk, catalyst, diversification role).
-- State assumptions when data may be stale or uncertain.
-- Never guarantee returns and do not present financial advice as certain.
-- If the user asks "which one should I buy", recommend only from assets already discussed in the conversation context; if none exist, ask for 2-4 candidate tickers and do not invent placeholders.
-- If the user asks for a company's current price, resolve common company names to tickers when possible.
-- If current price data cannot be fetched, explicitly say which symbols failed and ask to retry instead of inventing values.
-- Always end recommendations with a concrete action plan: entry approach, risk limit, and review trigger.
+## When the user greets or asks something vague
+Reply with one warm sentence, then immediately offer 3 concrete things you can help with right now (specific to investing, with numbers or tickers). Ask one short question to get started.
 
-Charts and rendering:
-- Use chart blocks when the question is numerical, comparative, or allocation-focused.
-- For simple conceptual questions, do not force charts.
-- Keep chart payload valid JSON inside a fenced block with language chart.
-- Never output raw JSON outside chart code blocks.
-- Prefer readable markdown sections with short bullets over long paragraphs.
-- When giving a recommendation, include: thesis, key risk, and what to monitor next.
+## Investment advice rules
+- Always state a clear position: buy / hold / avoid, with a brief reason.
+- Give concrete criteria: price level, entry zone, stop-loss, what to watch.
+- If the user asks "what to buy" or "compare X vs Y", give a ranked answer with reasoning — do not dodge with "it depends".
+- Recommendations must reference data from the live snapshot or news context if injected. If no live data is available, say which symbols failed and ask to retry.
+- Never invent price data. If you don't have it, say so.
+- End each recommendation with: **Entry**, **Risk**, **Watch** (one line each).
+- Never guarantee returns. Frame all recommendations as your analysis, not financial advice.
 
-Chart examples:
+## Current date and data awareness
+- Today is ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
+- You have access to real-time market data and recent news injected directly into each user message. Use it.
+- NEVER say "my knowledge cutoff is 2023" or "I don't have data after..." or any variation. That is false — you have live prices and recent news in this conversation.
+- If a live snapshot is injected, it IS current. Use it as the source of truth for prices.
+- If no live data is injected for a specific asset, say "I couldn't fetch live data for X right now" and give your best read based on market context — do not cite a training cutoff.
+- For macroeconomic questions (Fed, inflation, earnings), use the news context injected below the user message. If no news was injected, reason from the most recent market dynamics you're aware of and state that clearly.
+
+## Live market data
+- If a live snapshot is injected in the user message, use it. Never ask the user to "wait" for prices.
+- Never output placeholders like [check live] or [current price].
+- For price-only requests, output the snapshot data directly — no extra analysis unless asked.
+
+## News context
+- If news headlines are injected, factor them into your analysis naturally. Do not list them verbatim — synthesize what matters.
+
+## Charts
+- Use chart blocks for numerical, comparative, or allocation questions.
+- Do not force charts for simple questions.
+- Chart payload must be valid JSON inside a fenced \`\`\`chart block.
+- Never output raw JSON outside chart blocks.
+
+Chart format examples:
 \`\`\`chart
-{"type":"comparison","title":"AAPL vs MSFT (Illustrative)","items":[{"label":"AAPL","value":189.5,"change":2.1},{"label":"MSFT","value":415.2,"change":1.4}]}
+{"type":"comparison","title":"AAPL vs MSFT","items":[{"label":"AAPL","value":189.5,"change":2.1},{"label":"MSFT","value":415.2,"change":1.4}]}
 \`\`\`
 
 \`\`\`chart
-{"type":"allocation","title":"Balanced Allocation Example","items":[{"label":"US Equity","value":45},{"label":"Intl Equity","value":20},{"label":"Bonds","value":25},{"label":"Cash","value":10}]}
+{"type":"allocation","title":"Balanced Portfolio","items":[{"label":"US Equity","value":45},{"label":"Intl Equity","value":20},{"label":"Bonds","value":25},{"label":"Cash","value":10}]}
 \`\`\`
 
 Current date: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-If live data is uncertain, label values as estimates and suggest checking live quotes.`;
+If live data is uncertain, label values as estimates.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -524,7 +603,13 @@ export async function POST(request: NextRequest) {
       ? dbConversation.messages.slice(-MAX_CONTEXT_FALLBACK_MESSAGES).map((msg) => msg.text).join("\n")
       : "";
     const liveSnapshot = await buildLiveSnapshotContext(message, recentContextText);
-    const enrichedMessage = liveSnapshot ? `${message}\n\n${liveSnapshot.contextText}` : message;
+    const detectedStockSymbols = extractCandidateSymbols(message).filter((s) => !CRYPTO_TICKERS.has(s));
+    const [newsContext] = await Promise.all([
+      buildNewsContext(detectedStockSymbols, isMacroQuestion(message)),
+    ]);
+    let enrichedMessage = message;
+    if (liveSnapshot) enrichedMessage += `\n\n${liveSnapshot.contextText}`;
+    if (newsContext) enrichedMessage += `\n\n${newsContext}`;
 
     if (isSimpleLivePriceRequest(displayText)) {
       const deterministicReply = formatDeterministicLiveReply(displayText, liveSnapshot);
@@ -552,10 +637,10 @@ export async function POST(request: NextRequest) {
       stream = await openai.chat.completions.create({
         model: preferredModel,
         messages,
-        temperature: 0.25,
+        temperature: 0.15,
         presence_penalty: 0.35,
         frequency_penalty: 0.25,
-        max_tokens: 1000,
+        max_tokens: 600,
         stream: true,
       });
     } catch (primaryModelError) {
@@ -566,10 +651,10 @@ export async function POST(request: NextRequest) {
       stream = await openai.chat.completions.create({
         model: FALLBACK_MODEL,
         messages,
-        temperature: 0.25,
+        temperature: 0.15,
         presence_penalty: 0.35,
         frequency_penalty: 0.25,
-        max_tokens: 1000,
+        max_tokens: 600,
         stream: true,
       });
     }
