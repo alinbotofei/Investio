@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense, memo } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
@@ -19,6 +19,14 @@ import { smoothScrollToBottom } from "../lib/utils/scroll";
 import { markdownComponents } from "../lib/utils/markdown";
 import { onChatReset } from "../lib/utils/events";
 
+const MarkdownMessage = memo(function MarkdownMessage({ text }: { text: string }) {
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {text}
+    </ReactMarkdown>
+  );
+});
+
 function hasCompleteChartFence(text: string) {
   return /```chart[\s\S]*?```/i.test(text);
 }
@@ -35,6 +43,71 @@ function getStreamingSafePreview(text: string) {
 }
 
 const CHAT_DRAFT_STORAGE_KEY = "chat_input_draft";
+
+const SEARCH_STEPS = [
+  "Searching the web",
+  "Reading sources",
+  "Analyzing data",
+  "Preparing answer",
+] as const;
+
+function ReferencesPanel({ refs }: { refs: Array<{ title: string; url: string }> }) {
+  const [open, setOpen] = useState(false);
+  if (!refs.length) return null;
+  return (
+    <div className="mt-3 pt-2.5 border-t border-slate-700/40">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-[11.5px] text-slate-500 hover:text-slate-300 transition-colors duration-150"
+      >
+        <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth="1.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 6a3 3 0 0 1 6 0M6 3V1M6 9v2M9 6h2M1 6h2" />
+        </svg>
+        <span>{refs.length} source{refs.length > 1 ? "s" : ""} referenced</span>
+        <svg
+          className={`w-3 h-3 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth="1.5"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2 4l4 4 4-4" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mt-2 flex flex-col gap-1">
+          {refs.map((ref, i) => {
+            const hostname = (() => {
+              try { return new URL(ref.url).hostname.replace(/^www\./, ""); } catch { return ref.url; }
+            })();
+            return (
+              <a
+                key={`${ref.url}-${i}`}
+                href={ref.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 py-1 text-[12px] text-slate-400 hover:text-cyan-400 transition-colors duration-150 group"
+              >
+                <span className="text-[10px] w-4 text-center text-slate-600 font-mono tabular-nums flex-shrink-0">{i + 1}</span>
+                <img
+                  src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
+                  alt=""
+                  width={14}
+                  height={14}
+                  className="rounded-sm flex-shrink-0 opacity-70"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+                <span className="truncate max-w-[300px] group-hover:underline underline-offset-2 decoration-cyan-400/40">
+                  {ref.title}
+                </span>
+                <svg className="w-2.5 h-2.5 flex-shrink-0 opacity-30 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M1 9L9 1M9 1H4M9 1v5" />
+                </svg>
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -68,6 +141,10 @@ function ChatContent() {
   const [toast, setToast] = useState<string | null>(null);
   const [landingFocused, setLandingFocused] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [isWebSearching, setIsWebSearching] = useState(false);
+  const [searchFading, setSearchFading] = useState(false);
+  const [searchStep, setSearchStep] = useState(0);
+  const [messageReferences, setMessageReferences] = useState<Record<string, Array<{ title: string; url: string }>>>({});
 
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const landingTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -81,6 +158,11 @@ function ChatContent() {
   const pendingContentRef = useRef("");
   const flushRafRef = useRef<number | null>(null);
   const flushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchIndicatorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSearchingRef = useRef(false);
+  const holdFlushRef = useRef(false);
+  const stepTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     if (prevConvIdRef.current === convIdFromUrl) return;
@@ -154,6 +236,9 @@ function ChatContent() {
     return () => {
       if (flushRafRef.current !== null) cancelAnimationFrame(flushRafRef.current);
       if (flushTimeoutRef.current !== null) clearTimeout(flushTimeoutRef.current);
+      if (searchIndicatorTimerRef.current !== null) clearTimeout(searchIndicatorTimerRef.current);
+      if (searchFadeTimerRef.current !== null) clearTimeout(searchFadeTimerRef.current);
+      stepTimersRef.current.forEach(clearTimeout);
     };
   }, []);
 
@@ -247,9 +332,10 @@ function ChatContent() {
     setLoading(true);
 
     const flushAssistantText = () => {
-      if (flushRafRef.current !== null) return;
-      flushRafRef.current = requestAnimationFrame(() => {
-        flushRafRef.current = null;
+      if (holdFlushRef.current) return;
+      if (flushTimeoutRef.current !== null) return;
+      flushTimeoutRef.current = setTimeout(() => {
+        flushTimeoutRef.current = null;
         const nextText = pendingContentRef.current;
         setMessages((m) => {
           let changed = false;
@@ -262,12 +348,21 @@ function ChatContent() {
           });
           return changed ? next : m;
         });
-      });
+      }, 80);
     };
 
     let accumulatedText = "";
     let shouldRefreshConversations = false;
     let streamedFirstChunk = false;
+
+    // Show "Searching..." indicator if first token doesn't arrive within 1.5s
+    if (searchIndicatorTimerRef.current) clearTimeout(searchIndicatorTimerRef.current);
+    searchIndicatorTimerRef.current = setTimeout(() => {
+      if (!streamedFirstChunk) {
+        isSearchingRef.current = true;
+        setIsWebSearching(true);
+      }
+    }, 1500);
 
     try {
       const response = await fetch("/api/chat", {
@@ -310,7 +405,13 @@ function ChatContent() {
           if (!line.startsWith("data: ")) continue;
           const data = line.slice(6).trim();
           if (data === "[DONE]") continue;
-          let json: { content?: string; conversationId?: string; error?: string } | null = null;
+          let json: {
+            content?: string;
+            conversationId?: string;
+            error?: string;
+            searchStarted?: boolean;
+            references?: Array<{ title: string; url: string }>;
+          } | null = null;
           try {
             json = JSON.parse(data);
           } catch {
@@ -318,16 +419,51 @@ function ChatContent() {
           }
           if (!json) continue;
 
+          if (json.searchStarted) {
+            stepTimersRef.current.forEach(clearTimeout);
+            setSearchStep(0);
+            const t1 = setTimeout(() => setSearchStep(1), 2500);
+            const t2 = setTimeout(() => setSearchStep(2), 5200);
+            const t3 = setTimeout(() => setSearchStep(3), 8500);
+            stepTimersRef.current = [t1, t2, t3];
+          }
+
+          if (json.references && json.references.length > 0) {
+            setMessageReferences((prev) => ({ ...prev, [assistantId]: json!.references! }));
+          }
+
           if (json.content) {
             accumulatedText += json.content;
             pendingContentRef.current = accumulatedText;
             if (!streamedFirstChunk) {
-              streamedFirstChunk = true;
-              setMessages((m) =>
-                m.map((msg) =>
-                  msg.id === assistantId ? { ...msg, text: pendingContentRef.current } : msg
-                )
-              );
+              streamedFirstChunk = true;              stepTimersRef.current.forEach(clearTimeout);
+              stepTimersRef.current = [];              if (searchIndicatorTimerRef.current) {
+                clearTimeout(searchIndicatorTimerRef.current);
+                searchIndicatorTimerRef.current = null;
+              }
+              if (isSearchingRef.current) {
+                // Hold text flush while searching indicator fades out (420ms crossfade)
+                holdFlushRef.current = true;
+                setSearchFading(true);
+                searchFadeTimerRef.current = setTimeout(() => {
+                  searchFadeTimerRef.current = null;
+                  holdFlushRef.current = false;
+                  setSearchFading(false);
+                  setIsWebSearching(false);
+                  isSearchingRef.current = false;
+                  setMessages((m) =>
+                    m.map((msg) =>
+                      msg.id === assistantId ? { ...msg, text: pendingContentRef.current } : msg
+                    )
+                  );
+                }, 420);
+              } else {
+                setMessages((m) =>
+                  m.map((msg) =>
+                    msg.id === assistantId ? { ...msg, text: pendingContentRef.current } : msg
+                  )
+                );
+              }
             } else {
               flushAssistantText();
             }
@@ -357,6 +493,20 @@ function ChatContent() {
       const errMessage = error instanceof Error ? error.message : "Failed to send message";
       console.error("Chat error:", error);
       showToast("\u2717 Failed to send message");
+      if (searchIndicatorTimerRef.current) {
+        clearTimeout(searchIndicatorTimerRef.current);
+        searchIndicatorTimerRef.current = null;
+      }
+      if (searchFadeTimerRef.current !== null) {
+        clearTimeout(searchFadeTimerRef.current);
+        searchFadeTimerRef.current = null;
+      }
+      stepTimersRef.current.forEach(clearTimeout);
+      stepTimersRef.current = [];
+      holdFlushRef.current = false;
+      isSearchingRef.current = false;
+      setSearchFading(false);
+      setIsWebSearching(false);
       if (flushRafRef.current !== null) {
         cancelAnimationFrame(flushRafRef.current);
         flushRafRef.current = null;
@@ -377,6 +527,21 @@ function ChatContent() {
         clearTimeout(flushTimeoutRef.current);
         flushTimeoutRef.current = null;
       }
+      if (searchIndicatorTimerRef.current !== null) {
+        clearTimeout(searchIndicatorTimerRef.current);
+        searchIndicatorTimerRef.current = null;
+      }
+      if (searchFadeTimerRef.current !== null) {
+        clearTimeout(searchFadeTimerRef.current);
+        searchFadeTimerRef.current = null;
+      }
+      stepTimersRef.current.forEach(clearTimeout);
+      stepTimersRef.current = [];
+      holdFlushRef.current = false;
+      isSearchingRef.current = false;
+      setSearchFading(false);
+      setIsWebSearching(false);
+      setSearchStep(0);
       if (pendingContentRef.current !== accumulatedText) {
         setMessages((m) =>
           m.map((msg) => (msg.id === assistantId ? { ...msg, text: accumulatedText } : msg))
@@ -400,12 +565,63 @@ function ChatContent() {
     </div>
   );
 
-  const AssistantLoader = () => (
-    <div className="flex items-center text-cyan-200/90 py-0.5">
-      <div className="relative w-[16px] h-[16px]">
-        <div className="absolute inset-0 rounded-full border-[1.5px] border-cyan-400/20" />
-        <div className="absolute inset-0 rounded-full border-[1.5px] border-transparent border-t-cyan-300 animate-spin" />
-      </div>
+  const AssistantLoader = ({ searching, fading, stepIndex = 0 }: { searching?: boolean; fading?: boolean; stepIndex?: number }) => (
+    <div className="py-0.5">
+      {searching ? (
+        <div
+          className={`transition-all duration-[420ms] ease-out will-change-[opacity,transform] ${
+            fading ? "opacity-0 -translate-y-1 scale-[0.97]" : "opacity-100 translate-y-0 scale-100"
+          }`}
+        >
+          <div className="flex flex-col gap-1.5">
+            {SEARCH_STEPS.slice(0, stepIndex + 1).map((label, i) => {
+              const isDone = i < stepIndex;
+              const isCurrent = i === stepIndex;
+              return (
+                <div
+                  key={label}
+                  className={`flex items-center gap-2 transition-all duration-500 ${isDone ? "opacity-50" : "opacity-100"}`}
+                >
+                  {isDone ? (
+                    <div className="flex-shrink-0 w-3.5 h-3.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-center">
+                      <svg className="w-2 h-2 text-emerald-400" fill="none" viewBox="0 0 8 8">
+                        <path d="M1.5 4L3 5.5L6.5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="relative flex-shrink-0 w-3.5 h-3.5">
+                      <div className="absolute inset-0 rounded-full border border-sky-500/30" />
+                      <div
+                        className="absolute inset-0 rounded-full border border-transparent border-t-sky-400 animate-spin"
+                        style={{ animationDuration: "0.75s" }}
+                      />
+                    </div>
+                  )}
+                  <span className={`text-[12px] font-medium ${isDone ? "text-slate-500" : isCurrent ? "text-slate-200" : "text-slate-500"}`}>
+                    {label}
+                    {isCurrent && (
+                      <span className="inline-flex items-center gap-[3px] ml-3 align-middle">
+                        {[0, 200, 400].map((delay) => (
+                          <span
+                            key={delay}
+                            className="inline-block w-[3px] h-[3px] rounded-full bg-sky-400/80"
+                            style={{ animation: `typingDot 1.4s ease-in-out ${delay}ms infinite` }}
+                          />
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="relative w-[16px] h-[16px]">
+          <div className="absolute inset-0 rounded-full border-[1.5px] border-cyan-400/20" />
+          <div className="absolute inset-0 rounded-full border-[1.5px] border-transparent border-t-cyan-300 animate-spin" />
+        </div>
+      )}
     </div>
   );
 
@@ -513,7 +729,7 @@ function ChatContent() {
                       }}
                     />
                     {!value && !landingFocused && (
-                      <div className="absolute inset-x-0 inset-y-0 pointer-events-none px-6 pr-16 py-4 text-slate-300/70 text-[14px] sm:text-[15px] leading-relaxed overflow-hidden">
+                      <div className="absolute inset-x-0 inset-y-0 pointer-events-none px-6 pr-16 py-4 text-slate-300/70 text-[14px] sm:text-[15px] leading-relaxed overflow-hidden whitespace-nowrap">
                         <AnimatedPlaceholder
                           placeholders={CHAT_PLACEHOLDERS.map((p) => `Ask anything about ${p}...`)}
                           typingSpeed={50}
@@ -615,15 +831,16 @@ function ChatContent() {
                             {m.role === "user" ? (
                               m.text
                             ) : isTyping ? (
-                              <AssistantLoader />
+                              <AssistantLoader searching={isWebSearching} fading={searchFading} stepIndex={searchStep} />
                             ) : isStreaming && !streamingHasRenderableChart ? (
-                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                {streamingPreview}
-                              </ReactMarkdown>
+                              <MarkdownMessage text={streamingPreview} />
                             ) : (
-                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                {m.text}
-                              </ReactMarkdown>
+                              <>
+                                <MarkdownMessage text={m.text} />
+                                {m.id && messageReferences[m.id] && (
+                                  <ReferencesPanel refs={messageReferences[m.id]} />
+                                )}
+                              </>
                             )}
                           </div>
                           {m.role === "user" && <UserAvatar />}
@@ -634,7 +851,7 @@ function ChatContent() {
                       <div className="flex items-start gap-3 justify-start">
                         <AiAvatar />
                         <div className="rounded-2xl px-4 py-3 bg-slate-800/80 border border-slate-700/40 animate-fade-in">
-                          <AssistantLoader />
+                          <AssistantLoader searching={isWebSearching} fading={searchFading} stepIndex={searchStep} />
                         </div>
                       </div>
                     )}

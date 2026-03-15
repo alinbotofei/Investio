@@ -282,7 +282,7 @@ export default function ChatWidget({
             }}
           />
           {!value && !focused && (
-            <div className="absolute left-4 sm:left-4 top-[18px] right-16 pointer-events-none text-slate-400/70 text-sm overflow-hidden">
+            <div className="absolute left-4 top-[18px] right-16 pointer-events-none text-slate-400/70 text-sm overflow-hidden whitespace-nowrap">
               <AnimatedPlaceholder placeholders={widgetPlaceholders} typingSpeed={48} deletingSpeed={24} pauseAfterTyping={1800} />
             </div>
           )}

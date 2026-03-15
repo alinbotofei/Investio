@@ -137,10 +137,15 @@ export const markdownComponents: Components = {
       {...props}
     />
   ),
-  a: ({ node: _node, ...props }) => (
+  a: ({ node: _node, href, children, ...props }) => (
     <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
       className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 hover:decoration-cyan-300/50 transition-colors"
       {...props}
-    />
+    >
+      {children}
+    </a>
   ),
 };

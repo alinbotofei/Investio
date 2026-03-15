@@ -9,7 +9,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const FALLBACK_MODEL = "gpt-4o-mini";
+const FALLBACK_MODEL = "gpt-4o-mini-search-preview";
+const SAFE_FALLBACK_MODEL = "gpt-4o-mini";
 const MAX_LIVE_SYMBOLS = 3;
 const MAX_LIVE_CRYPTOS = 5;
 const MAX_MODEL_HISTORY_MESSAGES = 80;
@@ -60,6 +61,7 @@ const PRICE_KEYWORDS_REGEX = /(price|prices|quote|quotes|pret|preturi|pre(?:ț|t
 const LIVE_TIME_HINTS_REGEX = /(current|live|spot|acum|azi|in prezent|actual)/i;
 const DIRECT_PRICE_QUESTION_REGEX = /(cat|c[aă]t|ce valoare|ce pret|ce pre(?:ț|t)|cat e|cat este|how much|what is)/i;
 const DATE_QUESTION_REGEX = /(in ce data|ce data|what date|today'?s date|data de azi|ziua de azi)/i;
+const ATH_QUERY_REGEX = /(\bath\b|all.time.high|all time high|maxim.?istoric|maxim.?vremi|cel.?mai.?mare.?pret|cel.?mai.?ridicat|highest.?ever|peak.?price|record.?price|pret.?record|record.?high|new.?high|nou.?maxim|previous.?high|maxim.?anterior|cand.?a.?atins|when.?did.*hit|when.?did.*reach|a.?atins.*maxim|a.?atins.*record)/i;
 const MACRO_KEYWORDS_REGEX = /(fed|federal reserve|inflation|cpi|ppi|gdp|recession|interest rate|tariff|earnings season|market outlook|economic|macro|sector rotation|yield curve|central bank|jobs report|nonfarm)/i;
 
 type NewsItem = {
@@ -212,8 +214,9 @@ function isSimpleLivePriceRequest(text: string): boolean {
   if (!isLivePriceIntent(text)) return false;
   const q = text.toLowerCase();
   if (DATE_QUESTION_REGEX.test(q)) return false;
-  if (q.length > 220) return false;
-  if (/(de ce|why|compare|compar|analiz|analysis|buy|sell|cumpar|vand|forecast|predict|target|strategy|strateg|allocation|portofol)/i.test(q)) {
+  // Hard limit: anything over 80 chars is likely a complex question
+  if (q.length > 80) return false;
+  if (/(de ce|why|compare|compar|analiz|analysis|buy|sell|cumpar|vand|forecast|predict|target|strategy|strateg|allocation|portofol|recomand|ajuta|cele mai|top\s*\d|top\s*(crypto|coin|stock|actiu)|consideri|investesc|invest|bune|best|sfat|advice|portofoliu|portfolio|price action|outlook|urmatoarea|urmator|sezonalit|parere|cum vezi|cum crezi|ce zici|ce crezi|situati|perspectiv|perioada|viitor|viitoare|bazat|stiri|news|season)/i.test(q)) {
     return false;
   }
   return true;
@@ -225,7 +228,7 @@ function isRomanianText(text: string): boolean {
 
 function isTopCryptoRequest(text: string): boolean {
   const q = text.toLowerCase();
-  return /(top\s*(crypto|cript[o]?|coins?|monede)|cele mai mari crypto|blue[-\s]?chip crypto)/i.test(q);
+  return /(top\s*\d*\s*(crypto|cript[o]?|coins?|monede)|cele mai (mari|bune) crypto|blue[-\s]?chip crypto|cele mai bune.*crypto|crypto.*cele mai bune)/i.test(q);
 }
 
 function extractRequestedAssets(text: string): { stocks: string[]; cryptoPairs: string[] } {
@@ -306,6 +309,10 @@ async function buildLiveSnapshotContext(message: string, recentContextText: stri
   }
 
   if (isLivePriceIntent(message) && symbols.length === 0 && cryptoPairs.length === 0) {
+    DEFAULT_CRYPTO_PRICE_PAIRS.forEach((pair) => cryptoPairs.push(pair));
+  }
+
+  if (isTopCryptoRequest(message) && symbols.length === 0 && cryptoPairs.length === 0) {
     DEFAULT_CRYPTO_PRICE_PAIRS.forEach((pair) => cryptoPairs.push(pair));
   }
   const cappedCryptoPairs = cryptoPairs.slice(0, MAX_LIVE_CRYPTOS);
@@ -470,7 +477,7 @@ function buildModelHistoryFromConversation(
   }));
 }
 
-const INVESTIO_PROMPT = `You are Investio — a sharp, direct investment specialist. You have a real point of view and you share it clearly. You are not a generic assistant and you never sound like one.
+const INVESTIO_PROMPT_BASE = `You are Investio — a sharp, direct investment specialist. You have a real point of view and you share it clearly. You are not a generic assistant and you never sound like one.
 
 ## Core behavior
 - Reply in the same language as the user (Romanian or English, detect it).
@@ -479,52 +486,87 @@ const INVESTIO_PROMPT = `You are Investio — a sharp, direct investment special
 - Be opinionated: say "I'd go with X because..." not "it depends on your risk tolerance."
 - If you are uncertain, say so briefly and give your best read anyway. Never hide.
 - Avoid filler: no "Great question!", no "Certainly!", no repeated summaries.
+- NEVER open a response by stating the date or time unless the user explicitly asked for it.
+- NEVER dump unsolicited market data in response to casual greetings or vague questions.
+
+## Web search — YOU HAVE IT, USE IT
+- You have real-time web search available. Use it proactively whenever the user asks about current prices, rankings, news, companies, or anything that benefits from fresh data.
+- NEVER say "nu am acces la internet", "nu pot verifica online", "nu am acces direct la date", or any English equivalent. That is false — you DO have web access.
+- When the user asks you to "check online", "verify", or "search" — just do it. Don't ask permission, don't warn them, just search and answer.
+- For lists like "top 10 companies", "biggest crypto", "best performing stocks" — always search for current data, never rely on static knowledge.
+- If search returns relevant results, cite them naturally (e.g. "As of March 2026, the top..."). Keep citations brief.
+
+## ATH, records, and price milestones — MANDATORY WEB SEARCH
+- NEVER answer ATH (all-time high / maxim istoric) questions from training memory. ATH records change — BTC, ETH, SOL, stocks have repeatedly set new highs after your training cutoff.
+- When you see: "ATH", "all-time high", "maxim istoric", "cel mai mare pret", "record price", "nou maxim", "cand a atins" — ALWAYS trigger a web search immediately, before answering.
+- After searching, state the ATH clearly: asset name, value in USD, and exact date. Example: "Bitcoin's ATH is $X, set on [date], confirmed via [source]."
+- If the user says your stated ATH is wrong — believe them, search again, and correct yourself. Do not defend a wrong answer.
 
 ## When the user greets or asks something vague
-Reply with one warm sentence, then immediately offer 3 concrete things you can help with right now (specific to investing, with numbers or tickers). Ask one short question to get started.
+Reply with one warm, brief sentence. Then offer 2–3 concrete investing topics you can help with right now (include a ticker or number). Do NOT list prices they didn't ask for.
 
 ## Investment advice rules
 - Always state a clear position: buy / hold / avoid, with a brief reason.
 - Give concrete criteria: price level, entry zone, stop-loss, what to watch.
 - If the user asks "what to buy" or "compare X vs Y", give a ranked answer with reasoning — do not dodge with "it depends".
-- Recommendations must reference data from the live snapshot or news context if injected. If no live data is available, say which symbols failed and ask to retry.
-- Never invent price data. If you don't have it, say so.
+- When recommending, search for the latest price and fundamental data first.
+- Never invent price data. If you don't have it, search for it.
 - End each recommendation with: **Entry**, **Risk**, **Watch** (one line each).
 - Never guarantee returns. Frame all recommendations as your analysis, not financial advice.
 
-## Current date and data awareness
-- Today is ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.
-- You have access to real-time market data and recent news injected directly into each user message. Use it.
-- NEVER say "my knowledge cutoff is 2023" or "I don't have data after..." or any variation. That is false — you have live prices and recent news in this conversation.
-- If a live snapshot is injected, it IS current. Use it as the source of truth for prices.
-- If no live data is injected for a specific asset, say "I couldn't fetch live data for X right now" and give your best read based on market context — do not cite a training cutoff.
-- For macroeconomic questions (Fed, inflation, earnings), use the news context injected below the user message. If no news was injected, reason from the most recent market dynamics you're aware of and state that clearly.
-
-## Live market data
-- If a live snapshot is injected in the user message, use it. Never ask the user to "wait" for prices.
-- Never output placeholders like [check live] or [current price].
+## Live price data (Finnhub injection)
+- If a live price snapshot is injected at the end of the user message, use those prices directly — they are real-time.
+- Never ask the user to "wait" for prices if a snapshot exists.
 - For price-only requests, output the snapshot data directly — no extra analysis unless asked.
 
 ## News context
-- If news headlines are injected, factor them into your analysis naturally. Do not list them verbatim — synthesize what matters.
+- If news headlines are injected in the user message, synthesize what matters. Do not list them verbatim.
+- Combine injected news with web search results for a complete picture.
 
-## Charts
-- Use chart blocks for numerical, comparative, or allocation questions.
-- Do not force charts for simple questions.
-- Chart payload must be valid JSON inside a fenced \`\`\`chart block.
-- Never output raw JSON outside chart blocks.
+## Anti-repetition rules
+- NEVER repeat a structure you already used in this conversation. If you just gave bullet points, switch to a chart or a table next time.
+- NEVER reuse the same Entry/Risk/Watch phrasing if you already used it in the last response. Vary the format.
+- Read the conversation history. If the user is asking a follow-up, build on what was said — do not restart from scratch.
+- Each response must add something NEW: a specific number, a chart, a comparison, a contrarian view, or a catalyst not mentioned before.
 
-Chart format examples:
+## Charts — USE THEM ACTIVELY
+- For any analysis of crypto/stocks outlook, strategy, or comparison: ALWAYS include at least one chart block.
+- For portfolio/allocation questions: ALWAYS use an allocation chart.
+- For "how should I invest", "where to put money", "top X": ALWAYS use a comparison or allocation chart.
+- For seasonal or price action questions: include a comparison chart with estimated values or ranges.
+- Chart data should reflect the actual topic — use real tickers and realistic values, not generic placeholders.
+- Keep chart labels short (max 6 chars). Always include "change" field in comparison charts where relevant.
+
+Chart format (MANDATORY valid JSON, no trailing commas):
 \`\`\`chart
-{"type":"comparison","title":"AAPL vs MSFT","items":[{"label":"AAPL","value":189.5,"change":2.1},{"label":"MSFT","value":415.2,"change":1.4}]}
+{"type":"comparison","title":"BTC vs ETH vs SOL — Upside Potential","items":[{"label":"BTC","value":72000,"change":4.2},{"label":"ETH","value":2100,"change":2.8},{"label":"SOL","value":140,"change":8.1}]}
 \`\`\`
 
 \`\`\`chart
-{"type":"allocation","title":"Balanced Portfolio","items":[{"label":"US Equity","value":45},{"label":"Intl Equity","value":20},{"label":"Bonds","value":25},{"label":"Cash","value":10}]}
-\`\`\`
+{"type":"allocation","title":"Crypto Portfolio Strategy 2026","items":[{"label":"BTC","value":40},{"label":"ETH","value":25},{"label":"SOL","value":15},{"label":"BNB","value":10},{"label":"Cash","value":10}]}
+\`\`\``;
 
-Current date: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-If live data is uncertain, label values as estimates.`;
+function extractReferences(text: string): Array<{ title: string; url: string }> {
+  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const seen = new Set<string>();
+  const results: Array<{ title: string; url: string }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = mdLinkRegex.exec(text)) !== null) {
+    const url = m[2];
+    if (!seen.has(url)) {
+      seen.add(url);
+      results.push({ title: m[1], url });
+    }
+  }
+  return results;
+}
+
+function buildSystemPrompt(): string {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+  const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  return `${INVESTIO_PROMPT_BASE}\n\nCurrent date: ${dateStr}\nCurrent time: ${timeStr}`;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -610,6 +652,9 @@ export async function POST(request: NextRequest) {
     let enrichedMessage = message;
     if (liveSnapshot) enrichedMessage += `\n\n${liveSnapshot.contextText}`;
     if (newsContext) enrichedMessage += `\n\n${newsContext}`;
+    if (ATH_QUERY_REGEX.test(message)) {
+      enrichedMessage += `\n\n[System note: This question is about an all-time high or price record. These change as markets move. MANDATORY: use web search to verify the current ATH before answering. Do NOT rely on training data.]`;
+    }
 
     if (isSimpleLivePriceRequest(displayText)) {
       const deterministicReply = formatDeterministicLiveReply(displayText, liveSnapshot);
@@ -626,35 +671,34 @@ export async function POST(request: NextRequest) {
       : [...history, { role: "user", content: enrichedMessage } satisfies OpenAI.ChatCompletionMessageParam];
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: "system", content: INVESTIO_PROMPT },
+      { role: "system", content: buildSystemPrompt() },
       ...modelHistory,
     ];
 
     const preferredModel = process.env.OPENAI_MODEL || FALLBACK_MODEL;
+    const isSearchModel = preferredModel.includes("search-preview");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const searchTools: any[] = [{ type: "web_search_preview" }];
     let stream;
 
     try {
       stream = await openai.chat.completions.create({
         model: preferredModel,
         messages,
-        temperature: 0.15,
-        presence_penalty: 0.35,
-        frequency_penalty: 0.25,
-        max_tokens: 600,
+        max_tokens: 800,
         stream: true,
+        ...(isSearchModel ? { tools: searchTools } : { temperature: 0.15, presence_penalty: 0.35, frequency_penalty: 0.25 }),
       });
     } catch (primaryModelError) {
-      if (preferredModel === FALLBACK_MODEL) {
-        throw primaryModelError;
-      }
-
+      if (preferredModel === SAFE_FALLBACK_MODEL) throw primaryModelError;
+      // fallback to stable model without search
       stream = await openai.chat.completions.create({
-        model: FALLBACK_MODEL,
+        model: SAFE_FALLBACK_MODEL,
         messages,
         temperature: 0.15,
         presence_penalty: 0.35,
         frequency_penalty: 0.25,
-        max_tokens: 600,
+        max_tokens: 800,
         stream: true,
       });
     }
@@ -670,6 +714,12 @@ export async function POST(request: NextRequest) {
               `data: ${JSON.stringify({ conversationId: currentConversationId })}\n\n`
             )
           );
+
+          if (isSearchModel) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ searchStarted: true })}\n\n`)
+            );
+          }
 
           for await (const chunk of stream) {
             const content = chunk.choices[0]?.delta?.content || "";
@@ -687,6 +737,15 @@ export async function POST(request: NextRequest) {
               "assistant",
               fullResponse
             );
+
+            const refs = extractReferences(fullResponse);
+            if (refs.length > 0) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ references: refs })}
+
+`)
+              );
+            }
           }
 
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
