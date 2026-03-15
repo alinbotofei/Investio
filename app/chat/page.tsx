@@ -83,7 +83,7 @@ function ReferencesPanel({ refs }: { refs: Array<{ title: string; url: string }>
                 href={ref.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 py-1 text-[12px] text-slate-400 hover:text-cyan-400 transition-colors duration-150 group"
+                className="flex items-center gap-2 py-1 text-[12px] text-slate-400 hover:text-sky-400 transition-colors duration-150 group"
               >
                 <span className="text-[10px] w-4 text-center text-slate-600 font-mono tabular-nums flex-shrink-0">{i + 1}</span>
                 <img
@@ -94,7 +94,7 @@ function ReferencesPanel({ refs }: { refs: Array<{ title: string; url: string }>
                   className="rounded-sm flex-shrink-0 opacity-70"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                 />
-                <span className="truncate max-w-[300px] group-hover:underline underline-offset-2 decoration-cyan-400/40">
+                <span className="truncate max-w-[300px] group-hover:underline underline-offset-2 decoration-sky-400/40">
                   {ref.title}
                 </span>
                 <svg className="w-2.5 h-2.5 flex-shrink-0 opacity-30 group-hover:opacity-70 transition-opacity" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.5">
@@ -551,7 +551,7 @@ function ChatContent() {
   }
 
   const AiAvatar = () => (
-    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 shadow-md shadow-cyan-900/30 self-start mt-1 border border-cyan-300/20 flex items-center justify-center">
+    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-indigo-900/30 self-start mt-1 border border-indigo-300/20 flex items-center justify-center">
       <span className="text-white text-[13px] font-bold">I</span>
     </div>
   );
@@ -615,8 +615,8 @@ function ChatContent() {
         </div>
       ) : (
         <div className="relative w-[16px] h-[16px]">
-          <div className="absolute inset-0 rounded-full border-[1.5px] border-cyan-400/20" />
-          <div className="absolute inset-0 rounded-full border-[1.5px] border-transparent border-t-cyan-300 animate-spin" />
+          <div className="absolute inset-0 rounded-full border-[1.5px] border-sky-400/20" />
+          <div className="absolute inset-0 rounded-full border-[1.5px] border-transparent border-t-sky-400 animate-spin" />
         </div>
       )}
     </div>
@@ -643,7 +643,7 @@ function ChatContent() {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="flex-shrink-0 h-14 px-4 border-b border-slate-700/20 bg-slate-950/40 backdrop-blur-xl flex items-center gap-3">
                 <div className="flex-1 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
@@ -695,7 +695,7 @@ function ChatContent() {
 
                     <h1 className="mt-0 text-[24px] sm:text-[40px] lg:text-[46px] font-bold text-center leading-[1.1] tracking-tight max-w-3xl [text-wrap:balance] px-2">
                     <span className="text-slate-100">How can I help you </span>
-                    <span className="bg-gradient-to-r from-cyan-200 via-sky-300 to-blue-300 bg-clip-text text-transparent">today?</span>
+                    <span className="bg-gradient-to-r from-sky-200 via-blue-300 to-indigo-300 bg-clip-text text-transparent">today?</span>
                   </h1>
 
                     <div className="hidden sm:flex flex-wrap justify-center gap-2.5 max-w-2xl">
@@ -758,7 +758,7 @@ function ChatContent() {
                         <button
                           key={label}
                           onClick={() => { setDraftValue(prompt); setTimeout(() => landingTextareaRef.current?.focus(), 0); }}
-                          className="flex min-h-[64px] items-center gap-2.5 rounded-2xl bg-slate-800/62 border border-slate-700/40 px-3 py-3 text-left active:bg-slate-700/80 active:border-cyan-400/25 transition-all duration-150"
+                          className="flex min-h-[64px] items-center gap-2.5 rounded-2xl bg-slate-800/62 border border-slate-700/40 px-3 py-3 text-left active:bg-slate-700/80 active:border-sky-400/25 transition-all duration-150"
                         >
                           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-700/40 border border-slate-600/25 flex-shrink-0">
                             <Icon name={icon} className="text-[14px] text-blue-300 flex-shrink-0" />
@@ -779,13 +779,13 @@ function ChatContent() {
                         <button
                           key={label}
                           onClick={() => { setDraftValue(prompt); setTimeout(() => landingTextareaRef.current?.focus(), 0); }}
-                          className="group flex items-center gap-3.5 p-4 rounded-2xl bg-slate-800/58 hover:bg-slate-800/74 border border-slate-700/40 hover:border-cyan-400/20 text-left transition-all duration-200 hover:-translate-y-0.5"
+                          className="group flex items-center gap-3.5 p-4 rounded-2xl bg-slate-800/58 hover:bg-slate-800/74 border border-slate-700/40 hover:border-sky-400/20 text-left transition-all duration-200 hover:-translate-y-0.5"
                         >
-                          <div className="w-9 h-9 rounded-lg bg-slate-700/42 group-hover:bg-cyan-500/10 flex items-center justify-center flex-shrink-0 border border-slate-600/20 group-hover:border-cyan-400/18 transition-colors duration-200">
-                            <Icon name={icon} className="text-[15px] text-slate-400 group-hover:text-cyan-300 transition-colors duration-200" />
+                          <div className="w-9 h-9 rounded-lg bg-slate-700/42 group-hover:bg-sky-500/10 flex items-center justify-center flex-shrink-0 border border-slate-600/20 group-hover:border-sky-400/18 transition-colors duration-200">
+                            <Icon name={icon} className="text-[15px] text-slate-400 group-hover:text-sky-300 transition-colors duration-200" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-white text-sm font-semibold leading-tight group-hover:text-cyan-50 transition-colors duration-200">{label}</p>
+                            <p className="text-white text-sm font-semibold leading-tight group-hover:text-slate-50 transition-colors duration-200">{label}</p>
                             <p className="text-slate-500 text-xs leading-snug mt-1 group-hover:text-slate-400 transition-colors duration-200">{desc}</p>
                           </div>
                         </button>
@@ -862,7 +862,7 @@ function ChatContent() {
                       smoothScrollToBottom(messagesRef.current, false);
                       setShowScrollBtn(false);
                     }}
-                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-slate-800/95 border border-slate-600/50 hover:border-cyan-500/40 text-slate-300 hover:text-white rounded-full shadow-2xl text-xs font-medium transition-all hover:bg-slate-700/90 backdrop-blur-sm"
+                    className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-slate-800/95 border border-slate-600/50 hover:border-sky-400/35 text-slate-300 hover:text-white rounded-full shadow-2xl text-xs font-medium transition-all hover:bg-slate-700/90 backdrop-blur-sm"
                   >
                     <Icon name="keyboard_arrow_down" className="text-[16px]" />
                     <span>Latest message</span>
@@ -918,7 +918,7 @@ export default function ChatPage() {
         <DashboardLayout>
           <div className="flex items-center justify-center h-screen">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-2 border-cyan-500/40 border-t-cyan-400 rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-indigo-500/40 border-t-indigo-400 rounded-full animate-spin" />
               <span className="text-xs text-slate-600">Loading chat...</span>
             </div>
           </div>

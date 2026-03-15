@@ -91,7 +91,7 @@ export const markdownComponents: Components = {
     }
     return (
       <code
-        className="bg-slate-950/70 px-2 py-1 rounded text-cyan-400 text-sm font-mono border border-slate-700/50"
+        className="bg-slate-950/70 px-2 py-1 rounded text-sky-400 text-sm font-mono border border-slate-700/50"
         {...props}
       >
         {children}
@@ -142,7 +142,7 @@ export const markdownComponents: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-cyan-400 hover:text-cyan-300 underline decoration-cyan-400/30 hover:decoration-cyan-300/50 transition-colors"
+      className="text-sky-400 hover:text-sky-300 underline decoration-sky-400/30 hover:decoration-sky-300/50 transition-colors"
       {...props}
     >
       {children}
