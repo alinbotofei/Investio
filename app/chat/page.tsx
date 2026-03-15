@@ -34,10 +34,6 @@ function getStreamingSafePreview(text: string) {
   return before;
 }
 
-function getGreetingLabel() {
-  return "Welcome";
-}
-
 const CHAT_DRAFT_STORAGE_KEY = "chat_input_draft";
 
 function ChatContent() {
@@ -50,7 +46,6 @@ function ChatContent() {
   const rawFirstName = isSessionReady ? session?.user?.name?.split(" ")[0] || "" : "";
   const userFirstName =
     rawFirstName.toLowerCase() === "you" ? "Investor" : rawFirstName || "Investor";
-  const greetingLabel = getGreetingLabel();
   const { loadConversations } = useConversationsCtx();
 
   const [value, setValue] = useState(() => {
@@ -179,12 +174,14 @@ function ChatContent() {
       const response = await fetch(`/api/conversations/${conversationId}`);
       if (response.ok) {
         const conversation = await response.json();
-        const loadedMessages: Message[] = conversation.messages.map((msg: any) => ({
-          id: msg.id,
-          role: msg.role,
-          text: msg.text,
-          time: new Date(msg.createdAt).getTime(),
-        }));
+        const loadedMessages: Message[] = conversation.messages.map(
+          (msg: { id: string; role: "user" | "assistant"; text: string; createdAt: string }) => ({
+            id: msg.id,
+            role: msg.role,
+            text: msg.text,
+            time: new Date(msg.createdAt).getTime(),
+          })
+        );
         setMessages(loadedMessages);
         setCurrentConversationId(conversationId);
       } else {
@@ -302,12 +299,13 @@ function ChatContent() {
           if (!line.startsWith("data: ")) continue;
           const data = line.slice(6).trim();
           if (data === "[DONE]") continue;
-          let json: any;
+          let json: { content?: string; conversationId?: string; error?: string } | null = null;
           try {
             json = JSON.parse(data);
           } catch {
             continue;
           }
+          if (!json) continue;
 
           if (json.content) {
             accumulatedText += json.content;
@@ -344,7 +342,8 @@ function ChatContent() {
       if (shouldRefreshConversations) {
         await loadConversations();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : "Failed to send message";
       console.error("Chat error:", error);
       showToast("\u2717 Failed to send message");
       if (flushRafRef.current !== null) {
@@ -356,7 +355,7 @@ function ChatContent() {
         flushTimeoutRef.current = null;
       }
       setMessages((m) =>
-        m.map((msg) => (msg.id === assistantId ? { ...msg, text: `Error: ${error.message}` } : msg))
+        m.map((msg) => (msg.id === assistantId ? { ...msg, text: `Error: ${errMessage}` } : msg))
       );
     } finally {
       if (flushRafRef.current !== null) {
@@ -459,7 +458,7 @@ function ChatContent() {
                     <div className="min-h-[30px] sm:min-h-[38px] flex items-center justify-center">
                       {isSessionReady ? (
                         <p className="text-slate-100 text-[20px] sm:text-[26px] font-medium tracking-tight text-center leading-tight">
-                          <span className="text-slate-100/95">{greetingLabel}, </span>
+                          <span className="text-slate-100/95">Welcome, </span>
                           <span className="text-slate-50">{userFirstName}</span>
                           <span className="text-slate-200/85">!</span>
                         </p>
