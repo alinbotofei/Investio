@@ -34,11 +34,9 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error("Error fetching earnings:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch earnings" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch earnings";
+    console.error("Error fetching earnings:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

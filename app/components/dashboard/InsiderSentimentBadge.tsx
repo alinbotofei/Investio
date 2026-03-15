@@ -2,7 +2,7 @@
 
 import Icon from "../ui/Icon";
 
-interface InsiderSentimentData {
+export interface InsiderSentimentData {
   symbol: string;
   year: number;
   month: number;

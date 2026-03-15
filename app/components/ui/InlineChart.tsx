@@ -57,15 +57,17 @@ function isNumberArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.every((n) => typeof n === "number" && Number.isFinite(n));
 }
 
-function isValidChartData(value: any): value is ChartData {
+function isValidChartData(value: unknown): value is ChartData {
   if (!value || typeof value !== "object") return false;
-  if (!SUPPORTED_CHART_TYPES.has(value.type)) return false;
+  const v = value as Record<string, unknown>;
+  if (!SUPPORTED_CHART_TYPES.has(v.type as string)) return false;
 
-  if (value.type === "sparkline") {
-    return isNumberArray(value?.sparkline?.values);
+  if (v.type === "sparkline") {
+    const sparkline = v.sparkline as Record<string, unknown> | undefined;
+    return isNumberArray(sparkline?.values);
   }
 
-  return Array.isArray(value.items);
+  return Array.isArray(v.items);
 }
 
 function BarChart({ data }: { data: Extract<ChartData, { type: "bar" }> }) {
@@ -347,7 +349,7 @@ export default function InlineChart({ raw }: { raw: string }) {
       {data.type === "comparison" && <ComparisonChart data={data} />}
       {(data.type === "pie" ||
         data.type === "donut" ||
-        data.type === "allocation") && <PieChart data={data as any} />}
+        data.type === "allocation") && <PieChart data={data as Extract<ChartData, { type: "pie" | "donut" | "allocation" }>} />}
       {data.type === "sparkline" && <SparklineChart data={data} />}
     </div>
   );

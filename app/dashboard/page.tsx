@@ -62,15 +62,12 @@ function DashboardContent() {
 
         <div className="grid grid-cols-1 xl:grid-cols-[1.6fr,1fr] gap-4 sm:gap-5 lg:gap-6 items-start">
           <div className="min-w-0 space-y-4 sm:space-y-5">
-            {/* Watchlist */}
             <WatchlistManager />
 
             <MarketOverview />
           </div>
 
-          {/* Right Column - AI & News (Sticky on large screens) */}
           <div className="min-w-0 xl:sticky xl:top-4 space-y-4 sm:space-y-5">
-            {/* AI Chat Section */}
             <div className="bg-gradient-to-br from-blue-600/30 via-cyan-500/30 to-purple-600/30 border-2 border-cyan-400/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl shadow-cyan-500/20 ring-1 ring-cyan-400/20">
               <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-cyan-500/50">
@@ -121,7 +118,6 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* Market News */}
             <MarketNews />
           </div>
         </div>

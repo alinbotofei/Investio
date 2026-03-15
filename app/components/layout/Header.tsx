@@ -7,15 +7,7 @@ import { Suspense, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useConversationsCtx } from "@/app/contexts/ConversationsContext";
-
-function formatTimeAgo(date: Date): string {
-  const diff = Date.now() - date.getTime();
-  if (diff < 60000) return "just now";
-  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-  if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
+import { formatTimeAgo } from "@/app/lib/utils/format";
 
 export default function Header() {
   return (

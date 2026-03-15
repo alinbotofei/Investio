@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Stock } from "@/lib/types/stocks";
 import { getStockGradient } from "@/app/lib/utils/stockLogos";
+import { isPositive, formatPercent } from "@/app/lib/utils/format";
 
 interface StockCardProps {
   symbol: string;
@@ -10,11 +11,7 @@ interface StockCardProps {
   isActive?: boolean;
 }
 
-export default function StockCard({
-  symbol,
-  onClick,
-  isActive,
-}: StockCardProps) {
+export default function StockCard({ symbol, onClick, isActive }: StockCardProps) {
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
   const [logoError, setLogoError] = useState(false);
@@ -34,92 +31,94 @@ export default function StockCard({
     }
 
     fetchQuote();
-    const interval = setInterval(fetchQuote, 60 * 1000);
+    const interval = setInterval(fetchQuote, 60_000);
     return () => clearInterval(interval);
   }, [symbol]);
 
   if (loading) {
     return (
-      <div className="animate-pulse p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+      <div className="animate-pulse p-4 rounded-xl border border-slate-700/50 bg-slate-800/40">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-lg bg-slate-700/60" />
+          <div className="flex-1">
+            <div className="h-4 bg-slate-700/60 rounded w-20 mb-1.5" />
+            <div className="h-3 bg-slate-700/40 rounded w-32" />
+          </div>
+        </div>
+        <div className="h-7 bg-slate-700/60 rounded w-28 mb-2" />
+        <div className="h-4 bg-slate-700/40 rounded w-20" />
       </div>
     );
   }
 
   if (!stock) {
     return (
-      <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-center text-gray-500">
+      <div className="p-4 rounded-xl border border-slate-700/50 bg-slate-800/40 text-center text-slate-500 text-sm">
         Failed to load {symbol}
       </div>
     );
   }
 
-  const isPositive = stock.change >= 0;
+  const positive = isPositive(stock.change);
   const gradient = getStockGradient(symbol);
 
   return (
     <button
       onClick={onClick}
-      className={`w-full p-3 sm:p-4 border rounded-lg text-left transition-all hover:shadow-md ${
+      className={[
+        "w-full p-3 sm:p-4 rounded-xl border text-left transition-all duration-200 hover:shadow-lg",
         isActive
-          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-          : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-      }`}
+          ? "border-cyan-500/40 bg-cyan-500/10 shadow-md"
+          : "border-slate-700/50 bg-slate-800/40 hover:bg-slate-800/70 hover:border-slate-600/60",
+      ].join(" ")}
     >
-      <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 leading-tight">
-          {!logoError && stock.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={stock.logo}
-              alt=""
-              aria-hidden="true"
-              onError={() => setLogoError(true)}
-              className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg object-contain flex-shrink-0"
-            />
-          ) : (
-            <div
-              className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg flex-shrink-0 shadow-sm"
-              style={{
-                background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})`,
-              }}
-            />
-          )}
-          <div className="min-w-0 flex-1">
-            <div className="font-bold text-base sm:text-lg truncate">
-              {stock.symbol}
-            </div>
-            <div className="text-xs text-gray-500 truncate">{stock.name}</div>
+      <div className="flex items-center gap-2 sm:gap-3 mb-3">
+        {!logoError && stock.logo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={stock.logo}
+            alt=""
+            aria-hidden="true"
+            onError={() => setLogoError(true)}
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg object-contain bg-white/95 p-0.5 flex-shrink-0"
+          />
+        ) : (
+          <div
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg flex-shrink-0 shadow-sm"
+            style={{ background: `linear-gradient(135deg, ${gradient.from}, ${gradient.to})` }}
+          />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="font-bold text-base sm:text-lg text-white truncate leading-tight">
+            {stock.symbol}
           </div>
+          <div className="text-xs text-slate-400 truncate">{stock.name}</div>
         </div>
       </div>
 
       <div className="mb-2">
-        <div className="text-xl sm:text-2xl font-bold">
+        <div className="text-xl sm:text-2xl font-bold text-white">
           ${stock.price.toFixed(2)}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-xs sm:text-sm">
-        <span className={isPositive ? "text-green-600" : "text-red-600"}>
-          {isPositive ? "▲" : "▼"} ${Math.abs(stock.change).toFixed(2)}
+      <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium">
+        <span className={positive ? "text-emerald-400" : "text-red-400"}>
+          {positive ? "▲" : "▼"} ${Math.abs(stock.change).toFixed(2)}
         </span>
-        <span className={isPositive ? "text-green-600" : "text-red-600"}>
-          ({isPositive ? "+" : ""}
-          {stock.changePercent.toFixed(2)}%)
+        <span className={positive ? "text-emerald-400/80" : "text-red-400/80"}>
+          ({formatPercent(stock.changePercent)})
         </span>
       </div>
 
-      <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-2 gap-2 text-xs">
+      <div className="mt-2.5 pt-2.5 border-t border-slate-700/50 grid grid-cols-2 gap-2 text-xs">
         <div>
-          <div className="text-gray-500">High</div>
-          <div className="font-semibold">${stock.high.toFixed(2)}</div>
+          <div className="text-slate-500 mb-0.5">High</div>
+          <div className="font-semibold text-slate-200">${stock.high.toFixed(2)}</div>
         </div>
         <div>
-          <div className="text-gray-500">Low</div>
-          <div className="font-semibold">${stock.low.toFixed(2)}</div>
+          <div className="text-slate-500 mb-0.5">Low</div>
+          <div className="font-semibold text-slate-200">${stock.low.toFixed(2)}</div>
         </div>
       </div>
     </button>

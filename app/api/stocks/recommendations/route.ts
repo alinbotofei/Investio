@@ -30,11 +30,9 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error("Error fetching recommendations:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch recommendations" },
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch recommendations";
+    console.error("Error fetching recommendations:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

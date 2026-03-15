@@ -90,13 +90,10 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen bg-slate-950">
-      {/* Left Section - Hero (Desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-blue-600 to-blue-800 p-12 xl:p-16 relative overflow-hidden">
-        {/* Gradient orbs */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
 
-        {/* Content */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-16">
             <div className="h-11 w-11 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 shadow-xl">
@@ -147,10 +144,8 @@ export default function Login() {
         <div className="relative z-10" />
       </div>
 
-      {/* Right Section - Form */}
       <div className="flex lg:w-1/2 w-full flex-col items-center justify-center px-6 py-12 sm:px-8 sm:py-16 relative">
         <div className="w-full max-w-md relative z-10">
-          {/* Mobile Logo */}
           <div className="lg:hidden mb-12 text-center">
             <div className="inline-flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg">
@@ -162,7 +157,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Header */}
           <div className="mb-8 text-center lg:text-left">
             <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
               {step === 'email' ? 'Welcome back' : 'Enter your password'}
@@ -174,7 +168,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Error Alert */}
           {error && (
             <div className="mb-6 flex gap-3 rounded-xl bg-red-500/10 border border-red-500/30 p-4 backdrop-blur-sm">
               <svg className="h-5 w-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
@@ -317,7 +310,6 @@ export default function Login() {
             </form>
           )}
 
-          {/* Footer */}
           <p className="mt-8 text-center text-sm text-slate-500">
             By signing in, you agree to our{' '}
             <Link href="/terms-condition" className="text-blue-400 hover:text-blue-300 transition-colors">

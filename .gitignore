@@ -1,3 +1,8 @@
+# Playwright
+playwright-report/
+test-results/
+e2e/.auth/user.json
+
 # Node
 node_modules/
 npm-debug.log*

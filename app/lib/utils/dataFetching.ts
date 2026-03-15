@@ -1,4 +1,5 @@
 import { AssetCategory } from "@/lib/types/assets";
+import { Stock } from "@/lib/types/stocks";
 
 export interface FetchConfig {
   revalidate?: number;
@@ -48,8 +49,8 @@ export async function fetchWithRetry<T>(
   throw lastError || new Error("Failed to fetch data");
 }
 
-export async function fetchQuote(symbol: string): Promise<any> {
-  return fetchWithRetry(`/api/stocks/quote?symbol=${symbol}`);
+export async function fetchQuote(symbol: string): Promise<Stock> {
+  return fetchWithRetry<Stock>(`/api/stocks/quote?symbol=${symbol}`);
 }
 
 export async function fetchStockData(symbol: string) {
@@ -67,11 +68,11 @@ export async function fetchStockData(symbol: string) {
       recommendations.status === "fulfilled" ? recommendations.value : [],
     insiderSentiment:
       insiderSentiment.status === "fulfilled"
-        ? (insiderSentiment.value as any)?.data || []
+        ? (insiderSentiment.value as { data?: unknown[] })?.data ?? []
         : [],
     metrics:
       metrics.status === "fulfilled"
-        ? (metrics.value as any)?.metric || {}
+        ? (metrics.value as { metric?: Record<string, number> })?.metric ?? {}
         : {},
   };
 }

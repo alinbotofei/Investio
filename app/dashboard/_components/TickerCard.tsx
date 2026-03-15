@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import Icon from "@/app/components/ui/Icon";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
+import { assetHelpers } from "@/app/lib/utils/watchlist";
+import { isPositive, formatPercent } from "@/app/lib/utils/format";
 import type { AssetCategory } from "@/lib/types/assets";
 
 interface QuoteSimple {
@@ -29,28 +31,12 @@ export default function TickerCard({
 }: TickerCardProps) {
   const [imageError, setImageError] = useState(false);
 
-  const getCategoryColor = (cat: AssetCategory) => {
-    switch (cat) {
-      case "stock":
-        return "from-blue-600 to-cyan-500";
-      case "crypto":
-        return "from-cyan-600 to-blue-500";
-    }
-  };
-
-  const formatSymbol = (sym: string) => {
-    if (sym.includes(":")) {
-      return sym.split(":")[1].replace("USDT", "").replace("_", "/");
-    }
-    return sym;
-  };
-
-  const getIcon = () => {
-    return getAssetLogoUrl(quote.symbol, category, quote.logo);
-  };
-
-  const isPositive = quote.change >= 0;
-  const logoInfo = imageError ? { type: "icon", value: "image" } : getIcon();
+  const positive = isPositive(quote.change);
+  const logoInfo = imageError
+    ? { type: "icon" as const, value: "image" }
+    : getAssetLogoUrl(quote.symbol, category, quote.logo);
+  const categoryColor = assetHelpers.getCategoryColor(category);
+  const displaySymbol = assetHelpers.formatSymbol(quote.symbol);
 
   return (
     <Link
@@ -59,9 +45,7 @@ export default function TickerCard({
       className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-2.5 sm:p-3 hover:bg-slate-700/40 hover:border-slate-600/50 transition-all cursor-pointer group relative overflow-hidden min-w-0 block"
     >
       <div
-        className={`absolute inset-0 bg-gradient-to-br ${getCategoryColor(
-          category
-        )} opacity-0 group-hover:opacity-5 transition-opacity`}
+        className={`absolute inset-0 bg-gradient-to-br ${categoryColor} opacity-0 group-hover:opacity-5 transition-opacity`}
       />
 
       <div className="relative min-w-0">
@@ -71,14 +55,14 @@ export default function TickerCard({
               className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex-shrink-0 ${
                 logoInfo.type === "url" && !imageError
                   ? "bg-white/95"
-                  : `bg-gradient-to-br ${getCategoryColor(category)}`
+                  : `bg-gradient-to-br ${categoryColor}`
               } flex items-center justify-center shadow-md p-1.5`}
             >
               {logoInfo.type === "url" && !imageError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={logoInfo.value}
-                  alt={formatSymbol(quote.symbol)}
+                  alt={displaySymbol}
                   onError={() => setImageError(true)}
                   className="w-full h-full object-contain rounded"
                 />
@@ -91,7 +75,7 @@ export default function TickerCard({
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-white font-bold text-sm sm:text-base leading-tight break-words line-clamp-2">
-                {formatSymbol(quote.symbol)}
+                {displaySymbol}
               </h3>
               <span className="text-[10px] sm:text-xs text-slate-400 capitalize leading-tight block mt-0.5">
                 {category}
@@ -127,31 +111,30 @@ export default function TickerCard({
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <div
             className={`flex items-center gap-1.5 px-2 py-1 rounded-lg flex-shrink-0 ${
-              isPositive ? "bg-green-500/10" : "bg-red-500/10"
+              positive ? "bg-green-500/10" : "bg-red-500/10"
             }`}
           >
             <Icon
-              name={isPositive ? "trending_up" : "trending_down"}
+              name={positive ? "trending_up" : "trending_down"}
               className={`text-[13px] flex-shrink-0 ${
-                isPositive ? "text-green-400" : "text-red-400"
+                positive ? "text-green-400" : "text-red-400"
               }`}
             />
             <span
               className={`text-xs sm:text-sm font-semibold whitespace-nowrap leading-tight ${
-                isPositive ? "text-green-400" : "text-red-400"
+                positive ? "text-green-400" : "text-red-400"
               }`}
             >
-              {isPositive ? "+" : ""}
+              {positive ? "+" : ""}
               {quote.change.toFixed(2)}
             </span>
           </div>
           <div
             className={`text-xs sm:text-sm font-bold leading-tight whitespace-nowrap ${
-              isPositive ? "text-green-400" : "text-red-400"
+              positive ? "text-green-400" : "text-red-400"
             }`}
           >
-            {isPositive ? "+" : ""}
-            {quote.changePercent.toFixed(2)}%
+            {formatPercent(quote.changePercent)}
           </div>
         </div>
       </div>

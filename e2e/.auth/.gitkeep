@@ -1,0 +1,2 @@
+# Playwright stores the authenticated session here at runtime.
+# This file is intentionally kept empty — the folder must exist.

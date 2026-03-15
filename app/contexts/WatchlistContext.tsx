@@ -26,7 +26,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch("/api/watchlist");
       if (response.ok) {
         const data = await response.json();
-        const formatted = data.map((item: any) => ({
+        const formatted = data.map((item: { symbol: string; category: string; addedAt: string }) => ({
           symbol: item.symbol,
           category: item.category as AssetCategory,
           addedAt: new Date(item.addedAt).getTime(),

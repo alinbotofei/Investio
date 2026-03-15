@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 
-// Disable static optimization for this page
 export const dynamic = 'force-dynamic';
 
 function SignUpForm() {
@@ -111,13 +110,10 @@ function SignUpForm() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-      {/* Left Section - Hero (Desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-blue-600 via-blue-700 to-slate-900 p-12 relative overflow-hidden">
-        {/* Gradient orbs */}
         <div className="absolute top-0 left-0 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl opacity-50" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl opacity-50" />
 
-        {/* Content */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-12">
             <div className="h-12 w-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
@@ -159,7 +155,6 @@ function SignUpForm() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="relative z-10 text-sm text-blue-200">
           <p>Already have an account?{' '}
             <button 
@@ -172,16 +167,13 @@ function SignUpForm() {
         </div>
       </div>
 
-      {/* Right Section - Form (Full width on mobile, half width on desktop) */}
       <div className="flex lg:w-1/2 w-full flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-12 md:px-8 relative">
-        {/* Mobile hero background (visible only on small screens) */}
         <div className="lg:hidden absolute inset-0 -z-10 opacity-20">
           <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500/30 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-72 h-72 bg-purple-500/30 rounded-full blur-3xl" />
         </div>
 
         <div className="w-full max-w-sm relative z-10">
-          {/* Mobile Logo (visible only on small screens) */}
           <div className="lg:hidden mb-8 flex justify-center">
             <div className="flex items-center gap-2">
               <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center border border-blue-400/30">
@@ -202,7 +194,6 @@ function SignUpForm() {
             </p>
           </div>
 
-          {/* Error Alert */}
           {errors.submit && (
             <div className="mb-6 flex gap-3 rounded-lg bg-red-950/40 border border-red-900/60 p-4">
               <svg className="h-5 w-5 flex-shrink-0 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -213,7 +204,6 @@ function SignUpForm() {
           )}
 
           <form onSubmit={handleSignUp} className="space-y-5">
-            {/* Full Name */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-200 font-inter">
                 Full Name
@@ -242,7 +232,6 @@ function SignUpForm() {
               )}
             </div>
 
-            {/* Email */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-200 font-inter">
                 Email Address
@@ -271,7 +260,6 @@ function SignUpForm() {
               )}
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-200 font-inter">
                 Password
@@ -340,7 +328,6 @@ function SignUpForm() {
               })()}
             </div>
 
-            {/* Confirm Password */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-slate-200 font-inter">
                 Confirm Password
@@ -388,7 +375,6 @@ function SignUpForm() {
               )}
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -408,7 +394,6 @@ function SignUpForm() {
             </button>
           </form>
 
-          {/* Sign in link */}
           <div className="pt-6 border-t border-slate-700/30">
             <p className="text-center text-sm text-slate-400 font-inter">
               Already have an account?{' '}
@@ -421,7 +406,6 @@ function SignUpForm() {
             </p>
           </div>
 
-          {/* Footer */}
           <p className="mt-6 text-center text-xs text-slate-600 font-inter">
             By creating an account, you agree to our{' '}
             <Link href="/terms-condition" className="text-blue-400 hover:text-blue-300 underline transition-colors font-medium">

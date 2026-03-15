@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Icon from "../../components/ui/Icon";
+import { formatTimeAgo } from "@/app/lib/utils/format";
 
 interface NewsArticle {
   id: number;
@@ -36,17 +37,8 @@ export default function MarketNews() {
     }
   };
 
-  const formatTimeAgo = (timestamp: number) => {
-    const seconds = Math.floor(Date.now() / 1000 - timestamp);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return "Just now";
-  };
+  const formatTimeAgoLocal = (timestamp: number) =>
+    formatTimeAgo(new Date(timestamp * 1000));
 
   if (loading) {
     return (
@@ -121,7 +113,7 @@ export default function MarketNews() {
                       name="schedule"
                       className="text-[12px] sm:text-[13px] flex-shrink-0"
                     />
-                    {formatTimeAgo(article.datetime)}
+                    {formatTimeAgoLocal(article.datetime)}
                   </span>
                   {article.category && (
                     <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded text-[9px] sm:text-[10px] font-medium">

@@ -205,18 +205,20 @@ export default function ChatWidget({
   return (
     <div
       className={`flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden ${
-        compact ? "h-[480px] lg:h-full" : "h-full"
+        compact ? "h-[600px] lg:h-full" : "h-full"
       }`}
     >
-      <div className="p-3 sm:p-4 xl:p-5 border-b border-slate-700/50 flex-shrink-0">
-        <h3 className="text-sm sm:text-base xl:text-lg font-bold text-white flex items-center gap-2">
-          <Icon
-            name="chat"
-            className="text-cyan-400 text-[18px] sm:text-[20px] xl:text-[24px]"
-          />
-          AI Assistant
-        </h3>
-      </div>
+      {!compact && (
+        <div className="p-3 sm:p-4 xl:p-5 border-b border-slate-700/50 flex-shrink-0">
+          <h3 className="text-sm sm:text-base xl:text-lg font-bold text-white flex items-center gap-2">
+            <Icon
+              name="chat"
+              className="text-cyan-400 text-[18px] sm:text-[20px] xl:text-[24px]"
+            />
+            AI Assistant
+          </h3>
+        </div>
+      )}
 
       <div ref={messagesRef} className="flex-1 overflow-y-auto p-3 sm:p-4 xl:p-5 space-y-3 custom-scrollbar">
         {messages.length === 0 ? (
