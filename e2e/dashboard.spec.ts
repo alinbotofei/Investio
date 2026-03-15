@@ -1,10 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-/**
- * Dashboard E2E tests.
- * Runs as the authenticated user (session loaded from e2e/.auth/user.json).
- */
-
 test.describe("Dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/dashboard");

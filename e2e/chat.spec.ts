@@ -1,10 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-/**
- * Chat / AI assistant E2E tests.
- * Runs as the authenticated user.
- */
-
 test.describe("Chat page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/chat");

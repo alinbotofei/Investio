@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import Icon from "../ui/Icon";
 
-interface RecommendationData {
+export interface RecommendationData {
   period: string;
   strongBuy: number;
   buy: number;

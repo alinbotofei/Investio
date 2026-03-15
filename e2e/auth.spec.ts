@@ -1,15 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-/**
- * Authentication flow tests.
- *
- * These run WITHOUT the stored session so they use the default project
- * (no storageState) — they test the login/signup pages themselves.
- *
- * NOTE: override the project in playwright.config.ts if you want to
- *       run these without browser-state inheritance.
- */
-
 test.describe("Login page", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 

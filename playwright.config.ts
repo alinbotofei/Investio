@@ -1,10 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Playwright E2E configuration.
- * Run: npx playwright test
- * UI mode: npx playwright test --ui
- */
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,

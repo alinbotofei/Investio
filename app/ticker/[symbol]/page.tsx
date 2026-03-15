@@ -13,6 +13,9 @@ import {
 } from "@/app/components/dashboard";
 import { assetHelpers } from "@/app/lib/utils/watchlist";
 import { AssetCategory } from "@/lib/types/assets";
+import { Stock } from "@/lib/types/stocks";
+import type { RecommendationData } from "@/app/components/dashboard/RecommendationsWidget";
+import type { InsiderSentimentData } from "@/app/components/dashboard/InsiderSentimentBadge";
 import { formatNumber, formatPrice } from "@/app/lib/utils/format";
 import { fetchTickerData } from "@/app/lib/utils/dataFetching";
 import { useWatchlist } from "@/app/contexts/WatchlistContext";
@@ -28,10 +31,10 @@ export default function TickerPage() {
   const [category, setCategory] = useState<AssetCategory>("stock");
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [quote, setQuote] = useState<any>(null);
-  const [metrics, setMetrics] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [insiderSentiment, setInsiderSentiment] = useState<any[]>([]);
+  const [quote, setQuote] = useState<Stock | null>(null);
+  const [metrics, setMetrics] = useState<Record<string, number> | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationData[]>([]);
+  const [insiderSentiment, setInsiderSentiment] = useState<InsiderSentimentData[]>([]);
   const [chartLastClose, setChartLastClose] = useState<number | null>(null);
   const [watchlistFeedback, setWatchlistFeedback] = useState<string | null>(
     null
@@ -80,7 +83,7 @@ export default function TickerPage() {
         Array.isArray(data.recommendations) ? data.recommendations : []
       );
       setInsiderSentiment(
-        Array.isArray(data.insiderSentiment) ? data.insiderSentiment : []
+        Array.isArray(data.insiderSentiment) ? (data.insiderSentiment as InsiderSentimentData[]) : []
       );
       setMetrics(data.metrics);
     } catch (err) {
@@ -322,15 +325,15 @@ export default function TickerPage() {
             </div>
             <div
               className={`flex items-center gap-1.5 sm:gap-2 ${
-                quote?.change >= 0 ? "text-green-300" : "text-red-300"
+                (quote?.change ?? 0) >= 0 ? "text-green-300" : "text-red-300"
               }`}
             >
               <Icon
-                name={quote?.change >= 0 ? "trending_up" : "trending_down"}
+                name={(quote?.change ?? 0) >= 0 ? "trending_up" : "trending_down"}
                 className="text-[16px] sm:text-[18px] md:text-[20px]"
               />
               <span className="text-base sm:text-lg font-semibold">
-                {quote?.change >= 0 ? "+" : ""}
+                {(quote?.change ?? 0) >= 0 ? "+" : ""}
                 {quote?.change?.toFixed(2)} ({quote?.changePercent?.toFixed(2)}
                 %)
               </span>

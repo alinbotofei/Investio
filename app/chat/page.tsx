@@ -74,6 +74,7 @@ function ChatContent() {
   const chatTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const hasSubmittedRef = useRef(false);
   const userScrolledRef = useRef(false);
+  const forceScrollRef = useRef(false);
   const prevConvIdRef = useRef<string | null | undefined>(undefined);
   const activeStreamRef = useRef<string | null>(null);
   const streamingAssistantIdRef = useRef<string | null>(null);
@@ -122,31 +123,39 @@ function ChatContent() {
     const container = messagesRef.current;
     if (!container) return;
     const handleScroll = () => {
-      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
       userScrolledRef.current = !isNearBottom;
       setShowScrollBtn(!isNearBottom);
     };
-    container.addEventListener("scroll", handleScroll);
+    container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
-    return () => {
-      if (flushRafRef.current !== null) {
-        cancelAnimationFrame(flushRafRef.current);
-      }
-      if (flushTimeoutRef.current !== null) {
-        clearTimeout(flushTimeoutRef.current);
-      }
-    };
-  }, []);
+    const container = messagesRef.current;
+    if (!container || messages.length === 0) return;
 
-  useEffect(() => {
-    if (!userScrolledRef.current && messages.length > 0) {
-      smoothScrollToBottom(messagesRef.current, true, !loading);
+    if (forceScrollRef.current) {
+      forceScrollRef.current = false;
+      container.scrollTop = container.scrollHeight;
+      setShowScrollBtn(false);
+      return;
+    }
+
+    // Only auto-scroll if already near bottom — respects manual scroll-up during streaming
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceFromBottom <= 200) {
+      container.scrollTop = container.scrollHeight;
       setShowScrollBtn(false);
     }
-  }, [messages, loading]);
+  }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      if (flushRafRef.current !== null) cancelAnimationFrame(flushRafRef.current);
+      if (flushTimeoutRef.current !== null) clearTimeout(flushTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const ta = landingTextareaRef.current || chatTextareaRef.current;
@@ -182,6 +191,7 @@ function ChatContent() {
             time: new Date(msg.createdAt).getTime(),
           })
         );
+        forceScrollRef.current = true;
         setMessages(loadedMessages);
         setCurrentConversationId(conversationId);
       } else {
@@ -216,6 +226,7 @@ function ChatContent() {
     const textToSend = messageText || value.trim();
     if (!textToSend) return;
     userScrolledRef.current = false;
+    forceScrollRef.current = true;
 
     const userMsgId = String(Date.now());
     const assistantId = `asst-${Date.now()}`;
