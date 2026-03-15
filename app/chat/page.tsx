@@ -355,12 +355,7 @@ function ChatContent() {
     let streamedFirstChunk = false;
 
     if (searchIndicatorTimerRef.current) clearTimeout(searchIndicatorTimerRef.current);
-    searchIndicatorTimerRef.current = setTimeout(() => {
-      if (!streamedFirstChunk) {
-        isSearchingRef.current = true;
-        setIsWebSearching(true);
-      }
-    }, 1500);
+    searchIndicatorTimerRef.current = null;
 
     try {
       const response = await fetch("/api/chat", {
@@ -418,6 +413,10 @@ function ChatContent() {
           if (!json) continue;
 
           if (json.searchStarted) {
+            if (!streamedFirstChunk && !isSearchingRef.current) {
+              isSearchingRef.current = true;
+              setIsWebSearching(true);
+            }
             stepTimersRef.current.forEach(clearTimeout);
             setSearchStep(0);
             const t1 = setTimeout(() => setSearchStep(1), 2500);

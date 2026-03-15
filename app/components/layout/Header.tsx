@@ -136,7 +136,7 @@ function HeaderInner() {
               <div className="sticky top-0 bg-gradient-to-b from-slate-900 to-slate-900/95 backdrop-blur-sm p-6 border-b border-white/5 z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-md bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg">
+                    <div className="w-8 h-8 rounded-md bg-gradient-to-tr from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg">
                       <Icon name="insights" />
                     </div>
                     <div className="text-base font-extrabold text-white tracking-wide font-['Plus Jakarta Sans','Inter','system-ui','sans-serif']">

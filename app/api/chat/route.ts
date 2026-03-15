@@ -664,13 +664,16 @@ export async function POST(request: NextRequest) {
     let enrichedMessage = message;
     if (liveSnapshot) enrichedMessage += `\n\n${liveSnapshot.contextText}`;
     if (newsContext) enrichedMessage += `\n\n${newsContext}`;
+    if (isLivePriceIntent(message) && !liveSnapshot) {
+      enrichedMessage += `\n\n[Live price API unavailable. Use web search immediately to fetch the CURRENT real-time price for the requested assets. Do NOT say you cannot get live data — search for it and report the live price from search results.]`;
+    }
     if (ATH_QUERY_REGEX.test(message)) {
       enrichedMessage += `\n\n[SYSTEM OVERRIDE — ATH QUERY DETECTED: Your training data value for this ATH is WRONG and OUTDATED. Do NOT state it. Bitcoin's training-data ATH of $69,000 (Nov 2021) is incorrect — it was surpassed in 2024/2025. Perform a web search for "[asset name] all-time high 2025" or "[asset name] ATH record price" RIGHT NOW. Answer ONLY from the search result. Stating a training-data figure will be a factual error.]`;
     } else if (TEMPORAL_FACT_REGEX.test(message) && !isSimpleLivePriceRequest(message)) {
       enrichedMessage += `\n\n[System note: This question asks about a current fact that changes over time. Your training data may be from 2021-2023 and is likely outdated for this topic. Use web search to verify the current answer before responding.]`;
     }
 
-    if (isSimpleLivePriceRequest(displayText)) {
+    if (isSimpleLivePriceRequest(displayText) && liveSnapshot !== null) {
       const deterministicReply = formatDeterministicLiveReply(displayText, liveSnapshot);
       await conversationService.addMessage(
         currentConversationId,

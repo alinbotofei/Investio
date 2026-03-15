@@ -115,7 +115,7 @@ function SidebarInner({ items }: SidebarProps) {
         <div className="flex items-center h-12 px-3 flex-shrink-0 border-b border-white/[0.05]">
           <button
             onClick={handleLogoClick}
-            className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-[13px] shadow-[0_4px_12px_rgba(99,102,241,0.28)] hover:shadow-[0_4px_18px_rgba(99,102,241,0.44)] transition-shadow"
+            className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold flex-shrink-0 text-[13px] shadow-[0_4px_12px_rgba(59,130,246,0.28)] hover:shadow-[0_4px_18px_rgba(59,130,246,0.44)] transition-shadow"
             aria-label="Investio"
           >
             I
@@ -248,7 +248,7 @@ function SidebarInner({ items }: SidebarProps) {
                 </p>
               </div>
             ) : (
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {conversations.map((conv) => {
                   const isActive = conv.id === activeConvId;
                   const timeAgo = conv.updatedAt ? formatTimeAgo(new Date(conv.updatedAt)) : "";
@@ -278,7 +278,7 @@ function SidebarInner({ items }: SidebarProps) {
                           setToDeleteId(conv.id);
                           setShowDeleteModal(true);
                         }}
-                        className="flex-shrink-0 w-6 h-6 mr-2 rounded-md flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                        className="flex-shrink-0 w-5 h-5 mr-1.5 rounded flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-200 ease-out"
                         title="Delete"
                       >
                         <Icon name="delete_outline" className="text-[13px]" />
@@ -333,7 +333,7 @@ export default function Sidebar({ items }: SidebarProps) {
     <Suspense
       fallback={
         <aside className="hidden md:flex w-14 flex-shrink-0 bg-[#080d14] border-r border-white/[0.055] flex-col items-center py-4">
-          <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-600 to-indigo-500 flex items-center justify-center text-white font-bold text-[13px] shadow-[0_4px_14px_rgba(99,102,241,0.30)]">
+          <div className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-[13px] shadow-[0_4px_14px_rgba(59,130,246,0.30)]">
             I
           </div>
         </aside>
