@@ -10,3 +10,27 @@ export const formatPrice = (price: number | undefined, decimals = 2) => {
   if (!price) return "N/A";
   return `$${price.toFixed(decimals)}`;
 };
+
+export const formatPercent = (value: number | undefined, decimals = 2) => {
+  if (value === undefined || value === null) return "N/A";
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${value.toFixed(decimals)}%`;
+};
+
+export const formatVolume = (volume: number | undefined) => {
+  if (!volume) return "N/A";
+  if (volume >= 1e9) return `${(volume / 1e9).toFixed(2)}B`;
+  if (volume >= 1e6) return `${(volume / 1e6).toFixed(2)}M`;
+  if (volume >= 1e3) return `${(volume / 1e3).toFixed(2)}K`;
+  return volume.toString();
+};
+
+export const formatDate = (timestamp: number) => {
+  return new Date(timestamp * 1000).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+export const isPositive = (value: number) => value >= 0;

@@ -1,0 +1,62 @@
+import { test, expect } from "@playwright/test";
+
+/**
+ * Dashboard E2E tests.
+ * Runs as the authenticated user (session loaded from e2e/.auth/user.json).
+ */
+
+test.describe("Dashboard", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/dashboard");
+  });
+
+  test("loads and shows core layout elements", async ({ page }) => {
+    // Navigation sidebar should be present.
+    await expect(page.getByRole("navigation")).toBeVisible();
+
+    // The market overview section or a ticker card must appear.
+    const marketSection = page.getByText(/market|overview|portfolio/i).first();
+    await expect(marketSection).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("displays watchlist panel", async ({ page }) => {
+    const watchlist = page.getByText(/watchlist/i).first();
+    await expect(watchlist).toBeVisible({ timeout: 8_000 });
+  });
+
+  test("global search opens and accepts input", async ({ page }) => {
+    // Trigger the search bar (keyboard shortcut or visible input).
+    const searchInput = page.getByPlaceholder(/search|symbol|stock/i).first();
+
+    if (await searchInput.isVisible()) {
+      await searchInput.fill("AAPL");
+      await expect(searchInput).toHaveValue("AAPL");
+    } else {
+      // Try keyboard shortcut (Cmd/Ctrl + K is common).
+      await page.keyboard.press("Control+k");
+      const modal = page.getByRole("dialog");
+      await expect(modal).toBeVisible({ timeout: 3_000 });
+      await modal.getByRole("textbox").fill("AAPL");
+    }
+  });
+
+  test("navigates to a ticker page from the search results", async ({ page }) => {
+    const searchInput = page.getByPlaceholder(/search|symbol|stock/i).first();
+
+    if (await searchInput.isVisible()) {
+      await searchInput.fill("AAPL");
+    } else {
+      await page.keyboard.press("Control+k");
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible({ timeout: 3_000 });
+      await dialog.getByRole("textbox").fill("AAPL");
+    }
+
+    // Click the Apple result.
+    const appleResult = page.getByText(/apple/i).first();
+    await expect(appleResult).toBeVisible({ timeout: 6_000 });
+    await appleResult.click();
+
+    await expect(page).toHaveURL(/ticker\/AAPL/i, { timeout: 10_000 });
+  });
+});
