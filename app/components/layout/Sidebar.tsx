@@ -152,15 +152,17 @@ function SidebarInner({ items }: SidebarProps) {
         <nav className="px-2 space-y-1 flex-shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); router.push("/chat"); }}
-            className={`w-full flex items-center rounded-xl text-white font-semibold text-[13px] transition-all duration-200 ease-in-out bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_8px_rgba(59,130,246,0.2)] hover:shadow-[0_2px_14px_rgba(59,130,246,0.32)] active:scale-[0.97] ${
-              isOpen ? "gap-2.5 px-2.5 py-2.5" : "justify-center p-2.5"
+            className={`flex items-center rounded-xl text-white font-semibold text-[13px] transition-all duration-200 ease-in-out bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_8px_rgba(59,130,246,0.18)] hover:shadow-[0_2px_14px_rgba(59,130,246,0.3)] active:scale-[0.97] ${
+              isOpen
+                ? "w-full gap-2.5 px-3 py-2"
+                : "w-9 h-9 mx-auto justify-center"
             }`}
           >
             <Icon name="add" className="text-[17px] flex-shrink-0" />
             <span style={labelStyle}>New Chat</span>
           </button>
 
-          <div className="h-2" />
+          <div className="h-1.5" />
 
           {items.map((item) => (
             <Link
@@ -178,7 +180,11 @@ function SidebarInner({ items }: SidebarProps) {
                 item.active
                   ? "bg-white/[0.09] text-white"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-              } ${isOpen ? "gap-2.5 px-2.5 py-2.5" : "justify-center p-2.5"}`}
+              } ${
+                isOpen
+                  ? "w-full gap-2.5 px-3 py-2"
+                  : "w-9 h-9 mx-auto justify-center"
+              }`}
             >
               <Icon
                 name={iconFor(item.label)}
