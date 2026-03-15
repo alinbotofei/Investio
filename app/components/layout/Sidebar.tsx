@@ -112,7 +112,7 @@ function SidebarInner({ items }: SidebarProps) {
         }`}
         style={{ transition: "width 260ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
-        <div className="flex items-center h-12 px-3 flex-shrink-0">
+        <div className="flex items-center h-12 px-3 flex-shrink-0 border-b border-white/[0.05]">
           <button
             onClick={handleLogoClick}
             className="w-8 h-8 rounded-[10px] bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold flex-shrink-0 text-[13px] shadow-[0_4px_12px_rgba(59,130,246,0.28)] hover:shadow-[0_4px_18px_rgba(59,130,246,0.44)] transition-shadow"
@@ -149,10 +149,10 @@ function SidebarInner({ items }: SidebarProps) {
           </button>
         </div>
 
-        <nav className="px-2 space-y-1 flex-shrink-0">
+        <nav className="px-2 pt-3 space-y-1 flex-shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); router.push("/chat"); }}
-            className={`flex items-center rounded-xl text-white font-semibold text-[13px] transition-all duration-200 ease-in-out bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 shadow-[0_2px_8px_rgba(59,130,246,0.18)] hover:shadow-[0_2px_14px_rgba(59,130,246,0.3)] active:scale-[0.97] ${
+            className={`flex items-center rounded-xl text-[13px] font-semibold transition-all duration-200 ease-in-out border border-blue-500/30 bg-blue-500/[0.08] text-blue-300 hover:bg-blue-500/[0.15] hover:text-blue-200 hover:border-blue-400/40 active:scale-[0.97] ${
               isOpen
                 ? "w-full gap-2.5 px-3 py-2"
                 : "w-9 h-9 mx-auto justify-center"
