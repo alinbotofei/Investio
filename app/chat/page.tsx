@@ -671,7 +671,7 @@ function ChatContent() {
 
                   <div className="flex flex-col items-center gap-2 sm:gap-3.5 mb-1 sm:mb-4">
                     <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.035] backdrop-blur-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_10px_22px_rgba(2,8,23,0.08)]">
-                      <div className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px] rounded-[14px] bg-gradient-to-br from-blue-500 via-blue-500 to-sky-400 flex items-center justify-center shadow-[0_8px_18px_rgba(59,130,246,0.2)] flex-shrink-0">
+                      <div className="w-[34px] h-[34px] sm:w-[36px] sm:h-[36px] rounded-[14px] bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-[0_8px_18px_rgba(59,130,246,0.22)] flex-shrink-0">
                         <svg className="w-4 h-4 sm:w-[17px] sm:h-[17px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>

@@ -11,7 +11,7 @@ export * from "./constants/market";
  */
 export { chatBubble as CHAT_BUBBLE, textarea as TEXTAREA, sendButton as SEND_BUTTON_STYLES, suggestionButton as SUGGESTION_BTN } from "./constants/ui";
 
-export const CHAT_BUBBLE_USER = "rounded-2xl px-4 py-2.5 max-w-[72%] bg-gradient-to-br from-blue-600 to-indigo-500 text-white text-sm leading-relaxed shadow-md border border-blue-400/20 break-words";
+export const CHAT_BUBBLE_USER = "rounded-2xl px-4 py-2.5 max-w-[72%] bg-blue-600/80 text-white text-sm leading-relaxed shadow-md border border-blue-500/25 break-words";
 export const CHAT_BUBBLE_ASSISTANT = "rounded-2xl px-4 py-3 max-w-[78%] bg-slate-800/80 text-slate-100 text-sm break-words border border-slate-700/40 shadow-sm";
 export const TEXTAREA_BASE = "w-full bg-slate-800/60 border border-slate-600/40 border-[0.8px] text-white px-4 py-3.5 sm:px-5 sm:py-4 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-colors duration-300 hover:bg-slate-800/80 shadow-inner";
 export const SEND_BUTTON = "flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-500 text-white rounded-full shadow-md hover:scale-105 transition-transform disabled:opacity-60";
