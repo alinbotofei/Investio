@@ -26,7 +26,6 @@ test.describe("Login page", () => {
 
     await page.getByRole("button", { name: /sign in|log in/i }).click();
 
-    // Browser native validation or custom error message must appear.
     const emailInput = page.getByLabel(/email/i);
     const validationMessage = await emailInput.evaluate(
       (el) => (el as HTMLInputElement).validationMessage
@@ -41,7 +40,6 @@ test.describe("Login page", () => {
     await page.getByLabel(/password/i).fill("wrongpassword");
     await page.getByRole("button", { name: /sign in|log in/i }).click();
 
-    // Expect an error message to appear (text varies by implementation).
     const error = page.getByText(/invalid|incorrect|wrong|not found/i);
     await expect(error).toBeVisible({ timeout: 8_000 });
   });
@@ -72,7 +70,6 @@ test.describe("Signup page", () => {
 
     const passwordFields = page.getByLabel(/password/i);
     await passwordFields.first().fill("securepassword123");
-    // If there is a confirm password field, fill it with a different value.
     if ((await passwordFields.count()) > 1) {
       await passwordFields.nth(1).fill("differentpassword");
       await page.getByRole("button", { name: /sign up|create|register/i }).click();
@@ -92,7 +89,6 @@ test.describe("Signup page", () => {
 
 test.describe("Authenticated redirect", () => {
   test("redirects /login to /dashboard when already logged in", async ({ page }) => {
-    // storageState from the project (default = .auth/user.json via the project config)
     await page.goto("/login");
     await expect(page).toHaveURL(/dashboard/, { timeout: 10_000 });
   });

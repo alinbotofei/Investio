@@ -33,10 +33,8 @@ test.describe("Chat page", () => {
     await input.fill("Hello");
     await page.getByRole("button", { name: /send/i }).click();
 
-    // The user message should appear in the chat.
     await expect(page.getByText("Hello")).toBeVisible({ timeout: 5_000 });
 
-    // A response should eventually appear (allow generous timeout for OpenAI).
     const assistantMessage = page.locator('[data-role="assistant"], [data-testid="assistant-message"]').first();
     if (await assistantMessage.count() > 0) {
       await expect(assistantMessage).toBeVisible({ timeout: 30_000 });
@@ -48,7 +46,6 @@ test.describe("Chat page", () => {
     await input.fill("Tell me about Investio");
     await page.keyboard.press("Enter");
 
-    // The conversation title or a sidebar entry should appear.
     const sidebar = page.getByRole("complementary");
     await expect(sidebar).toBeVisible({ timeout: 5_000 });
   });
@@ -58,11 +55,9 @@ test.describe("Chat widget (dashboard)", () => {
   test("opens the chat widget from the dashboard", async ({ page }) => {
     await page.goto("/dashboard");
 
-    // Look for a floating action button that opens the chat widget.
     const fabOrChatBtn = page.getByRole("button", { name: /chat|ask|ai/i }).first();
     if (await fabOrChatBtn.isVisible()) {
       await fabOrChatBtn.click();
-      // A chat panel / modal should appear.
       const chatPanel = page.getByRole("dialog").or(page.getByTestId("chat-widget"));
       await expect(chatPanel).toBeVisible({ timeout: 5_000 });
     } else {

@@ -24,7 +24,6 @@ setup("authenticate", async ({ page }) => {
   await page.getByLabel(/password/i).fill(password);
   await page.getByRole("button", { name: /sign in|log in/i }).click();
 
-  // Wait for the redirect that signals a successful login.
   await page.waitForURL("**/dashboard", { timeout: 15_000 });
   await expect(page).toHaveURL(/dashboard/);
 

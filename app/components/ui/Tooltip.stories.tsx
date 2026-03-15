@@ -8,7 +8,6 @@ const meta = {
   parameters: { layout: "centered" },
   decorators: [
     (Story) => (
-      // Extra padding so the tooltip is not clipped by the canvas boundary
       <div className="p-16">
         <Story />
       </div>

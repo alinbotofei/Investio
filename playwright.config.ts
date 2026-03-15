@@ -20,14 +20,12 @@ export default defineConfig({
   },
 
   projects: [
-    // Setup project: creates an authenticated session cookie stored to disk.
     { name: "setup", testMatch: /.*\.setup\.ts/ },
 
     {
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
-        // Re-use the session from setup so tests don't need to log in every time.
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],
@@ -43,7 +41,6 @@ export default defineConfig({
     },
   ],
 
-  // Auto-start Next.js dev server when running locally.
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3000",

@@ -11,10 +11,8 @@ test.describe("Dashboard", () => {
   });
 
   test("loads and shows core layout elements", async ({ page }) => {
-    // Navigation sidebar should be present.
     await expect(page.getByRole("navigation")).toBeVisible();
 
-    // The market overview section or a ticker card must appear.
     const marketSection = page.getByText(/market|overview|portfolio/i).first();
     await expect(marketSection).toBeVisible({ timeout: 10_000 });
   });
@@ -25,14 +23,12 @@ test.describe("Dashboard", () => {
   });
 
   test("global search opens and accepts input", async ({ page }) => {
-    // Trigger the search bar (keyboard shortcut or visible input).
     const searchInput = page.getByPlaceholder(/search|symbol|stock/i).first();
 
     if (await searchInput.isVisible()) {
       await searchInput.fill("AAPL");
       await expect(searchInput).toHaveValue("AAPL");
     } else {
-      // Try keyboard shortcut (Cmd/Ctrl + K is common).
       await page.keyboard.press("Control+k");
       const modal = page.getByRole("dialog");
       await expect(modal).toBeVisible({ timeout: 3_000 });
@@ -52,7 +48,6 @@ test.describe("Dashboard", () => {
       await dialog.getByRole("textbox").fill("AAPL");
     }
 
-    // Click the Apple result.
     const appleResult = page.getByText(/apple/i).first();
     await expect(appleResult).toBeVisible({ timeout: 6_000 });
     await appleResult.click();

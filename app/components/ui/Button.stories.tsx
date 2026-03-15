@@ -29,8 +29,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// --- Variants ---
-
 export const Primary: Story = {
   args: { variant: "primary", children: "Get started" },
 };
@@ -47,8 +45,6 @@ export const Danger: Story = {
   args: { variant: "danger", children: "Delete account" },
 };
 
-// --- Sizes ---
-
 export const Small: Story = {
   args: { size: "sm", children: "Small" },
 };
@@ -61,8 +57,6 @@ export const Large: Story = {
   args: { size: "lg", children: "Large" },
 };
 
-// --- States ---
-
 export const Loading: Story = {
   args: { loading: true, children: "Saving…" },
 };
@@ -70,8 +64,6 @@ export const Loading: Story = {
 export const Disabled: Story = {
   args: { disabled: true, children: "Unavailable" },
 };
-
-// --- All variants side-by-side ---
 
 export const AllVariants: Story = {
   render: () => (
