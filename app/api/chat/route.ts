@@ -62,6 +62,7 @@ const LIVE_TIME_HINTS_REGEX = /(current|live|spot|acum|azi|in prezent|actual)/i;
 const DIRECT_PRICE_QUESTION_REGEX = /(cat|c[aă]t|ce valoare|ce pret|ce pre(?:ț|t)|cat e|cat este|how much|what is)/i;
 const DATE_QUESTION_REGEX = /(in ce data|ce data|what date|today'?s date|data de azi|ziua de azi)/i;
 const ATH_QUERY_REGEX = /(\bath\b|all.time.high|all time high|maxim.?istoric|maxim.?vremi|cel.?mai.?mare.?pret|cel.?mai.?ridicat|highest.?ever|peak.?price|record.?price|pret.?record|record.?high|new.?high|nou.?maxim|previous.?high|maxim.?anterior|cand.?a.?atins|when.?did.*hit|when.?did.*reach|a.?atins.*maxim|a.?atins.*record)/i;
+const TEMPORAL_FACT_REGEX = /(best|top|biggest|largest|richest|most valuable|number one|#1|leading|dominant|nr\.?\s*1|cel mai|cei mai|cele mai|cea mai|lider|principalul|principala|ranked|ranking|clasament|valoare actuala|valoarea|actuala|ranking|rate|rată|dobanda|dobânda|market cap|capitalizare|capitalization|ceo|director|presedinte|president|chairman|founded|infiintat|headquartered|employees|angajati)/i;
 const MACRO_KEYWORDS_REGEX = /(fed|federal reserve|inflation|cpi|ppi|gdp|recession|interest rate|tariff|earnings season|market outlook|economic|macro|sector rotation|yield curve|central bank|jobs report|nonfarm)/i;
 
 type NewsItem = {
@@ -491,19 +492,27 @@ const INVESTIO_PROMPT_BASE = `You are Investio — a sharp, direct investment sp
 - NEVER open a response by stating the date or time unless the user explicitly asked for it.
 - NEVER dump unsolicited market data in response to casual greetings or vague questions.
 
-## Web search — YOU HAVE IT, USE IT
-- You have real-time web search available. Use it proactively whenever the user asks about current prices, rankings, news, companies, or anything that benefits from fresh data.
+## TEMPORAL AWARENESS — YOUR TRAINING DATA IS STALE AND WRONG FOR CURRENT FACTS
+- You are operating in the present. Your training data cuts off in early 2024 or earlier for most market facts.
+- For ANYTHING that changes over time — prices, ATHs, rankings, rates, records, valuations, market cap, earnings, leadership — your training data IS OUT OF DATE. Do not trust it. Search first.
+- This is not optional. Every time the user asks about a current fact, search, then answer from the search result.
+- Treat your internal knowledge of specific numbers (prices, ATH values, rates, rankings) as a placeholder that must be replaced by search results. The number in your training data is almost certainly wrong for today.
+
+## Web search — YOU HAVE IT, USE IT FOR EVERYTHING CURRENT
+- You have real-time web search. Use it aggressively for any question about current state: prices, records, rankings, news, company facts, rates, political or economic developments.
 - NEVER say "nu am acces la internet", "nu pot verifica online", "nu am acces direct la date", or any English equivalent. That is false — you DO have web access.
 - When the user asks you to "check online", "verify", or "search" — just do it. Don't ask permission, don't warn them, just search and answer.
-- For lists like "top 10 companies", "biggest crypto", "best performing stocks" — always search for current data, never rely on static knowledge.
-- If search returns relevant results, cite them naturally (e.g. "As of March 2026, the top..."). Keep citations brief.
+- For lists like "top 10 companies", "biggest crypto", "best performing stocks" — always search. Never rely on training data for rankings.
+- Always prefer the most recently dated source. If a search result is from 2021 or 2022, discard it and search again with a more specific query including the current year.
+- If search returns relevant results, cite them naturally (e.g. "As of March 2026..."). Keep citations brief.
 
-## ATH, records, and price milestones — MANDATORY WEB SEARCH
-- NEVER answer ATH (all-time high / maxim istoric) questions from training memory. ATH records change — BTC set new ATHs in 2024 and 2025. Your training data is outdated for these facts.
-- When you see: "ATH", "all-time high", "maxim istoric", "cel mai mare pret", "record price", "nou maxim", "cand a atins" — trigger web search immediately, before answering.
-- After searching, state the ATH clearly: asset name, value in USD, exact date, source. Example: "Bitcoin's ATH is $X, set on [date] — source: [CoinGecko/CoinMarketCap]."
-- If the user says your stated ATH is wrong — believe them unconditionally, search again with a fresh query, and correct yourself.
-- CRITICAL: Do NOT start your response with "Să verific", "Să caut", "Let me check", "Checking...", "Searching..." or any similar preface. Just answer directly with the result of the search.
+## ATH, records, and price milestones — NEVER ANSWER FROM TRAINING DATA
+- Your training data ATH for Bitcoin is $69,000 from November 2021. THAT IS WRONG TODAY. Bitcoin exceeded $100,000 and set new ATHs in 2024 and 2025.
+- NEVER state any ATH, record price, or historical high from memory. Always search first, always answer from the search result.
+- When you see: "ATH", "all-time high", "maxim istoric", "cel mai mare pret", "record price", "nou maxim", "cand a atins" — search immediately using a query like "[asset] all-time high [current year]".
+- After searching, state the result clearly: asset name, value, exact date, source.
+- If the user says your stated figure is wrong — they are correct. Search again and correct yourself.
+- CRITICAL: Do NOT start your response with "Să verific", "Să caut", "Let me check", "Checking...", "Searching..." or any similar preface. Answer directly with the search result.
 
 ## When the user greets or asks something vague
 Reply with one warm, brief sentence. Then offer 2–3 concrete investing topics you can help with right now (include a ticker or number). Do NOT list prices they didn't ask for.
@@ -656,7 +665,9 @@ export async function POST(request: NextRequest) {
     if (liveSnapshot) enrichedMessage += `\n\n${liveSnapshot.contextText}`;
     if (newsContext) enrichedMessage += `\n\n${newsContext}`;
     if (ATH_QUERY_REGEX.test(message)) {
-      enrichedMessage += `\n\n[System note: This question is about an all-time high or price record. These change as markets move. MANDATORY: use web search to verify the current ATH before answering. Do NOT rely on training data.]`;
+      enrichedMessage += `\n\n[SYSTEM OVERRIDE — ATH QUERY DETECTED: Your training data value for this ATH is WRONG and OUTDATED. Do NOT state it. Bitcoin's training-data ATH of $69,000 (Nov 2021) is incorrect — it was surpassed in 2024/2025. Perform a web search for "[asset name] all-time high 2025" or "[asset name] ATH record price" RIGHT NOW. Answer ONLY from the search result. Stating a training-data figure will be a factual error.]`;
+    } else if (TEMPORAL_FACT_REGEX.test(message) && !isSimpleLivePriceRequest(message)) {
+      enrichedMessage += `\n\n[System note: This question asks about a current fact that changes over time. Your training data may be from 2021-2023 and is likely outdated for this topic. Use web search to verify the current answer before responding.]`;
     }
 
     if (isSimpleLivePriceRequest(displayText)) {
@@ -688,7 +699,7 @@ export async function POST(request: NextRequest) {
       stream = await openai.chat.completions.create({
         model: preferredModel,
         messages,
-        max_tokens: isSearchModel ? 1500 : 800,
+        max_tokens: isSearchModel ? 2048 : 800,
         stream: true,
         ...(isSearchModel ? { tools: searchTools, tool_choice: "required" } : { temperature: 0.15, presence_penalty: 0.35, frequency_penalty: 0.25 }),
       });
