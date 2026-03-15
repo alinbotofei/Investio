@@ -56,7 +56,7 @@ function SidebarInner({ items }: SidebarProps) {
 
   const handleMouseLeave = () => {
     if (isPinned) return;
-    closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 280);
+    closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 160);
   };
 
   const handlePin = (e: React.MouseEvent) => {
@@ -64,7 +64,7 @@ function SidebarInner({ items }: SidebarProps) {
     const next = !isPinned;
     setIsPinned(next);
     if (!next) {
-      closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 280);
+      closeTimeoutRef.current = setTimeout(() => setIsOpen(false), 160);
     }
     try { localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next)); } catch {}
   };
@@ -89,7 +89,7 @@ function SidebarInner({ items }: SidebarProps) {
 
   const fadeStyle: React.CSSProperties = {
     opacity: isOpen ? 1 : 0,
-    transition: isOpen ? "opacity 130ms ease 110ms" : "opacity 70ms ease 0ms",
+    transition: isOpen ? "opacity 80ms ease 50ms" : "opacity 40ms ease 0ms",
   };
 
   const labelStyle: React.CSSProperties = {
@@ -98,8 +98,8 @@ function SidebarInner({ items }: SidebarProps) {
     overflow: "hidden",
     whiteSpace: "nowrap",
     transition: isOpen
-      ? "opacity 130ms ease 110ms, max-width 260ms cubic-bezier(0.4,0,0.2,1)"
-      : "opacity 70ms ease 0ms, max-width 220ms cubic-bezier(0.4,0,0.2,1)",
+      ? "opacity 80ms ease 50ms, max-width 160ms cubic-bezier(0.4,0,0.2,1)"
+      : "opacity 40ms ease 0ms, max-width 140ms cubic-bezier(0.4,0,0.2,1)",
   };
 
   return (
@@ -110,7 +110,7 @@ function SidebarInner({ items }: SidebarProps) {
         className={`hidden md:flex flex-col flex-shrink-0 h-full overflow-hidden border-r border-white/[0.055] bg-[#080d14] will-change-[width] ${
           isOpen ? "w-64" : "w-14"
         }`}
-        style={{ transition: "width 260ms cubic-bezier(0.4, 0, 0.2, 1)" }}
+        style={{ transition: "width 160ms cubic-bezier(0.4, 0, 0.2, 1)" }}
       >
         <div className="flex items-center h-12 px-3 flex-shrink-0 border-b border-white/[0.05]">
           <button
@@ -138,7 +138,7 @@ function SidebarInner({ items }: SidebarProps) {
             style={{
               opacity: isOpen ? 1 : 0,
               pointerEvents: isOpen ? "auto" : "none",
-              transition: isOpen ? "opacity 130ms ease 110ms" : "opacity 70ms ease 0ms",
+              transition: isOpen ? "opacity 80ms ease 50ms" : "opacity 40ms ease 0ms",
             }}
           >
             {isPinned ? (
@@ -152,7 +152,7 @@ function SidebarInner({ items }: SidebarProps) {
         <nav className="px-2 pt-3 space-y-1 flex-shrink-0">
           <button
             onClick={(e) => { e.stopPropagation(); router.push("/chat"); }}
-            className={`flex items-center rounded-xl text-[13px] font-semibold transition-all duration-200 ease-in-out border border-blue-500/30 bg-blue-500/[0.08] text-blue-300 hover:bg-blue-500/[0.15] hover:text-blue-200 hover:border-blue-400/40 active:scale-[0.97] ${
+            className={`flex items-center rounded-xl text-[13px] font-semibold transition-all duration-150 ease-out border border-blue-500/30 bg-blue-500/[0.08] text-blue-300 hover:bg-blue-500/[0.15] hover:text-blue-200 hover:border-blue-400/40 active:scale-[0.97] ${
               isOpen
                 ? "w-full gap-2.5 px-3 py-2"
                 : "w-9 h-9 mx-auto justify-center"
@@ -176,7 +176,7 @@ function SidebarInner({ items }: SidebarProps) {
                   emitChatReset();
                 }
               }}
-              className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-200 ease-in-out ${
+              className={`flex items-center rounded-xl text-[13px] font-medium transition-all duration-150 ease-out ${
                 item.active
                   ? "bg-white/[0.09] text-white"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
@@ -205,7 +205,7 @@ function SidebarInner({ items }: SidebarProps) {
           style={{
             opacity: isOpen ? 1 : 0,
             pointerEvents: isOpen ? "auto" : "none",
-            transition: isOpen ? "opacity 130ms ease 110ms" : "opacity 70ms ease 0ms",
+            transition: isOpen ? "opacity 80ms ease 50ms" : "opacity 40ms ease 0ms",
           }}
         >
           <div className="px-4 mb-2 flex items-center justify-between flex-shrink-0">
@@ -255,7 +255,7 @@ function SidebarInner({ items }: SidebarProps) {
                   return (
                     <div
                       key={conv.id}
-                      className={`group relative flex items-center rounded-xl transition-all duration-200 ease-in-out ${
+                      className={`group relative flex items-center rounded-xl transition-all duration-150 ease-out ${
                         isActive ? "bg-white/[0.08]" : "hover:bg-white/[0.05]"
                       }`}
                     >
@@ -278,7 +278,7 @@ function SidebarInner({ items }: SidebarProps) {
                           setToDeleteId(conv.id);
                           setShowDeleteModal(true);
                         }}
-                        className="flex-shrink-0 w-5 h-5 mr-1.5 rounded flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-200 ease-out"
+                        className="flex-shrink-0 w-6 h-6 mx-1.5 rounded flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-400/[0.12] opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out"
                         title="Delete"
                       >
                         <Icon name="delete_outline" className="text-[13px]" />

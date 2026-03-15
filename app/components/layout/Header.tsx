@@ -40,7 +40,7 @@ function HeaderInner() {
   useEffect(() => {
     if (sidebarOpen) return;
 
-    const timeout = setTimeout(() => setSidebarVisible(false), 240);
+    const timeout = setTimeout(() => setSidebarVisible(false), 150);
     return () => clearTimeout(timeout);
   }, [sidebarOpen]);
 
@@ -125,11 +125,11 @@ function HeaderInner() {
 
       {sidebarVisible && (
         <div
-          className={`fixed inset-0 z-50 backdrop-blur-[1px] transition-all duration-250 ${sidebarOpen ? "bg-black/45 opacity-100" : "bg-black/0 opacity-0"}`}
+          className={`fixed inset-0 z-50 backdrop-blur-[1px] transition-all duration-150 ${sidebarOpen ? "bg-black/45 opacity-100" : "bg-black/0 opacity-0"}`}
           onClick={closeSidebar}
         >
           <aside
-            className={`fixed left-0 top-0 h-dvh w-72 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl transform-gpu will-change-transform transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] overflow-hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+            className={`fixed left-0 top-0 h-dvh w-72 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl transform-gpu will-change-transform transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] overflow-hidden ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="h-full overflow-y-auto overscroll-contain">

@@ -718,7 +718,7 @@ function ChatContent() {
                       onChange={(e) => setDraftValue(e.target.value)}
                       onFocus={() => setLandingFocused(true)}
                       onBlur={() => setLandingFocused(false)}
-                      className="relative w-full bg-slate-800/80 border border-slate-600/35 text-white py-4 pl-6 pr-[60px] rounded-[26px] resize-none focus:outline-none hover:bg-slate-800/88 hover:border-slate-500/42 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.22),0_0_32px_rgba(59,130,246,0.12),0_8px_24px_rgba(2,8,23,0.18)] shadow-[0_4px_18px_rgba(2,8,23,0.16)] text-[15px] sm:text-[16px] backdrop-blur-sm transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[76px] sm:min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar"
+                      className="relative w-full bg-slate-800/80 border border-slate-600/35 text-white py-4 pl-6 pr-[60px] rounded-[26px] resize-none focus:outline-none hover:bg-slate-800/88 hover:border-slate-500/42 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.22),0_0_32px_rgba(59,130,246,0.12),0_8px_24px_rgba(2,8,23,0.18)] shadow-[0_4px_18px_rgba(2,8,23,0.16)] text-[15px] sm:text-[16px] backdrop-blur-sm transition-[background-color,box-shadow,border-color] duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[76px] sm:min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar"
                       rows={1}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -738,7 +738,7 @@ function ChatContent() {
                       onClick={() => handleSend()}
                       disabled={loading || !value.trim()}
                       aria-label="Send message"
-                      className="absolute right-3 inset-y-0 my-auto w-[34px] h-[34px] sm:w-[34px] sm:h-[34px] xl:w-[34px] xl:h-[34px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_4px_12px_rgba(2,8,23,0.28)] transition-all duration-200 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-[30px] h-[30px] sm:w-[30px] sm:h-[30px] xl:w-[30px] xl:h-[30px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_3px_10px_rgba(2,8,23,0.25)] transition-all duration-200 active:scale-[0.96] disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <Icon name="send" className="text-[13px] sm:text-[13px] xl:text-[13px]" />
                     </button>
@@ -877,7 +877,7 @@ function ChatContent() {
                       value={value}
                       onChange={(e) => setDraftValue(e.target.value)}
                       placeholder="Ask anything..."
-                      className="w-full bg-slate-800/80 border border-slate-600/35 text-white text-[16px] py-4 pl-5 pr-[58px] rounded-[24px] resize-none focus:outline-none hover:bg-slate-800/90 hover:border-slate-500/40 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.15),0_0_28px_rgba(59,130,246,0.07)] transition-[background-color,box-shadow,border-color] duration-[500ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
+                      className="w-full bg-slate-800/80 border border-slate-600/35 text-white text-[16px] py-4 pl-5 pr-[58px] rounded-[24px] resize-none focus:outline-none hover:bg-slate-800/90 hover:border-slate-500/40 focus:bg-slate-800/90 focus:shadow-[0_0_0_1px_rgba(147,197,253,0.15),0_0_28px_rgba(59,130,246,0.07)] transition-[background-color,box-shadow,border-color] duration-[200ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-[60px] max-h-[190px] leading-relaxed hide-scrollbar shadow-[0_2px_12px_rgba(0,0,0,0.18)]"
                       rows={1}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
@@ -890,7 +890,7 @@ function ChatContent() {
                       onClick={() => handleSend()}
                       disabled={loading || !value.trim()}
                       aria-label="Send"
-                      className="absolute right-3 inset-y-0 my-auto w-[34px] h-[34px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_4px_12px_rgba(2,8,23,0.28)] transition-all duration-200 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 w-[30px] h-[30px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_3px_10px_rgba(2,8,23,0.25)] transition-all duration-200 active:scale-[0.96] disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       {loading ? (
                         <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />

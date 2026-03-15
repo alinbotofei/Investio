@@ -67,9 +67,8 @@ a {
   background: #475569;
 }
 
-/* Chat message styling */
 .chat-message {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.15s ease-in;
 }
 
 @keyframes fadeIn {
@@ -83,7 +82,6 @@ a {
   }
 }
 
-/* Chart container */
 .chart-container {
   margin: 1rem 0;
   padding: 1rem;
@@ -92,7 +90,6 @@ a {
   border: 1px solid var(--border);
 }
 
-/* Code blocks */
 pre {
   background: var(--card-background);
   border: 1px solid var(--border);
@@ -107,7 +104,6 @@ code {
   font-size: 0.9em;
 }
 
-/* Table styling */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -126,7 +122,6 @@ th {
   background: var(--card-background);
 }
 
-/* Loading animations */
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -140,14 +135,12 @@ th {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Transitions */
 .transition-all {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
 
-/* Focus styles */
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
@@ -155,7 +148,6 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-/* Custom scrollbar class */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #475569 transparent;
@@ -179,7 +171,6 @@ textarea:focus-visible {
   background: #64748b;
 }
 
-/* Hide scrollbar for textarea */
 .hide-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -189,7 +180,6 @@ textarea:focus-visible {
   display: none;
 }
 
-/* Keep icon layout stable and prevent ligature text flash before font is ready */
 .material-symbols-outlined {
   display: inline-flex;
   align-items: center;
@@ -206,7 +196,6 @@ body:not(.fonts-loaded) .material-symbols-outlined {
   color: transparent !important;
 }
 
-/* Typing dots animation */
 .typing-dots {
   display: flex;
   align-items: center;
@@ -242,9 +231,8 @@ body:not(.fonts-loaded) .material-symbols-outlined {
   }
 }
 
-/* Fade in animation */
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.2s ease-out;
 }
 
 @keyframes fadeIn {
