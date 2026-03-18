@@ -42,13 +42,13 @@ export default function InsiderSentimentBadge({
 
   const sentiment =
     avgMspr > 0
-      ? { label: "Bullish", color: "text-green-400", bg: "bg-green-500/10", icon: "trending_up" }
+      ? { label: "Bullish", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-400/20", icon: "trending_up" }
       : avgMspr < 0
-      ? { label: "Bearish", color: "text-red-400", bg: "bg-red-500/10", icon: "trending_down" }
-      : { label: "Neutral", color: "text-yellow-400", bg: "bg-yellow-500/10", icon: "trending_flat" };
+      ? { label: "Bearish", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-400/20", icon: "trending_down" }
+      : { label: "Neutral", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-400/20", icon: "trending_flat" };
 
   return (
-    <div className={`${sentiment.bg} border border-${sentiment.color.replace('text-', '')}/20 rounded-xl p-3`}>
+    <div className={`${sentiment.bg} border ${sentiment.border} rounded-xl p-3`}>
       <div className="flex items-center gap-2 mb-2">
         <Icon name="account_balance" className={`${sentiment.color} text-[16px]`} />
         <span className="text-xs font-semibold text-white">
