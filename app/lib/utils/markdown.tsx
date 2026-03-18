@@ -37,21 +37,24 @@ function looksLikeChartJson(raw: string): boolean {
 
 export const markdownComponents: Components = {
   h1: ({ node: _node, ...props }) => (
-    <h1 className="text-2xl font-bold mb-3 mt-4 text-white" {...props} />
+    <h1 className="text-2xl font-bold mb-3 mt-4 text-slate-100" {...props} />
   ),
   h2: ({ node: _node, ...props }) => (
-    <h2 className="text-xl font-bold mb-3 mt-3 text-white" {...props} />
+    <h2 className="text-xl font-bold mb-3 mt-3 text-slate-100" {...props} />
   ),
   h3: ({ node: _node, ...props }) => (
-    <h3 className="text-lg font-semibold mb-2 mt-2 text-slate-200" {...props} />
+    <h3 className="text-lg font-semibold mb-2 mt-2 text-slate-300" {...props} />
   ),
   p: ({ node: _node, children, ...props }) => {
     const rawText = extractText(children as ReactNode).trim();
     if (looksLikeChartJson(rawText)) {
       return <InlineChart raw={rawText} />;
     }
+    if (rawText.startsWith("{")) {
+      return null;
+    }
     return (
-      <p className="mb-3 leading-relaxed text-slate-100" {...props}>
+      <p className="mb-3 leading-relaxed text-slate-300" {...props}>
         {children}
       </p>
     );
@@ -69,13 +72,13 @@ export const markdownComponents: Components = {
     />
   ),
   li: ({ node: _node, ...props }) => (
-    <li className="leading-relaxed text-slate-100" {...props} />
+    <li className="leading-relaxed text-slate-300" {...props} />
   ),
   strong: ({ node: _node, ...props }) => (
-    <strong className="font-bold text-white" {...props} />
+    <strong className="font-semibold text-slate-100" {...props} />
   ),
   em: ({ node: _node, ...props }) => (
-    <em className="italic text-slate-200" {...props} />
+    <em className="italic text-slate-400" {...props} />
   ),
   code: ({ node: _node, className, children, ...props }) => {
     const isInline = !className;
@@ -87,7 +90,11 @@ export const markdownComponents: Components = {
       ) {
         return <InlineChart raw={raw} />;
       }
-      return null;
+      return (
+        <code className="block bg-slate-950/60 rounded-lg p-3 my-2 text-sky-300 text-sm font-mono overflow-x-auto border border-slate-700/40 leading-relaxed">
+          {children}
+        </code>
+      );
     }
     return (
       <code
@@ -106,28 +113,38 @@ export const markdownComponents: Components = {
       return el.type === InlineChart || el.props?.raw !== undefined;
     });
     if (hasChart) return <>{children}</>;
-    return null;
+    return (
+      <pre className="bg-slate-950/60 rounded-lg p-3 my-2 overflow-x-auto border border-slate-700/40">
+        {children}
+      </pre>
+    );
   },
   table: ({ node: _node, ...props }) => (
-    <div className="overflow-x-auto my-4">
+    <div className="overflow-x-auto mt-2 mb-4 rounded-lg border border-slate-700/60">
       <table
-        className="w-full border-collapse rounded-lg overflow-hidden"
+        className="w-full border-collapse text-sm m-0"
         {...props}
       />
     </div>
   ),
   thead: ({ node: _node, ...props }) => (
-    <thead className="bg-slate-700/50" {...props} />
+    <thead className="bg-slate-800/80" {...props} />
   ),
   th: ({ node: _node, ...props }) => (
     <th
-      className="border border-slate-600 px-4 py-2 text-left font-semibold text-slate-200"
+      className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-700/80"
       {...props}
     />
   ),
+  tbody: ({ node: _node, ...props }) => (
+    <tbody {...props} />
+  ),
+  tr: ({ node: _node, ...props }) => (
+    <tr className="border-b border-slate-700/40 last:border-0 transition-colors hover:bg-slate-700/10" {...props} />
+  ),
   td: ({ node: _node, ...props }) => (
     <td
-      className="border border-slate-700/50 px-4 py-2 text-slate-100"
+      className="px-4 py-2.5 text-slate-300"
       {...props}
     />
   ),
