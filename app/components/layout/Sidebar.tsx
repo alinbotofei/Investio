@@ -89,7 +89,7 @@ function SidebarInner({ items }: SidebarProps) {
 
   const fadeStyle: React.CSSProperties = {
     opacity: isOpen ? 1 : 0,
-    transition: isOpen ? "opacity 100ms ease 80ms" : "opacity 50ms ease 0ms",
+    transition: isOpen ? "opacity 180ms ease 80ms" : "opacity 80ms ease 0ms",
   };
 
   const labelStyle: React.CSSProperties = {
@@ -98,8 +98,8 @@ function SidebarInner({ items }: SidebarProps) {
     overflow: "hidden",
     whiteSpace: "nowrap",
     transition: isOpen
-      ? "opacity 100ms ease 70ms, max-width 180ms cubic-bezier(0.22,1,0.36,1)"
-      : "opacity 40ms ease 0ms, max-width 120ms cubic-bezier(0.55,0,1,0.45)",
+      ? "opacity 180ms ease 60ms, max-width 220ms cubic-bezier(0.4,0,0.2,1)"
+      : "opacity 60ms ease 0ms, max-width 150ms cubic-bezier(0.4,0,1,1)",
   };
 
   return (
@@ -110,7 +110,7 @@ function SidebarInner({ items }: SidebarProps) {
         className={`hidden md:flex flex-col flex-shrink-0 h-full overflow-hidden border-r border-white/[0.055] bg-[#080d14] ${
           isOpen ? "w-64" : "w-14"
         }`}
-        style={{ transition: isOpen ? "width 180ms cubic-bezier(0.22,1,0.36,1)" : "width 120ms cubic-bezier(0.55,0,1,0.45)" }}
+        style={{ transition: isOpen ? "width 220ms cubic-bezier(0.4,0,0.2,1)" : "width 150ms cubic-bezier(0.4,0,1,1)" }}
       >
         <div className="flex items-center h-12 px-3 flex-shrink-0 border-b border-white/[0.05]">
           <button
@@ -138,7 +138,7 @@ function SidebarInner({ items }: SidebarProps) {
             style={{
               opacity: isOpen ? 1 : 0,
               pointerEvents: isOpen ? "auto" : "none",
-              transition: isOpen ? "opacity 100ms ease 80ms" : "opacity 50ms ease 0ms",
+              transition: isOpen ? "opacity 180ms ease 80ms" : "opacity 80ms ease 0ms",
             }}
           >
             {isPinned ? (
