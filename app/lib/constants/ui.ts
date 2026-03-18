@@ -1,8 +1,3 @@
-/**
- * Reusable Tailwind class strings for UI primitives.
- * Co-located here so components stay lean and styles are easy to audit.
- */
-
 export const chatBubble = {
   user: "rounded-2xl px-4 py-2.5 max-w-[72%] bg-gradient-to-br from-blue-600 to-cyan-500 text-white text-sm leading-relaxed shadow-md border border-blue-400/20 break-words",
   assistant: "rounded-2xl px-4 py-3 max-w-[78%] bg-slate-800/80 text-slate-100 text-sm break-words border border-slate-700/40 shadow-sm",

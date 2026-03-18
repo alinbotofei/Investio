@@ -1,8 +1,3 @@
-/**
- * Static market-related constants: symbols, placeholders, quick actions.
- * Kept separate from UI constants so each file has one reason to change.
- */
-
 export const POPULAR_STOCKS = [
   "AAPL",
   "MSFT",
@@ -80,4 +75,20 @@ export const CHAT_SUGGESTIONS = [
     desc: "High-yield plays & payout data",
     prompt: "Show me the best dividend stocks right now with yield comparison charts.",
   },
+] as const;
+
+export const STOCK_SUGGESTIONS = [
+  { symbol: "AAPL", name: "Apple Inc." },
+  { symbol: "MSFT", name: "Microsoft Corp." },
+  { symbol: "GOOGL", name: "Alphabet Inc." },
+  { symbol: "TSLA", name: "Tesla Inc." },
+  { symbol: "NVDA", name: "NVIDIA Corp." },
+] as const;
+
+export const DASHBOARD_INPUT_PLACEHOLDERS = [
+  "What are the top performing stocks today?",
+  "Compare Bitcoin vs Ethereum performance",
+  "Analyze crypto market sentiment",
+  "Should I invest in tech stocks?",
+  "What's moving the market today?",
 ] as const;

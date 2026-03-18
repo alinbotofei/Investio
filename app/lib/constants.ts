@@ -1,14 +1,6 @@
-/**
- * Barrel re-export — keeps all existing imports working while the
- * actual values now live in focused, single-responsibility modules.
- */
 export * from "./constants/ui";
 export * from "./constants/market";
 
-/**
- * Legacy named exports kept for backward compatibility with components
- * that still reference the flat names directly.
- */
 export { chatBubble as CHAT_BUBBLE, textarea as TEXTAREA, sendButton as SEND_BUTTON_STYLES, suggestionButton as SUGGESTION_BTN } from "./constants/ui";
 
 export const CHAT_BUBBLE_USER = "rounded-2xl px-4 py-2.5 max-w-[72%] bg-blue-600/80 text-white text-sm leading-relaxed shadow-md border border-blue-500/25 break-words";

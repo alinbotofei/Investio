@@ -5,21 +5,13 @@ import Icon from "../ui/Icon";
 import { AssetCategory } from "@/lib/types/assets";
 import { assetHelpers } from "@/app/lib/utils/watchlist";
 import { useWatchlist } from "@/app/contexts/WatchlistContext";
-import { POPULAR_CRYPTO } from "@/app/lib/constants";
+import { POPULAR_CRYPTO, STOCK_SUGGESTIONS } from "@/app/lib/constants";
 
 interface AssetSuggestion {
   symbol: string;
   name: string;
   category: AssetCategory;
 }
-
-const STOCK_SUGGESTIONS: AssetSuggestion[] = [
-  { symbol: "AAPL", name: "Apple Inc.", category: "stock" },
-  { symbol: "MSFT", name: "Microsoft Corp.", category: "stock" },
-  { symbol: "GOOGL", name: "Alphabet Inc.", category: "stock" },
-  { symbol: "TSLA", name: "Tesla Inc.", category: "stock" },
-  { symbol: "NVDA", name: "NVIDIA Corp.", category: "stock" },
-];
 
 export default function AssetExplorer() {
   const [category, setCategory] = useState<AssetCategory>("stock");
@@ -28,7 +20,7 @@ export default function AssetExplorer() {
 
   useEffect(() => {
     if (category === "stock") {
-      setSuggestions(STOCK_SUGGESTIONS);
+      setSuggestions(STOCK_SUGGESTIONS.map((s) => ({ ...s, category: "stock" as const })));
     } else if (category === "crypto") {
       setSuggestions(
         POPULAR_CRYPTO.map((symbol) => ({

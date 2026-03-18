@@ -8,7 +8,7 @@ import MarketOverview from "./_components/MarketOverview";
 import MarketNews from "./_components/MarketNews";
 import Icon from "@/app/components/ui/Icon";
 import AnimatedPlaceholder from "@/app/components/ui/AnimatedPlaceholder";
-import { SEND_BUTTON } from "@/app/lib/constants";
+import { SEND_BUTTON, DASHBOARD_INPUT_PLACEHOLDERS } from "@/app/lib/constants";
 
 function DashboardContent() {
   const router = useRouter();
@@ -21,14 +21,6 @@ function DashboardContent() {
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  const placeholders = [
-    "What are the top performing stocks today?",
-    "Compare Bitcoin vs Ethereum performance",
-    "Analyze crypto market sentiment",
-    "Should I invest in tech stocks?",
-    "What's moving the market today?",
-  ];
 
   const handleChatSubmit = () => {
     if (chatInput.trim()) {
@@ -103,7 +95,7 @@ function DashboardContent() {
                 {!chatInput && (
                   <div className="absolute left-3 sm:left-3.5 top-3 sm:top-3.5 right-14 pointer-events-none text-slate-400 text-sm sm:text-base leading-relaxed">
                     <AnimatedPlaceholder
-                      placeholders={placeholders}
+                      placeholders={DASHBOARD_INPUT_PLACEHOLDERS}
                       interval={3500}
                     />
                   </div>
