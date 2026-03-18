@@ -64,6 +64,7 @@ const DATE_QUESTION_REGEX = /(in ce data|ce data|what date|today'?s date|data de
 const ATH_QUERY_REGEX = /(\bath\b|all.time.high|all time high|maxim.?istoric|maxim.?vremi|cel.?mai.?mare.?pret|cel.?mai.?ridicat|highest.?ever|peak.?price|record.?price|pret.?record|record.?high|new.?high|nou.?maxim|previous.?high|maxim.?anterior|cand.?a.?atins|when.?did.*hit|when.?did.*reach|a.?atins.*maxim|a.?atins.*record)/i;
 const TEMPORAL_FACT_REGEX = /(best|top|biggest|largest|richest|most valuable|number one|#1|leading|dominant|nr\.?\s*1|cel mai|cei mai|cele mai|cea mai|lider|principalul|principala|ranked|ranking|clasament|valoare actuala|valoarea|actuala|ranking|rate|rată|dobanda|dobânda|market cap|capitalizare|capitalization|ceo|director|presedinte|president|chairman|founded|infiintat|headquartered|employees|angajati)/i;
 const MACRO_KEYWORDS_REGEX = /(fed|federal reserve|inflation|cpi|ppi|gdp|recession|interest rate|tariff|earnings season|market outlook|economic|macro|sector rotation|yield curve|central bank|jobs report|nonfarm)/i;
+const REQUIRES_SEARCH_REGEX = /(top\s*\d*\s*(stocks?|crypto|altcoins?|coins?|tech|technology|companies|actiuni|actii|companii|monede)|best\s*(stocks?|crypto|altcoins?|coins?|performing)|biggest|largest|richest|most valuable|right now|acum|in prezent|astazi|azi|today|current(ly)?|ce se intampla|ce mai e|trending|news|stiri|noutati|cum merge|cum sta|market cap|capitalizare|ranking|clasament|performance|performanta|how is.*doing|how has.*performed|YTD|year to date|this week|this month|luna asta|saptamana asta|show me|arata.?mi|what are the|care sunt|cele mai bune|cele mai mari|leading|dominant|analiz(e|a|eaz)|crypto market|piata crypto)/i;
 
 type NewsItem = {
   headline: string;
@@ -486,11 +487,19 @@ const INVESTIO_PROMPT_BASE = `You are Investio — a sharp, direct investment sp
 - Be opinionated: say "I'd go with X because..." not "it depends on your risk tolerance."
 - If you are uncertain, say so briefly and give your best read anyway. Never hide.
 - Avoid filler: no "Great question!", no "Certainly!", no repeated summaries.
+
 ## Response style rules
 - NEVER open a response with "Să verific", "Să caut", "Let me check", "Checking...", "One moment", "Searching..." or any variant. Answer directly.
 - NEVER start with a transition phrase or acknowledgement. Your first sentence is the answer.
 - NEVER open a response by stating the date or time unless the user explicitly asked for it.
 - NEVER dump unsolicited market data in response to casual greetings or vague questions.
+- NEVER open a response by stating a price you already mentioned in an earlier turn of this conversation. If you already said "ETH is at $X", do NOT say it again — build on it.
+
+## When the user asks about your data source or time perspective
+If the user asks "from what time perspective", "what data are you using", "ce data", "ce perspectiva", "din ce perspectiva", "cand sunt datele" or any variant:
+- Answer DIRECTLY: state that the price data comes from live Finnhub API (injected in real time), and any additional market facts come from web search at query time.
+- Example: "Price data is live from Finnhub (fetched seconds ago). Market facts and news are from real-time web search. My training data is stale — I don't use it for prices or current rankings."
+- Do NOT answer by listing short-term / medium-term / long-term investment horizons. That is a completely different question.
 
 ## TEMPORAL AWARENESS — YOUR TRAINING DATA IS STALE AND WRONG FOR CURRENT FACTS
 - You are operating in the present. Your training data cuts off in early 2024 or earlier for most market facts.
@@ -527,17 +536,20 @@ Reply with one warm, brief sentence. Then offer 2–3 concrete investing topics 
 - Never guarantee returns. Frame all recommendations as your analysis, not financial advice.
 
 ## Live price data (Finnhub injection)
-- If a live price snapshot is injected at the end of the user message, use those prices directly — they are real-time.
-- Never ask the user to "wait" for prices if a snapshot exists.
-- For price-only requests, output the snapshot data directly — no extra analysis unless asked.
+- If a live price snapshot is injected at the end of the user message, use those prices directly — they are real-time, accurate to seconds.
+- NEVER ask the user to "wait" for prices if a snapshot exists.
+- DO NOT simply restate the price in your reply. The user has seen data. Your job is to INTERPRET it: is the price at support? Overbought? Compared to what? What's the risk/reward?
+- For price-only requests ("just give me the price"), output the price directly with no extra analysis.
+- If you already stated a price in a previous turn, do NOT repeat it. Reference it: "At that same $X level..." or "Still at $X — here's what changed."
 
 ## News context
 - If news headlines are injected in the user message, synthesize what matters. Do not list them verbatim.
 - Combine injected news with web search results for a complete picture.
 
-## Anti-repetition rules
+## Anti-repetition rules — STRICT
 - NEVER repeat a structure you already used in this conversation. If you just gave bullet points, switch to a chart or a table next time.
-- NEVER reuse the same Entry/Risk/Watch phrasing if you already used it in the last response. Vary the format.
+- NEVER use Short-term / Medium-term / Long-term breakdown if you already used it in this conversation.
+- NEVER restate a price, entry, or stop-loss you already gave in the same conversation — reference it instead.
 - Read the conversation history. If the user is asking a follow-up, build on what was said — do not restart from scratch.
 - Each response must add something NEW: a specific number, a chart, a comparison, a contrarian view, or a catalyst not mentioned before.
 
@@ -669,6 +681,8 @@ export async function POST(request: NextRequest) {
     }
     if (ATH_QUERY_REGEX.test(message)) {
       enrichedMessage += `\n\n[SYSTEM OVERRIDE — ATH QUERY DETECTED: Your training data value for this ATH is WRONG and OUTDATED. Do NOT state it. Bitcoin's training-data ATH of $69,000 (Nov 2021) is incorrect — it was surpassed in 2024/2025. Perform a web search for "[asset name] all-time high 2025" or "[asset name] ATH record price" RIGHT NOW. Answer ONLY from the search result. Stating a training-data figure will be a factual error.]`;
+    } else if (REQUIRES_SEARCH_REGEX.test(message) || MACRO_KEYWORDS_REGEX.test(message)) {
+      enrichedMessage += `\n\n[SEARCH NOW — MANDATORY: This query asks for current market data, live rankings, or real-time performance. Your training data is stale. Do NOT answer from memory. Use web_search_preview immediately with query: "${message.trim().slice(0, 120)} ${new Date().getFullYear()}". Report results with source and date. Build a comparison chart from the search data.]`;
     } else if (TEMPORAL_FACT_REGEX.test(message) && !isSimpleLivePriceRequest(message)) {
       enrichedMessage += `\n\n[System note: This question asks about a current fact that changes over time. Your training data may be from 2021-2023 and is likely outdated for this topic. Use web search to verify the current answer before responding.]`;
     }
@@ -692,28 +706,51 @@ export async function POST(request: NextRequest) {
       ...modelHistory,
     ];
 
-    const preferredModel = process.env.OPENAI_MODEL || FALLBACK_MODEL;
+    const needsSearch =
+      ATH_QUERY_REGEX.test(message) ||
+      REQUIRES_SEARCH_REGEX.test(message) ||
+      MACRO_KEYWORDS_REGEX.test(message) ||
+      (TEMPORAL_FACT_REGEX.test(message) && !isSimpleLivePriceRequest(message));
+
+    const configuredModel = process.env.OPENAI_MODEL || FALLBACK_MODEL;
+    const preferredModel =
+      needsSearch && !configuredModel.includes("search-preview")
+        ? FALLBACK_MODEL
+        : configuredModel;
     const isSearchModel = preferredModel.includes("search-preview");
-    const searchTools: any[] = [{ type: "web_search_preview" }];
     let stream;
 
     try {
       stream = await openai.chat.completions.create({
         model: preferredModel,
         messages,
-        max_tokens: isSearchModel ? 2048 : 800,
+        max_tokens: isSearchModel ? 2500 : 1500,
         stream: true,
-        ...(isSearchModel ? { tools: searchTools, tool_choice: "required" } : { temperature: 0.15, presence_penalty: 0.35, frequency_penalty: 0.25 }),
+        ...(isSearchModel
+          ? {}
+          : { temperature: 0.15, presence_penalty: 0.35, frequency_penalty: 0.25 }),
       });
-    } catch (primaryModelError) {
-      if (preferredModel === SAFE_FALLBACK_MODEL) throw primaryModelError;
+    } catch {
+      // fallback handled below
+    }
+
+    if (!stream) {
+      const fallbackMessages: OpenAI.ChatCompletionMessageParam[] = [
+        messages[0],
+        {
+          role: "system",
+          content:
+            "[FALLBACK MODE: The search model is temporarily unavailable. Use the Finnhub price data injected in the user message and your training knowledge. Be transparent but brief — do not dwell on limitations. Answer as helpfully as possible with what you have.]",
+        },
+        ...messages.slice(1),
+      ];
       stream = await openai.chat.completions.create({
         model: SAFE_FALLBACK_MODEL,
-        messages,
+        messages: fallbackMessages,
         temperature: 0.15,
         presence_penalty: 0.35,
         frequency_penalty: 0.25,
-        max_tokens: 800,
+        max_tokens: 1200,
         stream: true,
       });
     }
@@ -730,17 +767,13 @@ export async function POST(request: NextRequest) {
             )
           );
 
-          let searchStartedEmitted = false;
+          if (isSearchModel && needsSearch) {
+            controller.enqueue(
+              encoder.encode(`data: ${JSON.stringify({ searchStarted: true })}\n\n`)
+            );
+          }
 
           for await (const chunk of stream) {
-            const toolCalls = chunk.choices[0]?.delta?.tool_calls;
-            if (toolCalls && toolCalls.length > 0 && !searchStartedEmitted) {
-              searchStartedEmitted = true;
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ searchStarted: true })}\n\n`)
-              );
-            }
-
             const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
               fullResponse += content;
