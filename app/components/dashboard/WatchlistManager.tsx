@@ -12,7 +12,8 @@ export default function WatchlistManager() {
   const { watchlist, loading, removeFromWatchlist } = useWatchlist();
   const [filter, setFilter] = useState<AssetCategory | "all">("all");
   const [isExpanded, setIsExpanded] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -25,48 +26,35 @@ export default function WatchlistManager() {
     await removeFromWatchlist(symbol);
   };
 
-  const scroll = (direction: "left" | "right") => {
-    if (containerRef.current) {
-      const cardWidth = 150;
-      const gap = 12;
-      const scrollAmount = (cardWidth + gap) * 2;
-
-      const currentScroll = containerRef.current.scrollLeft;
-      const newPosition =
-        direction === "left"
-          ? Math.max(0, currentScroll - scrollAmount)
-          : currentScroll + scrollAmount;
-
-      containerRef.current.scrollTo({
-        left: newPosition,
-        behavior: "smooth",
-      });
-    }
+  const updateScrollButtons = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setCanScrollLeft(scrollLeft > 5);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
   };
 
-  const updateScrollButtons = () => {
-    if (containerRef.current) {
-      setScrollPosition(containerRef.current.scrollLeft);
-    }
+  const scroll = (direction: "left" | "right") => {
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollAmount = (150 + 12) * 2;
+    const newPosition =
+      direction === "left"
+        ? Math.max(0, container.scrollLeft - scrollAmount)
+        : container.scrollLeft + scrollAmount;
+    container.scrollTo({ left: newPosition, behavior: "smooth" });
+    if (direction === "right") setCanScrollLeft(true);
+    if (direction === "left" && newPosition === 0) setCanScrollLeft(false);
+    setTimeout(updateScrollButtons, 350);
   };
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    const handleScroll = () => updateScrollButtons();
-    container.addEventListener("scroll", handleScroll);
-
+    container.addEventListener("scroll", updateScrollButtons);
     updateScrollButtons();
-
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [filteredWatchlist]);
-
-  const canScrollLeft = scrollPosition > 5;
-  const canScrollRight =
-    containerRef.current &&
-    scrollPosition <
-      containerRef.current.scrollWidth - containerRef.current.clientWidth - 5;
+    return () => container.removeEventListener("scroll", updateScrollButtons);
+  }, [filteredWatchlist, isExpanded]);
 
   return (
     <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
