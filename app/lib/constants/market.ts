@@ -91,4 +91,4 @@ export const DASHBOARD_INPUT_PLACEHOLDERS = [
   "Analyze crypto market sentiment",
   "Should I invest in tech stocks?",
   "What's moving the market today?",
-] as const;
+];
