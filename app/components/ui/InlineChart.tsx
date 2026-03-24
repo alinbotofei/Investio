@@ -57,6 +57,22 @@ function isNumberArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.every((n) => typeof n === "number" && Number.isFinite(n));
 }
 
+function ChartSkeleton() {
+  return (
+    <div className="my-4 bg-slate-900/70 border border-slate-700/30 rounded-2xl p-4 animate-pulse">
+      <div className="h-3 w-32 bg-slate-700/60 rounded mb-4" />
+      <div className="space-y-3">
+        {[75, 50, 65, 40].map((w, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="h-2.5 w-16 bg-slate-700/50 rounded shrink-0" />
+            <div className="h-6 bg-slate-700/40 rounded-lg" style={{ width: `${w}%` }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function isValidChartData(value: unknown): value is ChartData {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
@@ -321,19 +337,11 @@ export default function InlineChart({ raw }: { raw: string }) {
   try {
     data = JSON.parse(raw.trim());
   } catch {
-    return (
-      <pre className="text-xs text-red-400 bg-slate-900/50 p-2 rounded">
-        {raw}
-      </pre>
-    );
+    return <ChartSkeleton />;
   }
 
   if (!isValidChartData(data)) {
-    return (
-      <div className="my-4 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2">
-        Unsupported or invalid chart payload.
-      </div>
-    );
+    return <ChartSkeleton />;
   }
 
   return (

@@ -27,19 +27,27 @@ const MarkdownMessage = memo(function MarkdownMessage({ text }: { text: string }
   );
 });
 
-function hasCompleteChartFence(text: string) {
-  return /```chart[\s\S]*?```/i.test(text);
-}
-
 function getStreamingSafePreview(text: string) {
-  const start = text.lastIndexOf("```chart");
-  if (start === -1) return text;
-
-  const closing = text.indexOf("```", start + 8);
-  if (closing !== -1) return text;
-
-  const before = text.slice(0, start).trimEnd();
-  return before;
+  const lines = text.split("\n");
+  let inFence = false;
+  let fenceOpenCharIdx = 0;
+  let charIdx = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^`{3}/.test(line)) {
+      if (!inFence) {
+        inFence = true;
+        fenceOpenCharIdx = charIdx;
+      } else {
+        inFence = false;
+      }
+    }
+    charIdx += line.length + 1;
+  }
+  if (inFence) {
+    return text.slice(0, fenceOpenCharIdx).trimEnd();
+  }
+  return text;
 }
 
 const CHAT_DRAFT_STORAGE_KEY = "chat_input_draft";
@@ -276,6 +284,18 @@ function ChatContent() {
             time: new Date(msg.createdAt).getTime(),
           })
         );
+        const restoredRefs: Record<string, Array<{ title: string; url: string }>> = {};
+        loadedMessages.forEach((msg, idx) => {
+          if (msg.role === "assistant") {
+            try {
+              const stored = localStorage.getItem(`refs:${conversationId}:${idx}`);
+              if (stored) restoredRefs[msg.id] = JSON.parse(stored);
+            } catch {}
+          }
+        });
+        if (Object.keys(restoredRefs).length > 0) {
+          setMessageReferences(restoredRefs);
+        }
         forceScrollRef.current = true;
         setMessages(loadedMessages);
         setCurrentConversationId(conversationId);
@@ -312,6 +332,9 @@ function ChatContent() {
     if (!textToSend) return;
     userScrolledRef.current = false;
     forceScrollRef.current = true;
+
+    const assistantPositionIndex =
+      messages.filter((m) => m.id !== "ctx-init").length + 1;
 
     const userMsgId = String(Date.now());
     const assistantId = `asst-${Date.now()}`;
@@ -354,6 +377,8 @@ function ChatContent() {
     let accumulatedText = "";
     let shouldRefreshConversations = false;
     let streamedFirstChunk = false;
+    let localConvId: string | null = currentConversationId;
+    let pendingRefsToStore: Array<{ title: string; url: string }> | null = null;
 
     if (searchIndicatorTimerRef.current) clearTimeout(searchIndicatorTimerRef.current);
     searchIndicatorTimerRef.current = null;
@@ -428,6 +453,16 @@ function ChatContent() {
 
           if (json.references && json.references.length > 0) {
             setMessageReferences((prev) => ({ ...prev, [assistantId]: json!.references! }));
+            if (localConvId) {
+              try {
+                localStorage.setItem(
+                  `refs:${localConvId}:${assistantPositionIndex}`,
+                  JSON.stringify(json.references)
+                );
+              } catch {}
+            } else {
+              pendingRefsToStore = json.references;
+            }
           }
 
           if (json.content) {
@@ -465,11 +500,21 @@ function ChatContent() {
               flushAssistantText();
             }
           }
-          if (json.conversationId && !currentConversationId) {
+          if (json.conversationId && !localConvId) {
+            localConvId = json.conversationId;
             activeStreamRef.current = json.conversationId;
             setCurrentConversationId(json.conversationId);
             router.replace(`/chat?id=${json.conversationId}`);
             shouldRefreshConversations = true;
+            if (pendingRefsToStore) {
+              try {
+                localStorage.setItem(
+                  `refs:${localConvId}:${assistantPositionIndex}`,
+                  JSON.stringify(pendingRefsToStore)
+                );
+              } catch {}
+              pendingRefsToStore = null;
+            }
           }
           if (json.error) {
             throw new Error(json.error);
@@ -539,7 +584,7 @@ function ChatContent() {
       setSearchFading(false);
       setIsWebSearching(false);
       setSearchStep(0);
-      if (pendingContentRef.current !== accumulatedText) {
+      if (accumulatedText) {
         setMessages((m) =>
           m.map((msg) => (msg.id === assistantId ? { ...msg, text: accumulatedText } : msg))
         );
@@ -804,12 +849,9 @@ function ChatContent() {
                     {messages.map((m, i) => {
                       const isTyping = m.role === "assistant" && !m.text;
                       const isStreaming = m.role === "assistant" && streamingAssistantIdRef.current === m.id;
-                      const streamingHasRenderableChart =
-                        isStreaming && hasCompleteChartFence(m.text);
-                      const streamingPreview =
-                        isStreaming && !streamingHasRenderableChart
-                          ? getStreamingSafePreview(m.text)
-                          : m.text;
+                      const streamingPreview = isStreaming
+                        ? getStreamingSafePreview(m.text)
+                        : m.text;
                       return (
                         <div
                           key={m.id ?? i}
@@ -829,7 +871,7 @@ function ChatContent() {
                               m.text
                             ) : isTyping ? (
                               <AssistantLoader searching={isWebSearching} fading={searchFading} stepIndex={searchStep} />
-                            ) : isStreaming && !streamingHasRenderableChart ? (
+                            ) : isStreaming ? (
                               <MarkdownMessage text={streamingPreview} />
                             ) : (
                               <>
@@ -844,14 +886,7 @@ function ChatContent() {
                         </div>
                       );
                     })}
-                    {loading && messages[messages.length - 1]?.role !== "assistant" && (
-                      <div className="flex items-start gap-3 justify-start">
-                        <AiAvatar />
-                        <div className="rounded-2xl px-4 py-3 bg-slate-800/80 border border-slate-700/40 animate-fade-in">
-                          <AssistantLoader searching={isWebSearching} fading={searchFading} stepIndex={searchStep} />
-                        </div>
-                      </div>
-                    )}
+
                   </div>
                 </div>
 
@@ -893,11 +928,7 @@ function ChatContent() {
                       aria-label="Send"
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 w-[30px] h-[30px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_3px_10px_rgba(2,8,23,0.25)] transition-all duration-200 active:scale-[0.96] disabled:opacity-30 disabled:cursor-not-allowed"
                     >
-                      {loading ? (
-                        <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      ) : (
-                        <Icon name="send" className="text-[13px]" />
-                      )}
+                      <Icon name="send" className="text-[13px]" />
                     </button>
                   </div>
                 </div>

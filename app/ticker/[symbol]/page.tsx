@@ -433,7 +433,7 @@ export default function TickerPage() {
                 <div className="bg-gradient-to-r from-cyan-600/20 to-blue-600/20 px-4 xl:px-6 py-3 xl:py-4 border-b border-cyan-500/20 flex-shrink-0">
                   <h3 className="text-lg xl:text-xl font-bold text-white flex items-center gap-2">
                     <Icon name="psychology" className="text-cyan-400 text-[22px] xl:text-[26px]" />
-                    Ask About {quote?.name || symbol}
+                    Ask About {quote?.name || assetHelpers.formatSymbol(symbol)}
                   </h3>
                   <p className="text-xs xl:text-sm text-slate-300 mt-1">Get instant AI-powered insights and analysis</p>
                 </div>

@@ -54,7 +54,7 @@ export const markdownComponents: Components = {
       return null;
     }
     return (
-      <p className="mb-3 leading-relaxed text-slate-300" {...props}>
+      <p className="leading-relaxed text-slate-300" {...props}>
         {children}
       </p>
     );

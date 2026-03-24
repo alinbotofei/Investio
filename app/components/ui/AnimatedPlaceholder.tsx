@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 interface AnimatedPlaceholderProps {
-  placeholders: string[];
+  placeholders: readonly string[];
   /** Legacy prop — treated as pauseAfterTyping when pauseAfterTyping is not set */
   interval?: number;
   /** ms per character while typing (default: 52) */

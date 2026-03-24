@@ -26,8 +26,10 @@ export default function ChatWidget({
   compact = false,
   navigateOnSend = true,
 }: ChatWidgetProps) {
-  const tickerSymbol =
-    context?.split(",")[0]?.split(":")[1]?.trim() || context || "this asset";
+  const rawSymbol = context?.split(",")[0]?.replace(/^Ticker:\s*/i, "").trim();
+  const tickerSymbol = rawSymbol
+    ? rawSymbol.replace(/^BINANCE:|^OANDA:/i, "").replace("_", "/")
+    : context || "this asset";
 
   const widgetPlaceholders = placeholder
     ? [placeholder]
@@ -292,11 +294,7 @@ export default function ChatWidget({
             aria-label="Send message"
             className={`${SEND_BUTTON} absolute right-3 inset-y-0 my-auto w-[34px] h-[34px] flex items-center justify-center shadow-[0_4px_12px_rgba(2,8,23,0.28)] transition-all duration-200 active:scale-[0.97]`}
           >
-            {loading ? (
-              <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Icon name="send" className="text-[13px]" />
-            )}
+            <Icon name="send" className="text-[13px]" />
           </button>
         </div>
       </div>

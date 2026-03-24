@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Icon from "../ui/Icon";
@@ -8,6 +8,8 @@ import { NavItem } from "../../lib/types";
 import { emitChatReset } from "../../lib/utils/events";
 import { useConversationsCtx } from "@/app/contexts/ConversationsContext";
 import { formatTimeAgo } from "@/app/lib/utils/format";
+
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 interface SidebarProps {
   items: NavItem[];
@@ -22,8 +24,8 @@ function iconFor(label: string) {
 const SIDEBAR_STORAGE_KEY = "sidebar_open";
 
 function SidebarInner({ items }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isPinned, setIsPinned] = useState(true);
+  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [isPinned, setIsPinned] = useState<boolean>(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<string | null>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,7 +36,7 @@ function SidebarInner({ items }: SidebarProps) {
   const activeConvId = searchParams.get("id");
   const { conversations, loading: convsLoading, deleteConversation } = useConversationsCtx();
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     try {
       const v = localStorage.getItem(SIDEBAR_STORAGE_KEY);
       const pinned = v === null ? true : v === "true";
