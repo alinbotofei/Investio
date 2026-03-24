@@ -9,7 +9,6 @@ import { emitChatReset } from "../../lib/utils/events";
 import { useConversationsCtx } from "@/app/contexts/ConversationsContext";
 import { formatTimeAgo } from "@/app/lib/utils/format";
 
-const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 interface SidebarProps {
   items: NavItem[];
@@ -35,6 +34,8 @@ function SidebarInner({ items }: SidebarProps) {
   const router = useRouter();
   const activeConvId = searchParams.get("id");
   const { conversations, loading: convsLoading, deleteConversation } = useConversationsCtx();
+  const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 
   useIsomorphicLayoutEffect(() => {
     try {
