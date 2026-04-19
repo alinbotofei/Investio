@@ -91,6 +91,7 @@ function DashboardContent() {
                       handleChatSubmit();
                     }
                   }}
+                  data-test-id="dashboard-chat-input"
                 />
                 {!chatInput && (
                   <div className="absolute left-3 sm:left-3.5 top-3 sm:top-3.5 right-14 pointer-events-none text-slate-400 text-sm sm:text-base leading-relaxed">
@@ -104,6 +105,7 @@ function DashboardContent() {
                   onClick={handleChatSubmit}
                   className={`${SEND_BUTTON} w-8 h-8 sm:w-9 sm:h-9 absolute right-2.5 top-1/2 -translate-y-1/2 shadow-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed`}
                   disabled={!chatInput.trim()}
+                  data-test-id="dashboard-chat-send"
                 >
                   <Icon name="send" className="text-[14px] sm:text-[15px]" />
                 </button>

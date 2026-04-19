@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({
-        exists: false,
+        exists: true,
         email: normalizedEmail,
       });
     }

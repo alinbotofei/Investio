@@ -769,6 +769,7 @@ function ChatContent() {
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
                       }}
+                      data-test-id="chat-input"
                     />
                     {!value && !landingFocused && (
                       <div className="absolute inset-x-0 inset-y-0 pointer-events-none px-6 pr-16 py-4 text-slate-300/70 text-[14px] sm:text-[15px] leading-relaxed overflow-hidden whitespace-nowrap">
@@ -785,6 +786,7 @@ function ChatContent() {
                       disabled={loading || !value.trim()}
                       aria-label="Send message"
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 w-[30px] h-[30px] sm:w-[30px] sm:h-[30px] xl:w-[30px] xl:h-[30px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_3px_10px_rgba(2,8,23,0.25)] transition-all duration-200 active:scale-[0.96] disabled:opacity-30 disabled:cursor-not-allowed"
+                      data-test-id="chat-send-button"
                     >
                       <Icon name="send" className="text-[13px] sm:text-[13px] xl:text-[13px]" />
                     </button>
@@ -921,12 +923,14 @@ function ChatContent() {
                           handleSend();
                         }
                       }}
+                      data-test-id="chat-input"
                     />
                     <button
                       onClick={() => handleSend()}
                       disabled={loading || !value.trim()}
                       aria-label="Send"
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 w-[30px] h-[30px] flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-500 to-sky-500 hover:from-blue-400 hover:via-blue-500 hover:to-sky-400 text-white rounded-full shadow-[0_3px_10px_rgba(2,8,23,0.25)] transition-all duration-200 active:scale-[0.96] disabled:opacity-30 disabled:cursor-not-allowed"
+                      data-test-id="chat-send-button"
                     >
                       <Icon name="send" className="text-[13px]" />
                     </button>

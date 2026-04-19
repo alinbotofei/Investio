@@ -172,6 +172,7 @@ function SidebarInner({ items }: SidebarProps) {
               key={item.label}
               href={item.href}
               prefetch
+              data-test-id={`nav-${item.label.toLowerCase()}`}
               onClick={(e) => {
                 e.stopPropagation();
                 if (item.href === "/chat" && pathname === "/chat") {
