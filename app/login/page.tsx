@@ -192,6 +192,7 @@ export default function Login() {
                   disabled={loading}
                   autoComplete="email"
                   required
+                  data-test-id="email-input"
                 />
               </div>
 
@@ -199,6 +200,7 @@ export default function Login() {
                 type="submit"
                 disabled={loading}
                 className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 py-3.5 font-semibold text-white transition-all hover:from-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                data-test-id="continue-button"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -271,6 +273,7 @@ export default function Login() {
                     disabled={loading}
                     autoComplete="current-password"
                     required
+                    data-test-id="password-input"
                   />
                   <button
                     type="button"
@@ -296,6 +299,7 @@ export default function Login() {
                 type="submit"
                 disabled={loading}
                 className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 py-3.5 font-semibold text-white transition-all hover:from-blue-500 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40"
+                data-test-id="sign-in-button"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

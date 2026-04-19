@@ -221,6 +221,7 @@ function SignUpForm() {
                 disabled={loading}
                 autoComplete="name"
                 required
+                data-test-id="signup-name-input"
               />
               {errors.name && (
                 <p className="flex items-start gap-2 text-xs text-red-400 font-medium font-inter pt-1">
@@ -249,6 +250,7 @@ function SignUpForm() {
                 disabled={loading}
                 autoComplete="email"
                 required
+                data-test-id="signup-email-input"
               />
               {errors.email && (
                 <p className="flex items-start gap-2 text-xs text-red-400 font-medium font-inter pt-1">
@@ -278,6 +280,7 @@ function SignUpForm() {
                   disabled={loading}
                   autoComplete="new-password"
                   required
+                  data-test-id="signup-password-input"
                 />
                 <button
                   type="button"
@@ -346,6 +349,7 @@ function SignUpForm() {
                   disabled={loading}
                   autoComplete="new-password"
                   required
+                  data-test-id="signup-confirm-password-input"
                 />
                 <button
                   type="button"
@@ -379,6 +383,7 @@ function SignUpForm() {
               type="submit"
               disabled={loading}
               className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 py-3 font-semibold text-white transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:shadow-none mt-6 font-inter"
+              data-test-id="signup-submit-button"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

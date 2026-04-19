@@ -3,50 +3,41 @@ import { test, expect } from "@playwright/test";
 test.describe("Dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/dashboard");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(
+      page.getByRole("heading", { name: "Investment Dashboard" })
+    ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("loads and shows core layout elements", async ({ page }) => {
-    await expect(page.getByRole("navigation")).toBeVisible();
-
-    const marketSection = page.getByText(/market|overview|portfolio/i).first();
-    await expect(marketSection).toBeVisible({ timeout: 10_000 });
+  test("shows the Investment Dashboard heading", async ({ page }) => {
+    await expect(
+      page.getByRole("heading", { name: "Investment Dashboard" })
+    ).toBeVisible();
   });
 
-  test("displays watchlist panel", async ({ page }) => {
-    const watchlist = page.getByText(/watchlist/i).first();
-    await expect(watchlist).toBeVisible({ timeout: 8_000 });
+  test("displays the watchlist section", async ({ page }) => {
+    await expect(page.getByText(/my watchlist/i).first()).toBeVisible({
+      timeout: 8_000,
+    });
   });
 
-  test("global search opens and accepts input", async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/search|symbol|stock/i).first();
-
-    if (await searchInput.isVisible()) {
-      await searchInput.fill("AAPL");
-      await expect(searchInput).toHaveValue("AAPL");
-    } else {
-      await page.keyboard.press("Control+k");
-      const modal = page.getByRole("dialog");
-      await expect(modal).toBeVisible({ timeout: 3_000 });
-      await modal.getByRole("textbox").fill("AAPL");
-    }
+  test("AI assistant input accepts text", async ({ page }) => {
+    const input = page.locator("[data-test-id='dashboard-chat-input']");
+    await expect(input).toBeVisible({ timeout: 8_000 });
+    await input.fill("What is the price of AAPL?");
+    await expect(input).toHaveValue("What is the price of AAPL?");
   });
 
-  test("navigates to a ticker page from the search results", async ({ page }) => {
-    const searchInput = page.getByPlaceholder(/search|symbol|stock/i).first();
+  test("AI assistant send navigates to chat with context", async ({ page }) => {
+    await page.locator("[data-test-id='dashboard-chat-input']").fill("AAPL analysis");
+    await page.locator("[data-test-id='dashboard-chat-send']").click();
+    await page.waitForURL(/chat/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/chat/);
+  });
 
-    if (await searchInput.isVisible()) {
-      await searchInput.fill("AAPL");
-    } else {
-      await page.keyboard.press("Control+k");
-      const dialog = page.getByRole("dialog");
-      await expect(dialog).toBeVisible({ timeout: 3_000 });
-      await dialog.getByRole("textbox").fill("AAPL");
-    }
-
-    const appleResult = page.getByText(/apple/i).first();
-    await expect(appleResult).toBeVisible({ timeout: 6_000 });
-    await appleResult.click();
-
-    await expect(page).toHaveURL(/ticker\/AAPL/i, { timeout: 10_000 });
+  test("shows market overview content", async ({ page }) => {
+    await expect(
+      page.getByText(/top movers|stocks|market|cryptocurrency/i).first()
+    ).toBeVisible({ timeout: 10_000 });
   });
 });

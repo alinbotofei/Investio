@@ -14,20 +14,20 @@ A full-stack investment dashboard built as a portfolio project, demonstrating pr
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15 (App Router) |
-| UI | React 19, Tailwind CSS v4 |
-| Language | TypeScript (strict) |
-| Auth | NextAuth.js v5 (JWT) |
-| Database | PostgreSQL + Prisma ORM |
-| AI | OpenAI GPT-4o-mini (streaming) |
-| Market Data | Finnhub REST API |
-| Charts | Lightweight Charts (TradingView) |
-| Component Dev | Storybook 8 |
-| E2E Testing | Playwright (Chromium + Firefox) |
-| Unit Testing | Vitest |
-| Deployment | Vercel + Supabase |
+| Layer         | Technology                       |
+| ------------- | -------------------------------- |
+| Framework     | Next.js 15 (App Router)          |
+| UI            | React 19, Tailwind CSS v4        |
+| Language      | TypeScript (strict)              |
+| Auth          | NextAuth.js v5 (JWT)             |
+| Database      | PostgreSQL + Prisma ORM          |
+| AI            | OpenAI GPT-4o-mini (streaming)   |
+| Market Data   | Finnhub REST API                 |
+| Charts        | Lightweight Charts (TradingView) |
+| Component Dev | Storybook 8                      |
+| E2E Testing   | Playwright                       |
+| Unit Testing  | Vitest                           |
+| Deployment    | Vercel + Supabase                |
 
 ## Architecture
 
@@ -103,30 +103,33 @@ prisma/schema.prisma      # Database schema (User, Conversation, Message, Watchl
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start local dev server |
-| `npm run build` | Production build |
-| `npm run storybook` | Launch Storybook on port 6006 |
-| `npm run test:e2e` | Run Playwright E2E tests |
-| `npm run test:e2e:ui` | Playwright with interactive UI |
+| Command                  | Description                    |
+| ------------------------ | ------------------------------ |
+| `npm run dev`            | Start local dev server         |
+| `npm run build`          | Production build               |
+| `npm run storybook`      | Launch Storybook on port 6006  |
+| `npm run test`           | Run unit tests with Vitest     |
+| `npm run test:ui`        | Vitest with interactive UI     |
+| `npm run test:storybook` | Run Storybook component tests  |
+| `npm run test:e2e`       | Run Playwright E2E tests       |
+| `npm run test:e2e:ui`    | Playwright with interactive UI |
+| `npm run test:all`       | Run all test suites            |
 
 ## Testing
 
-**E2E (Playwright):** Auth flows, dashboard layout, watchlist interactions, chat message sending — run across Chromium and Firefox with shared auth state.
+**E2E (Playwright):** Auth flows, dashboard layout, watchlist interactions, chat message sending, and ticker navigation — run on Chromium with shared auth state via a `setup` project.
 
-**Component (Storybook):** All UI primitives and dashboard widgets have isolated stories covering loading, empty, error, and data states.
+**Component (Storybook):** UI primitives and dashboard widgets have isolated stories, executed as tests through `@storybook/addon-vitest`.
 
-**Setup for E2E:**
+**Setup:**
 
 ```bash
-# First run — configure test credentials
-cp .env.local .env.test
-# Set E2E_EMAIL and E2E_PASSWORD in .env.test, then:
-npm run test:e2e
+cp .env.example .env.test
+# Fill in E2E_EMAIL and E2E_PASSWORD
+npm install
+npm run test:all
 ```
 
 ## Deployment
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for Vercel + Supabase deployment guide.
-
