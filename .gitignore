@@ -17,6 +17,10 @@ out/
 # Build output
 build/
 dist/
+storybook-static/
+
+# Claude Code local config
+.claude/
 
 # Env files
 .env

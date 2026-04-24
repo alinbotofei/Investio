@@ -1,9 +1,9 @@
-import type { StorybookConfig } from "@storybook/nextjs-vite";
+import type { StorybookConfig } from "@storybook/nextjs-vite" with { "resolution-mode": "import" };
 
 const config: StorybookConfig = {
   stories: [
-    "../app/components/**/*.stories.@(ts|tsx)",
-    "../app/components/**/*.mdx",
+    "../app/components/**/*.stories.tsx",
+    "../app/components/**/*.stories.mdx",
   ],
   addons: [
     "@storybook/addon-docs",

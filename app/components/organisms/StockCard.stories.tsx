@@ -28,9 +28,9 @@ const mockStock = {
 const withFetch = (impl: () => Promise<Response>): Decorator =>
   function WithFetch(Story) {
     useEffect(() => {
-      const orig = global.fetch;
-      global.fetch = impl;
-      return () => { global.fetch = orig; };
+      const orig = globalThis.fetch;
+      globalThis.fetch = impl;
+      return () => { globalThis.fetch = orig; };
     }, []);
     return <Story />;
   };

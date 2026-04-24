@@ -26,6 +26,7 @@ setup("authenticate", async ({ page, request }) => {
   await expect(page.locator("[data-test-id='email-input']")).toBeVisible({ timeout: 15_000 });
   await page.locator("[data-test-id='email-input']").fill(email);
   await page.locator("[data-test-id='continue-button']").click();
+  await page.waitForLoadState("networkidle");
 
   await expect(page.locator("[data-test-id='password-input']")).toBeVisible({ timeout: 15_000 });
   await page.locator("[data-test-id='password-input']").fill(password);
