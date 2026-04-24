@@ -2,20 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import DashboardLayout from "@/app/components/layout/DashboardLayout";
-import Icon from "@/app/components/ui/Icon";
-import TradingChart from "@/app/components/dashboard/TradingChart";
+import DashboardLayout from "@/app/components/templates/DashboardLayout";
+import Icon from "@/app/components/atoms/Icon";
+import TradingChart from "@/app/components/organisms/TradingChart";
 import {
   NewsFeed,
   RecommendationsWidget,
   InsiderSentimentBadge,
   ChatWidget,
-} from "@/app/components/dashboard";
+} from "@/app/components/organisms";
 import { assetHelpers } from "@/app/lib/utils/watchlist";
 import { AssetCategory } from "@/lib/types/assets";
 import { Stock } from "@/lib/types/stocks";
-import type { RecommendationData } from "@/app/components/dashboard/RecommendationsWidget";
-import type { InsiderSentimentData } from "@/app/components/dashboard/InsiderSentimentBadge";
+import type { RecommendationData } from "@/app/components/organisms/RecommendationsWidget";
+import type { InsiderSentimentData } from "@/app/components/organisms/InsiderSentimentBadge";
 import { formatNumber, formatPrice } from "@/app/lib/utils/format";
 import { fetchTickerData } from "@/app/lib/utils/dataFetching";
 import { useWatchlist } from "@/app/contexts/WatchlistContext";

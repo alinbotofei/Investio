@@ -1,6 +1,6 @@
 import type { Components } from "react-markdown";
 import type { ReactNode } from "react";
-import InlineChart from "@/app/components/ui/InlineChart";
+import InlineChart from "@/app/components/molecules/InlineChart";
 
 const SUPPORTED_CHART_TYPES = [
   "bar",

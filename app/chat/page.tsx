@@ -5,9 +5,9 @@ import { useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import DashboardLayout from "../components/layout/DashboardLayout";
-import Icon from "../components/ui/Icon";
-import AnimatedPlaceholder from "../components/ui/AnimatedPlaceholder";
+import DashboardLayout from "../components/templates/DashboardLayout";
+import Icon from "../components/atoms/Icon";
+import AnimatedPlaceholder from "../components/molecules/AnimatedPlaceholder";
 import { Message } from "../lib/types";
 import { useConversationsCtx } from "../contexts/ConversationsContext";
 import {

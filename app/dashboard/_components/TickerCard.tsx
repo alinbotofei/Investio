@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import Icon from "@/app/components/ui/Icon";
+import Icon from "@/app/components/atoms/Icon";
 import { getAssetLogoUrl } from "@/app/lib/utils/stockLogos";
 import { assetHelpers } from "@/app/lib/utils/watchlist";
 import { isPositive, formatPercent } from "@/app/lib/utils/format";

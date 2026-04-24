@@ -2,12 +2,12 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import DashboardLayout from "@/app/components/layout/DashboardLayout";
-import { WatchlistManager } from "@/app/components/dashboard";
+import DashboardLayout from "@/app/components/templates/DashboardLayout";
+import { WatchlistManager } from "@/app/components/organisms";
 import MarketOverview from "./_components/MarketOverview";
 import MarketNews from "./_components/MarketNews";
-import Icon from "@/app/components/ui/Icon";
-import AnimatedPlaceholder from "@/app/components/ui/AnimatedPlaceholder";
+import Icon from "@/app/components/atoms/Icon";
+import AnimatedPlaceholder from "@/app/components/molecules/AnimatedPlaceholder";
 import { SEND_BUTTON, DASHBOARD_INPUT_PLACEHOLDERS } from "@/app/lib/constants";
 
 function DashboardContent() {
