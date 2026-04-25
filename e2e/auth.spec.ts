@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const TEST_EMAIL = process.env.E2E_EMAIL ?? "investiotesting@investio.com";
+const TEST_EMAIL = process.env.E2E_EMAIL || "investiotesting@investio.com";
 const HAS_DB = !!process.env.DATABASE_URL;
 
 test.describe("Login", () => {
