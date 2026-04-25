@@ -5,8 +5,8 @@ import fs from "fs";
 const authFile = path.join(__dirname, "../.auth/user.json");
 
 setup("authenticate", async ({ page, request }) => {
-  const email = process.env.E2E_EMAIL ?? "investiotesting@investio.com";
-  const password = process.env.E2E_PASSWORD ?? "Testing12345!";
+  const email = process.env.E2E_EMAIL || "investiotesting@investio.com";
+  const password = process.env.E2E_PASSWORD || "Testing12345!";
 
   fs.mkdirSync(path.dirname(authFile), { recursive: true });
 
