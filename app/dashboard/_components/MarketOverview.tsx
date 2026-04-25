@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, memo } from "react";
-import Icon from "../../components/ui/Icon";
+import Icon from "../../components/atoms/Icon";
 import TickerCard from "./TickerCard";
 import { useWatchlist } from "@/app/contexts/WatchlistContext";
 import {

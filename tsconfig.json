@@ -32,7 +32,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
   "include": [
@@ -40,7 +42,8 @@
     "app/**/*",
     "lib/**/*",
     "types/**/*",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".storybook/**/*"
   ],
   "exclude": [
     "node_modules"

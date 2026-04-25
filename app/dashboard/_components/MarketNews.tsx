@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Icon from "../../components/ui/Icon";
+import Icon from "../../components/atoms/Icon";
 import { formatTimeAgo } from "@/app/lib/utils/format";
 
 interface NewsArticle {
